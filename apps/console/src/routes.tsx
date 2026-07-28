@@ -44,6 +44,7 @@ import { CurrentUser } from "./providers/CurrentUser";
 import { accessReviewRoutes } from "./routes/accessReviewRoutes";
 import { assetRoutes } from "./routes/assetRoutes";
 import { auditRoutes } from "./routes/auditRoutes";
+import { auditProgramRoutes } from "./pages/organizations/audit-programs/routes";
 import { contextRoutes } from "./routes/contextRoutes";
 import { dataRoutes } from "./routes/dataRoutes";
 import { documentsRoutes } from "./routes/documentsRoutes";
@@ -340,6 +341,7 @@ const routes = [
           ...assetRoutes,
           ...dataRoutes,
           ...auditRoutes,
+          ...auditProgramRoutes,
           ...contextRoutes,
           ...findingRoutes,
           ...obligationRoutes,

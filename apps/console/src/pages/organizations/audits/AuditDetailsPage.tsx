@@ -40,6 +40,7 @@ import {
   IconTrashCan,
   Input,
   Option,
+  Select,
   useConfirm,
   useToast,
 } from "@probo/ui";
@@ -49,10 +50,12 @@ import {
   type PreloadedQuery,
   usePreloadedQuery,
 } from "react-relay";
+import { Suspense } from "react";
 import { useNavigate } from "react-router";
 import { z } from "zod";
 
 import type { AuditGraphNodeQuery } from "#/__generated__/core/AuditGraphNodeQuery.graphql";
+import { AuditProgramSelectField } from "#/components/form/AuditProgramSelectField";
 import { ControlledField } from "#/components/form/ControlledField";
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
@@ -71,6 +74,7 @@ const updateAuditSchema = z.object({
   validUntil: z.string().optional(),
   auditStartDate: z.string().optional(),
   auditEndDate: z.string().optional(),
+  auditProgramId: z.string().optional(),
   state: z.enum([
     "NOT_STARTED",
     "IN_PROGRESS",
@@ -108,6 +112,7 @@ export default function AuditDetailsPage(props: Props) {
         validUntil: auditEntry.validUntil?.split("T")[0] || "",
         auditStartDate: auditEntry.auditStartDate?.split("T")[0] || "",
         auditEndDate: auditEntry.auditEndDate?.split("T")[0] || "",
+        auditProgramId: auditEntry.auditProgram?.id || "",
         state: auditEntry.state || "NOT_STARTED",
       },
     });
@@ -130,6 +135,7 @@ export default function AuditDetailsPage(props: Props) {
         auditStartDate: formatDatetime(formData.auditStartDate) ?? null,
         auditEndDate: formatDatetime(formData.auditEndDate) ?? null,
         state: formData.state,
+        auditProgramId: formData.auditProgramId || null,
       });
       reset(formData);
       toast({
@@ -240,6 +246,25 @@ export default function AuditDetailsPage(props: Props) {
               </Option>
             ))}
           </ControlledField>
+
+          <Field label={t("auditDetailsPage.fields.auditProgram")}>
+            <Suspense
+              fallback={(
+                <Select
+                  variant="editor"
+                  disabled
+                  placeholder={t("auditDetailsPage.loading")}
+                />
+              )}
+            >
+              <AuditProgramSelectField
+                organizationId={organizationId}
+                frameworkId={auditEntry.framework?.id}
+                control={control}
+                name="auditProgramId"
+              />
+            </Suspense>
+          </Field>
 
           <Field label={t("auditDetailsPage.fields.validFrom")}>
             <Input {...register("validFrom")} type="date" />

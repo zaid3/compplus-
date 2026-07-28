@@ -40,13 +40,14 @@ import {
   useToast,
 } from "@probo/ui";
 import { Suspense } from "react";
-import { type Control, Controller } from "react-hook-form";
+import { type Control, Controller, useWatch } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { useLazyLoadQuery } from "react-relay";
 import { graphql } from "relay-runtime";
 import { z } from "zod";
 
 import type { CreateAuditDialogFrameworksQuery } from "#/__generated__/core/CreateAuditDialogFrameworksQuery.graphql";
+import { AuditProgramSelectField } from "#/components/form/AuditProgramSelectField";
 import { ControlledField } from "#/components/form/ControlledField";
 import { useCreateAudit } from "#/hooks/graph/AuditGraph";
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
@@ -94,6 +95,7 @@ export function CreateAuditDialog({
     validUntil: z.string().optional(),
     auditStartDate: z.string().optional(),
     auditEndDate: z.string().optional(),
+    auditProgramId: z.string().optional(),
     state: z.enum([
       "NOT_STARTED",
       "IN_PROGRESS",
@@ -111,12 +113,14 @@ export function CreateAuditDialog({
         validUntil: "",
         auditStartDate: "",
         auditEndDate: "",
+        auditProgramId: "",
         state: "NOT_STARTED",
       },
     });
   const internalRef = useDialogRef();
   const ref = externalRef ?? internalRef;
   const createAudit = useCreateAudit(connection);
+  const frameworkId = useWatch({ control, name: "frameworkId" });
 
   const onSubmit = async (data: z.infer<typeof schema>) => {
     try {
@@ -128,6 +132,7 @@ export function CreateAuditDialog({
         validUntil: formatDatetime(data.validUntil),
         auditStartDate: formatDatetime(data.auditStartDate),
         auditEndDate: formatDatetime(data.auditEndDate),
+        auditProgramId: data.auditProgramId || null,
         state: data.state,
         file: file ?? null,
       });
@@ -209,6 +214,26 @@ export function CreateAuditDialog({
             </Suspense>
           </Field>
 
+          <Field label={t("createAuditDialog.fields.auditProgram")}>
+            <Suspense
+              fallback={(
+                <Select
+                  variant="editor"
+                  disabled
+                  placeholder={t("createAuditDialog.loading")}
+                />
+              )}
+            >
+              <AuditProgramSelectField
+                organizationId={organizationId}
+                frameworkId={frameworkId}
+                control={control}
+                name="auditProgramId"
+                disabled={!frameworkId}
+              />
+            </Suspense>
+          </Field>
+
           <Field label={t("createAuditDialog.fields.name")}>
             <Input
               {...register("name")}
@@ -259,6 +284,7 @@ type FormSchema = {
   validUntil?: string;
   auditStartDate?: string;
   auditEndDate?: string;
+  auditProgramId?: string;
   state: "NOT_STARTED" | "IN_PROGRESS" | "COMPLETED" | "REJECTED" | "OUTDATED";
 };
 

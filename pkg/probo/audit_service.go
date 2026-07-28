@@ -41,6 +41,7 @@ type (
 	CreateAuditRequest struct {
 		OrganizationID             gid.GID
 		FrameworkID                gid.GID
+		AuditProgramID             *gid.GID
 		Name                       *string
 		ValidFrom                  *time.Time
 		ValidUntil                 *time.Time
@@ -53,6 +54,7 @@ type (
 	UpdateAuditRequest struct {
 		ID                         gid.GID
 		Name                       **string
+		AuditProgramID             **gid.GID
 		ValidFrom                  *time.Time
 		ValidUntil                 *time.Time
 		AuditStartDate             *time.Time
@@ -72,6 +74,7 @@ func (car *CreateAuditRequest) Validate() error {
 
 	v.Check(car.OrganizationID, "organization_id", validator.Required(), validator.GID(coredata.OrganizationEntityType))
 	v.Check(car.FrameworkID, "framework_id", validator.Required(), validator.GID(coredata.FrameworkEntityType))
+	v.Check(car.AuditProgramID, "audit_program_id", validator.GID(coredata.AuditProgramEntityType))
 	v.Check(car.Name, "name", validator.SafeTextNoNewLine(TitleMaxLength))
 	v.Check(car.ValidUntil, "valid_until", validator.After(car.ValidFrom))
 	v.Check(car.AuditEndDate, "audit_end_date", validator.After(car.AuditStartDate))
@@ -86,6 +89,7 @@ func (uar *UpdateAuditRequest) Validate() error {
 
 	v.Check(uar.ID, "id", validator.Required(), validator.GID(coredata.AuditEntityType))
 	v.Check(uar.Name, "name", validator.SafeTextNoNewLine(TitleMaxLength))
+	v.Check(uar.AuditProgramID, "audit_program_id", validator.GID(coredata.AuditProgramEntityType))
 	v.Check(uar.ValidUntil, "valid_until", validator.After(uar.ValidFrom))
 	v.Check(uar.AuditEndDate, "audit_end_date", validator.After(uar.AuditStartDate))
 	v.Check(uar.State, "state", validator.OneOfSlice(coredata.AuditStates()))
@@ -205,6 +209,23 @@ func (s *AuditService) Create(
 				return fmt.Errorf("cannot load framework: %w", err)
 			}
 
+			if req.AuditProgramID != nil {
+				program, err := s.loadAuditProgram(
+					ctx,
+					conn,
+					scope,
+					*req.AuditProgramID,
+					req.OrganizationID,
+					req.FrameworkID,
+					"audit_program_id",
+				)
+				if err != nil {
+					return err
+				}
+
+				audit.AuditProgramID = &program.ID
+			}
+
 			if err := audit.Insert(ctx, conn, scope); err != nil {
 				return fmt.Errorf("cannot insert audit: %w", err)
 			}
@@ -238,6 +259,27 @@ func (s *AuditService) Update(
 
 			if req.Name != nil {
 				audit.Name = *req.Name
+			}
+
+			if req.AuditProgramID != nil {
+				if *req.AuditProgramID == nil {
+					audit.AuditProgramID = nil
+				} else {
+					program, err := s.loadAuditProgram(
+						ctx,
+						conn,
+						scope,
+						**req.AuditProgramID,
+						audit.OrganizationID,
+						audit.FrameworkID,
+						"audit_program_id",
+					)
+					if err != nil {
+						return err
+					}
+
+					audit.AuditProgramID = &program.ID
+				}
 			}
 
 			if req.ValidFrom != nil {
@@ -584,4 +626,96 @@ func (s AuditService) ListForFindingID(
 	}
 
 	return page.NewPage(audits, cursor), nil
+}
+
+func (s AuditService) CountForAuditProgramID(
+	ctx context.Context, scope coredata.Scoper,
+	auditProgramID gid.GID,
+) (int, error) {
+	var count int
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) (err error) {
+			audits := coredata.Audits{}
+
+			count, err = audits.CountByAuditProgramID(ctx, conn, scope, auditProgramID)
+			if err != nil {
+				return fmt.Errorf("cannot count audits for audit program: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
+}
+
+func (s AuditService) ListForAuditProgramID(
+	ctx context.Context, scope coredata.Scoper,
+	auditProgramID gid.GID,
+	cursor *page.Cursor[coredata.AuditOrderField],
+) (*page.Page[*coredata.Audit, coredata.AuditOrderField], error) {
+	var audits coredata.Audits
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			program := &coredata.AuditProgram{}
+			if err := program.LoadByID(ctx, conn, scope, auditProgramID); err != nil {
+				return fmt.Errorf("cannot load audit program: %w", err)
+			}
+
+			if err := audits.LoadByAuditProgramID(ctx, conn, scope, program.ID, cursor); err != nil {
+				return fmt.Errorf("cannot load audits for audit program: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return page.NewPage(audits, cursor), nil
+}
+
+func (s AuditService) loadAuditProgram(
+	ctx context.Context,
+	conn pg.Querier,
+	scope coredata.Scoper,
+	auditProgramID gid.GID,
+	organizationID gid.GID,
+	frameworkID gid.GID,
+	field string,
+) (*coredata.AuditProgram, error) {
+	program := &coredata.AuditProgram{}
+	if err := program.LoadByID(ctx, conn, scope, auditProgramID); err != nil {
+		return nil, validator.ValidationErrors{{
+			Field:   field,
+			Code:    validator.ErrorCodeCustom,
+			Message: "audit program not found",
+		}}
+	}
+
+	if program.OrganizationID != organizationID {
+		return nil, validator.ValidationErrors{{
+			Field:   field,
+			Code:    validator.ErrorCodeCustom,
+			Message: "audit program belongs to a different organization",
+		}}
+	}
+
+	if program.FrameworkID != frameworkID {
+		return nil, validator.ValidationErrors{{
+			Field:   field,
+			Code:    validator.ErrorCodeCustom,
+			Message: "audit program belongs to a different framework",
+		}}
+	}
+
+	return program, nil
 }

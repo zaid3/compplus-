@@ -1,0 +1,70 @@
+{
+  "auditProgramsPage": {
+    "title": "Audit programs",
+    "description": "Group audits under multi-year certification programs by framework.",
+    "actions": { "add": "Add program", "delete": "Delete" },
+    "columns": {
+      "name": "Name",
+      "framework": "Framework",
+      "validFrom": "Valid from",
+      "validUntil": "Valid until"
+    },
+    "row": { "unknownFramework": "Unknown framework", "notSet": "Not set" }
+  },
+  "auditProgramDetailsPage": {
+    "breadcrumb": { "auditPrograms": "Audit programs" },
+    "messages": {
+      "success": "Success",
+      "error": "Error",
+      "updated": "Audit program updated successfully"
+    },
+    "errors": { "update": "Failed to update audit program" },
+    "fields": {
+      "name": "Name",
+      "namePlaceholder": "Program name",
+      "validFrom": "Valid from",
+      "validUntil": "Valid until"
+    },
+    "actions": {
+      "delete": "Delete",
+      "update": "Update",
+      "updating": "Updating..."
+    },
+    "audits": {
+      "title": "Linked audits",
+      "empty": "No audits are linked to this program yet.",
+      "columns": { "name": "Audit", "state": "State" }
+    },
+    "auditStates": {
+      "not_started": "Not started",
+      "in_progress": "In progress",
+      "completed": "Completed",
+      "rejected": "Rejected",
+      "outdated": "Outdated"
+    },
+    "meta": { "updated": "Last updated {{date}}" }
+  },
+  "createAuditProgramDialog": {
+    "breadcrumb": { "auditPrograms": "Audit programs", "new": "New program" },
+    "validation": {
+      "frameworkRequired": "Framework is required",
+      "nameRequired": "Name is required"
+    },
+    "messages": {
+      "success": "Success",
+      "error": "Error",
+      "created": "Audit program created successfully"
+    },
+    "errors": { "create": "Failed to create audit program" },
+    "loading": "Loading...",
+    "fields": {
+      "framework": "Framework",
+      "frameworkPlaceholder": "Select a framework",
+      "name": "Name",
+      "namePlaceholder": "Program name",
+      "validFrom": "Valid from",
+      "validUntil": "Valid until"
+    },
+    "actions": { "create": "Create" }
+  }
+}
