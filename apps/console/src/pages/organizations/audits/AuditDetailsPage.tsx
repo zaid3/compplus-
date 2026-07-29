@@ -44,13 +44,13 @@ import {
   useConfirm,
   useToast,
 } from "@probo/ui";
+import { Suspense } from "react";
 import { useTranslation } from "react-i18next";
 import {
   ConnectionHandler,
   type PreloadedQuery,
   usePreloadedQuery,
 } from "react-relay";
-import { Suspense } from "react";
 import { useNavigate } from "react-router";
 import { z } from "zod";
 
