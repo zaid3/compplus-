@@ -36,7 +36,7 @@ import {
   useDialogRef,
   useToast,
 } from "@probo/ui";
-import { Suspense, type ReactNode } from "react";
+import { type ReactNode, Suspense } from "react";
 import { type Control, Controller } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { useLazyLoadQuery } from "react-relay";

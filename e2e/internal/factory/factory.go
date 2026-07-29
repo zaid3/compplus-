@@ -696,6 +696,7 @@ func CreateAudit(c *testutil.Client, frameworkID string, attrs ...Attrs) string 
 	if state := a.getStringPtr("state"); state != nil {
 		input["state"] = *state
 	}
+
 	if auditProgramID := a.getStringPtr("auditProgramId"); auditProgramID != nil {
 		input["auditProgramId"] = *auditProgramID
 	}
@@ -771,6 +772,7 @@ func CreateAuditProgram(c *testutil.Client, frameworkID string, attrs ...Attrs) 
 	if validFrom := a.getStringPtr("validFrom"); validFrom != nil {
 		input["validFrom"] = *validFrom
 	}
+
 	if validUntil := a.getStringPtr("validUntil"); validUntil != nil {
 		input["validUntil"] = *validUntil
 	}

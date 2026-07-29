@@ -207,13 +207,17 @@ func TestAuditProgram_List(t *testing.T) {
 	require.NoError(t, err)
 
 	found := false
+
 	for _, edge := range result.Node.AuditPrograms.Edges {
 		if edge.Node.ID == programID {
 			found = true
+
 			assert.Equal(t, "Listed Program", edge.Node.Name)
+
 			break
 		}
 	}
+
 	assert.True(t, found, "expected to find created audit program in list")
 }
 
@@ -322,12 +326,15 @@ func TestAuditProgram_RBAC(t *testing.T) {
 		require.NoError(t, err)
 
 		found := false
+
 		for _, edge := range result.Node.AuditPrograms.Edges {
 			if edge.Node.ID == programID {
 				found = true
+
 				break
 			}
 		}
+
 		assert.True(t, found)
 	})
 }
@@ -357,6 +364,5 @@ func TestAuditProgram_TenantIsolation(t *testing.T) {
 	}
 
 	err := ownerB.Execute(query, map[string]any{"id": programID}, &result)
-	require.NoError(t, err)
-	assert.Nil(t, result.Node)
+	testutil.AssertNodeNotAccessible(t, err, result.Node == nil, "audit program")
 }
