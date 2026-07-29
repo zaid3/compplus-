@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 import { Combobox, ComboboxItem, InfiniteScrollTrigger } from "@probo/ui";
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useState } from "react";
 import {
   type Control,
   Controller,
@@ -61,7 +61,30 @@ const selectedAuditProgramQuery = graphql`
   }
 `;
 
-export function AuditProgramSelectField<T extends FieldValues>({
+function matchesFramework(
+  program: SelectedAuditProgram | null | undefined,
+  frameworkId?: string | null,
+): boolean {
+  if (!program) {
+    return false;
+  }
+  if (!frameworkId) {
+    return true;
+  }
+  return !program.framework?.id || program.framework.id === frameworkId;
+}
+
+export function AuditProgramSelectField<T extends FieldValues>(props: Props<T>) {
+  // Remount when framework changes so search state resets without an effect.
+  return (
+    <AuditProgramSelectFieldInner
+      key={props.frameworkId ?? ""}
+      {...props}
+    />
+  );
+}
+
+function AuditProgramSelectFieldInner<T extends FieldValues>({
   organizationId,
   frameworkId,
   control,
@@ -74,17 +97,13 @@ export function AuditProgramSelectField<T extends FieldValues>({
     = usePaginatedAuditPrograms(organizationId);
   const [search, setSearch] = useState("");
 
-  useEffect(() => {
-    setSearch("");
-  }, [frameworkId]);
-
   const allPrograms
     = data?.auditPrograms?.edges
       ?.map(edge => edge.node)
       .filter((node): node is NonNullable<typeof node> => node !== null) ?? [];
 
-  const programs = allPrograms.filter(
-    program => !frameworkId || program.framework?.id === frameworkId,
+  const programs = allPrograms.filter(program =>
+    matchesFramework(program, frameworkId),
   );
 
   const filteredPrograms = programs.filter(program =>
@@ -103,22 +122,23 @@ export function AuditProgramSelectField<T extends FieldValues>({
           = selectedAuditProgram && selectedAuditProgram.id === field.value
             ? selectedAuditProgram
             : null;
-        const selected = selectedFromList ?? selectedFromProp ?? null;
-        const needsFetch = Boolean(field.value) && !selected;
+        const selectedCandidate = selectedFromList ?? selectedFromProp ?? null;
+        const selected = matchesFramework(selectedCandidate, frameworkId)
+          ? selectedCandidate
+          : null;
+        const needsFetch = Boolean(field.value) && !selectedCandidate;
 
         return (
           <Suspense
             fallback={(
               <AuditProgramCombobox
                 fieldName={String(field.name)}
-                value={field.value ?? ""}
                 selected={null}
                 search={search}
                 onSearch={setSearch}
                 onChange={field.onChange}
                 onBlur={field.onBlur}
                 programs={filteredPrograms}
-                frameworkId={frameworkId}
                 disabled={disabled}
                 hasNext={hasNext}
                 isLoadingNext={isLoadingNext}
@@ -148,14 +168,12 @@ export function AuditProgramSelectField<T extends FieldValues>({
               : (
                   <AuditProgramCombobox
                     fieldName={String(field.name)}
-                    value={field.value ?? ""}
                     selected={selected}
                     search={search}
                     onSearch={setSearch}
                     onChange={field.onChange}
                     onBlur={field.onBlur}
                     programs={filteredPrograms}
-                    frameworkId={frameworkId}
                     disabled={disabled}
                     hasNext={hasNext}
                     isLoadingNext={isLoadingNext}
@@ -173,8 +191,6 @@ export function AuditProgramSelectField<T extends FieldValues>({
 function AuditProgramComboboxWithFetchedSelected({
   value,
   frameworkId,
-  onChange,
-  onSearch,
   ...props
 }: {
   fieldName: string;
@@ -205,39 +221,24 @@ function AuditProgramComboboxWithFetchedSelected({
           framework: data.node.framework,
         }
       : null;
-
-  useEffect(() => {
-    if (!fetched || !frameworkId || !fetched.framework?.id) {
-      return;
-    }
-    if (fetched.framework.id !== frameworkId) {
-      onChange("");
-      onSearch("");
-    }
-  }, [fetched, frameworkId, onChange, onSearch]);
+  const selected = matchesFramework(fetched, frameworkId) ? fetched : null;
 
   return (
     <AuditProgramCombobox
       {...props}
-      value={value}
-      selected={fetched}
-      frameworkId={frameworkId}
-      onChange={onChange}
-      onSearch={onSearch}
+      selected={selected}
     />
   );
 }
 
 function AuditProgramCombobox({
   fieldName,
-  value,
   selected,
   search,
   onSearch,
   onChange,
   onBlur,
   programs,
-  frameworkId,
   disabled,
   hasNext,
   isLoadingNext,
@@ -245,30 +246,18 @@ function AuditProgramCombobox({
   noneLabel,
 }: {
   fieldName: string;
-  value: string;
   selected: SelectedAuditProgram | null;
   search: string;
   onSearch: (query: string) => void;
   onChange: (value: string) => void;
   onBlur: () => void;
   programs: SelectedAuditProgram[];
-  frameworkId?: string | null;
   disabled?: boolean;
   hasNext: boolean;
   isLoadingNext: boolean;
   loadNext: (count: number) => void;
   noneLabel: string;
 }) {
-  useEffect(() => {
-    if (!value || !frameworkId || !selected?.framework?.id) {
-      return;
-    }
-    if (selected.framework.id !== frameworkId) {
-      onChange("");
-      onSearch("");
-    }
-  }, [frameworkId, onChange, onSearch, selected, value]);
-
   return (
     <Combobox
       id={fieldName}

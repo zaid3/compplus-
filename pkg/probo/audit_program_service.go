@@ -212,6 +212,7 @@ func (s *AuditProgramService) Update(
 
 			v := validator.New()
 			v.Check(auditProgram.ValidUntil, "valid_until", validator.After(auditProgram.ValidFrom))
+
 			if err := v.Error(); err != nil {
 				return err
 			}
