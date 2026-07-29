@@ -75,6 +75,9 @@ export const auditNodeQuery = graphql`
         auditProgram {
           id
           name
+          framework {
+            id
+          }
         }
         createdAt
         updatedAt
@@ -143,6 +146,9 @@ export const updateAuditMutation = graphql`
         auditProgram {
           id
           name
+          framework {
+            id
+          }
         }
         updatedAt
       }

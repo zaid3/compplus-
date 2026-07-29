@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 import { Combobox, ComboboxItem, InfiniteScrollTrigger } from "@probo/ui";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import {
   type Control,
   Controller,
@@ -27,8 +27,16 @@ import {
   type FieldValues,
 } from "react-hook-form";
 import { useTranslation } from "react-i18next";
+import { graphql, useLazyLoadQuery } from "react-relay";
 
+import type { AuditProgramSelectFieldSelectedQuery } from "#/__generated__/core/AuditProgramSelectFieldSelectedQuery.graphql";
 import { usePaginatedAuditPrograms } from "#/hooks/graph/usePaginatedAuditPrograms";
+
+type SelectedAuditProgram = {
+  id: string;
+  name: string;
+  framework?: { id: string } | null;
+};
 
 type Props<T extends FieldValues> = {
   organizationId: string;
@@ -36,7 +44,22 @@ type Props<T extends FieldValues> = {
   control: Control<T>;
   name: FieldPath<T>;
   disabled?: boolean;
+  selectedAuditProgram?: SelectedAuditProgram | null;
 };
+
+const selectedAuditProgramQuery = graphql`
+  query AuditProgramSelectFieldSelectedQuery($id: ID!) {
+    node(id: $id) {
+      ... on AuditProgram {
+        id
+        name
+        framework {
+          id
+        }
+      }
+    }
+  }
+`;
 
 export function AuditProgramSelectField<T extends FieldValues>({
   organizationId,
@@ -44,6 +67,7 @@ export function AuditProgramSelectField<T extends FieldValues>({
   control,
   name,
   disabled,
+  selectedAuditProgram,
 }: Props<T>) {
   const { t } = useTranslation("organizations/audit-programs");
   const { data, loadNext, hasNext, isLoadingNext }
@@ -72,30 +96,134 @@ export function AuditProgramSelectField<T extends FieldValues>({
       control={control}
       name={name}
       render={({ field }) => {
-        const selected = field.value
+        const selectedFromList = field.value
           ? allPrograms.find(program => program.id === field.value)
           : null;
+        const selectedFromProp
+          = selectedAuditProgram && selectedAuditProgram.id === field.value
+            ? selectedAuditProgram
+            : null;
+        const selected = selectedFromList ?? selectedFromProp ?? null;
+        const needsFetch = Boolean(field.value) && !selected;
 
         return (
-          <AuditProgramCombobox
-            fieldName={String(field.name)}
-            value={field.value ?? ""}
-            selectedName={selected?.name ?? ""}
-            search={search}
-            onSearch={setSearch}
-            onChange={field.onChange}
-            onBlur={field.onBlur}
-            programs={filteredPrograms}
-            allPrograms={allPrograms}
-            frameworkId={frameworkId}
-            disabled={disabled}
-            hasNext={hasNext}
-            isLoadingNext={isLoadingNext}
-            loadNext={loadNext}
-            noneLabel={t("auditProgramSelect.none")}
-          />
+          <Suspense
+            fallback={(
+              <AuditProgramCombobox
+                fieldName={String(field.name)}
+                value={field.value ?? ""}
+                selected={null}
+                search={search}
+                onSearch={setSearch}
+                onChange={field.onChange}
+                onBlur={field.onBlur}
+                programs={filteredPrograms}
+                frameworkId={frameworkId}
+                disabled={disabled}
+                hasNext={hasNext}
+                isLoadingNext={isLoadingNext}
+                loadNext={loadNext}
+                noneLabel={t("auditProgramSelect.none")}
+              />
+            )}
+          >
+            {needsFetch
+              ? (
+                  <AuditProgramComboboxWithFetchedSelected
+                    fieldName={String(field.name)}
+                    value={field.value}
+                    search={search}
+                    onSearch={setSearch}
+                    onChange={field.onChange}
+                    onBlur={field.onBlur}
+                    programs={filteredPrograms}
+                    frameworkId={frameworkId}
+                    disabled={disabled}
+                    hasNext={hasNext}
+                    isLoadingNext={isLoadingNext}
+                    loadNext={loadNext}
+                    noneLabel={t("auditProgramSelect.none")}
+                  />
+                )
+              : (
+                  <AuditProgramCombobox
+                    fieldName={String(field.name)}
+                    value={field.value ?? ""}
+                    selected={selected}
+                    search={search}
+                    onSearch={setSearch}
+                    onChange={field.onChange}
+                    onBlur={field.onBlur}
+                    programs={filteredPrograms}
+                    frameworkId={frameworkId}
+                    disabled={disabled}
+                    hasNext={hasNext}
+                    isLoadingNext={isLoadingNext}
+                    loadNext={loadNext}
+                    noneLabel={t("auditProgramSelect.none")}
+                  />
+                )}
+          </Suspense>
         );
       }}
+    />
+  );
+}
+
+function AuditProgramComboboxWithFetchedSelected({
+  value,
+  frameworkId,
+  onChange,
+  onSearch,
+  ...props
+}: {
+  fieldName: string;
+  value: string;
+  search: string;
+  onSearch: (query: string) => void;
+  onChange: (value: string) => void;
+  onBlur: () => void;
+  programs: SelectedAuditProgram[];
+  frameworkId?: string | null;
+  disabled?: boolean;
+  hasNext: boolean;
+  isLoadingNext: boolean;
+  loadNext: (count: number) => void;
+  noneLabel: string;
+}) {
+  const data = useLazyLoadQuery<AuditProgramSelectFieldSelectedQuery>(
+    selectedAuditProgramQuery,
+    { id: value },
+    { fetchPolicy: "store-or-network" },
+  );
+
+  const fetched
+    = data.node?.id
+      ? {
+          id: data.node.id,
+          name: data.node.name ?? "",
+          framework: data.node.framework,
+        }
+      : null;
+
+  useEffect(() => {
+    if (!fetched || !frameworkId || !fetched.framework?.id) {
+      return;
+    }
+    if (fetched.framework.id !== frameworkId) {
+      onChange("");
+      onSearch("");
+    }
+  }, [fetched, frameworkId, onChange, onSearch]);
+
+  return (
+    <AuditProgramCombobox
+      {...props}
+      value={value}
+      selected={fetched}
+      frameworkId={frameworkId}
+      onChange={onChange}
+      onSearch={onSearch}
     />
   );
 }
@@ -103,13 +231,12 @@ export function AuditProgramSelectField<T extends FieldValues>({
 function AuditProgramCombobox({
   fieldName,
   value,
-  selectedName,
+  selected,
   search,
   onSearch,
   onChange,
   onBlur,
   programs,
-  allPrograms,
   frameworkId,
   disabled,
   hasNext,
@@ -119,13 +246,12 @@ function AuditProgramCombobox({
 }: {
   fieldName: string;
   value: string;
-  selectedName: string;
+  selected: SelectedAuditProgram | null;
   search: string;
   onSearch: (query: string) => void;
   onChange: (value: string) => void;
   onBlur: () => void;
-  programs: { id: string; name: string; framework?: { id: string } | null }[];
-  allPrograms: { id: string; name: string; framework?: { id: string } | null }[];
+  programs: SelectedAuditProgram[];
   frameworkId?: string | null;
   disabled?: boolean;
   hasNext: boolean;
@@ -134,15 +260,14 @@ function AuditProgramCombobox({
   noneLabel: string;
 }) {
   useEffect(() => {
-    if (!value || !frameworkId) {
+    if (!value || !frameworkId || !selected?.framework?.id) {
       return;
     }
-    const selected = allPrograms.find(program => program.id === value);
-    if (selected && selected.framework?.id !== frameworkId) {
+    if (selected.framework.id !== frameworkId) {
       onChange("");
       onSearch("");
     }
-  }, [allPrograms, frameworkId, onChange, onSearch, value]);
+  }, [frameworkId, onChange, onSearch, selected, value]);
 
   return (
     <Combobox
@@ -150,7 +275,7 @@ function AuditProgramCombobox({
       name={fieldName}
       onBlur={onBlur}
       placeholder={noneLabel}
-      value={search || selectedName || ""}
+      value={search || selected?.name || ""}
       onSearch={onSearch}
       disabled={disabled}
     >

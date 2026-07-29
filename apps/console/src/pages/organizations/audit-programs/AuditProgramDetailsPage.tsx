@@ -48,18 +48,16 @@ import {
   ConnectionHandler,
   graphql,
   type PreloadedQuery,
+  useFragment,
   usePaginationFragment,
   usePreloadedQuery,
 } from "react-relay";
 import { Link, useNavigate } from "react-router";
 import { z } from "zod";
 
-import type {
-  AuditProgramDetailsPageAuditsFragment$data,
-  AuditProgramDetailsPageAuditsFragment$key,
-} from "#/__generated__/core/AuditProgramDetailsPageAuditsFragment.graphql";
+import type { AuditProgramDetailsPageAuditsFragment$key } from "#/__generated__/core/AuditProgramDetailsPageAuditsFragment.graphql";
+import type { AuditProgramDetailsPageLinkedAuditRowFragment$key } from "#/__generated__/core/AuditProgramDetailsPageLinkedAuditRowFragment.graphql";
 import type { AuditProgramGraphNodeQuery } from "#/__generated__/core/AuditProgramGraphNodeQuery.graphql";
-import type { NodeOf } from "#/types";
 import { SortableTable } from "#/components/SortableTable";
 import {
   auditProgramNodeQuery,
@@ -96,21 +94,24 @@ const auditsFragment = graphql`
       edges {
         node {
           id
-          name
-          state
-          framework {
-            id
-            name
-          }
+          ...AuditProgramDetailsPageLinkedAuditRowFragment
         }
       }
     }
   }
 `;
 
-type LinkedAudit = NodeOf<
-  AuditProgramDetailsPageAuditsFragment$data["audits"]
->;
+const linkedAuditRowFragment = graphql`
+  fragment AuditProgramDetailsPageLinkedAuditRowFragment on Audit {
+    id
+    name
+    state
+    framework {
+      id
+      name
+    }
+  }
+`;
 
 type Props = {
   queryRef: PreloadedQuery<AuditProgramGraphNodeQuery>;
@@ -286,7 +287,7 @@ export default function AuditProgramDetailsPage(props: Props) {
                     {linkedAudits.map(audit => (
                       <LinkedAuditRow
                         key={audit.id}
-                        audit={audit}
+                        auditKey={audit}
                         organizationId={organizationId}
                       />
                     ))}
@@ -305,12 +306,13 @@ export default function AuditProgramDetailsPage(props: Props) {
 }
 
 function LinkedAuditRow({
-  audit,
+  auditKey,
   organizationId,
 }: {
-  audit: LinkedAudit;
+  auditKey: AuditProgramDetailsPageLinkedAuditRowFragment$key;
   organizationId: string;
 }) {
+  const audit = useFragment(linkedAuditRowFragment, auditKey);
   const { t } = useTranslation("organizations/audit-programs");
 
   return (

@@ -5074,8 +5074,9 @@ components:
           $ref: "#/components/schemas/GID"
           description: Audit program ID
         name:
-          type: string
+          type: ["string", "null"]
           description: Audit program name
+          go.probo.inc/mcpgen/omittable: true
         valid_from:
           anyOf:
             - type: string

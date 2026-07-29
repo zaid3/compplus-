@@ -7515,11 +7515,16 @@ func (r *Resolver) UpdateAuditProgramTool(ctx context.Context, req *mcp.CallTool
 
 	svc := r.proboSvc
 
+	var nameValue *string
+	if name := UnwrapOmittable(input.Name); name != nil {
+		nameValue = *name
+	}
+
 	auditProgram, err := svc.AuditPrograms.Update(
 		ctx, scope,
 		&probo.UpdateAuditProgramRequest{
 			ID:         input.ID,
-			Name:       input.Name,
+			Name:       nameValue,
 			ValidFrom:  UnwrapOmittable(input.ValidFrom),
 			ValidUntil: UnwrapOmittable(input.ValidUntil),
 		},

@@ -264,6 +264,7 @@ export default function AuditDetailsPage(props: Props) {
                 frameworkId={auditEntry.framework?.id}
                 control={control}
                 name="auditProgramId"
+                selectedAuditProgram={auditEntry.auditProgram}
               />
             </Suspense>
           </Field>
