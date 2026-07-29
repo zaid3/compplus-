@@ -81,7 +81,10 @@ export function CreateAuditProgramDialog({
     frameworkId: z
       .string()
       .min(1, t("createAuditProgramDialog.validation.frameworkRequired")),
-    name: z.string().min(1, t("createAuditProgramDialog.validation.nameRequired")),
+    name: z
+      .string()
+      .trim()
+      .min(1, t("createAuditProgramDialog.validation.nameRequired")),
     validFrom: z.string().optional(),
     validUntil: z.string().optional(),
   });

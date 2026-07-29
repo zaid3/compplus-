@@ -27,6 +27,7 @@ import {
 import {
   Breadcrumb,
   Button,
+  Combobox,
   Dialog,
   DialogContent,
   DialogFooter,
@@ -39,7 +40,7 @@ import {
   useDialogRef,
   useToast,
 } from "@probo/ui";
-import { Suspense } from "react";
+import { Suspense, useEffect } from "react";
 import { type Control, Controller, useWatch } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { useLazyLoadQuery } from "react-relay";
@@ -104,7 +105,7 @@ export function CreateAuditDialog({
       "OUTDATED",
     ]),
   });
-  const { control, handleSubmit, register, formState, reset }
+  const { control, handleSubmit, register, formState, reset, setValue }
     = useFormWithSchema(schema, {
       defaultValues: {
         frameworkId: "",
@@ -121,6 +122,10 @@ export function CreateAuditDialog({
   const ref = externalRef ?? internalRef;
   const createAudit = useCreateAudit(connection);
   const frameworkId = useWatch({ control, name: "frameworkId" });
+
+  useEffect(() => {
+    setValue("auditProgramId", "");
+  }, [frameworkId, setValue]);
 
   const onSubmit = async (data: z.infer<typeof schema>) => {
     try {
@@ -217,11 +222,13 @@ export function CreateAuditDialog({
           <Field label={t("createAuditDialog.fields.auditProgram")}>
             <Suspense
               fallback={(
-                <Select
-                  variant="editor"
-                  disabled
+                <Combobox
+                  onSearch={() => {}}
                   placeholder={t("createAuditDialog.loading")}
-                />
+                  disabled
+                >
+                  <div />
+                </Combobox>
               )}
             >
               <AuditProgramSelectField

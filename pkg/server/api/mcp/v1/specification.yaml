@@ -4850,8 +4850,7 @@ components:
           go.probo.inc/mcpgen/omittable: true
         audit_program_id:
           anyOf:
-            - type: string
-              $ref: "#/components/schemas/GID"
+            - $ref: "#/components/schemas/GID"
             - type: "null"
           description: Audit program ID (set to null to unlink)
           go.probo.inc/mcpgen/omittable: true
@@ -5078,17 +5077,19 @@ components:
           type: string
           description: Audit program name
         valid_from:
-          type:
-            - string
-            - "null"
-          format: date-time
+          anyOf:
+            - type: string
+              format: date-time
+            - type: "null"
           description: Valid from date
+          go.probo.inc/mcpgen/omittable: true
         valid_until:
-          type:
-            - string
-            - "null"
-          format: date-time
+          anyOf:
+            - type: string
+              format: date-time
+            - type: "null"
           description: Valid until date
+          go.probo.inc/mcpgen/omittable: true
 
     UpdateAuditProgramOutput:
       type: object

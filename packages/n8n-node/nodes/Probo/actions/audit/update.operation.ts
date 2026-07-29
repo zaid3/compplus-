@@ -154,6 +154,9 @@ export async function execute(
 					compliancePortalVisibility
 					createdAt
 					updatedAt
+					auditProgram {
+						id
+					}
 				}
 			}
 		}

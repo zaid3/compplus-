@@ -1507,6 +1507,10 @@ func (r *Resolver) AddAuditTool(ctx context.Context, req *mcp.CallToolRequest, i
 		},
 	)
 	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, types.AddAuditOutput{}, fmt.Errorf("resource not found")
+		}
+
 		return nil, types.AddAuditOutput{}, fmt.Errorf("failed to create audit: %w", err)
 	}
 
@@ -1538,6 +1542,10 @@ func (r *Resolver) UpdateAuditTool(ctx context.Context, req *mcp.CallToolRequest
 		},
 	)
 	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, types.UpdateAuditOutput{}, fmt.Errorf("resource not found")
+		}
+
 		return nil, types.UpdateAuditOutput{}, fmt.Errorf("cannot update audit: %w", err)
 	}
 
@@ -7487,6 +7495,10 @@ func (r *Resolver) AddAuditProgramTool(ctx context.Context, req *mcp.CallToolReq
 		},
 	)
 	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, types.AddAuditProgramOutput{}, fmt.Errorf("resource not found")
+		}
+
 		return nil, types.AddAuditProgramOutput{}, fmt.Errorf("failed to create audit program: %w", err)
 	}
 
@@ -7508,11 +7520,15 @@ func (r *Resolver) UpdateAuditProgramTool(ctx context.Context, req *mcp.CallTool
 		&probo.UpdateAuditProgramRequest{
 			ID:         input.ID,
 			Name:       input.Name,
-			ValidFrom:  input.ValidFrom,
-			ValidUntil: input.ValidUntil,
+			ValidFrom:  UnwrapOmittable(input.ValidFrom),
+			ValidUntil: UnwrapOmittable(input.ValidUntil),
 		},
 	)
 	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, types.UpdateAuditProgramOutput{}, fmt.Errorf("resource not found")
+		}
+
 		return nil, types.UpdateAuditProgramOutput{}, fmt.Errorf("failed to update audit program: %w", err)
 	}
 

@@ -32,6 +32,7 @@ import {
   Breadcrumb,
   Button,
   Card,
+  Combobox,
   DropdownItem,
   Dropzone,
   Field,
@@ -40,7 +41,6 @@ import {
   IconTrashCan,
   Input,
   Option,
-  Select,
   useConfirm,
   useToast,
 } from "@probo/ui";
@@ -250,11 +250,13 @@ export default function AuditDetailsPage(props: Props) {
           <Field label={t("auditDetailsPage.fields.auditProgram")}>
             <Suspense
               fallback={(
-                <Select
-                  variant="editor"
-                  disabled
+                <Combobox
+                  onSearch={() => {}}
                   placeholder={t("auditDetailsPage.loading")}
-                />
+                  disabled
+                >
+                  <div />
+                </Combobox>
               )}
             >
               <AuditProgramSelectField

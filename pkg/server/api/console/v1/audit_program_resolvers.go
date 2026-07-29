@@ -143,6 +143,10 @@ func (r *mutationResolver) CreateAuditProgram(ctx context.Context, input types.C
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
 		}
 
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, gqlutils.NotFound(ctx, err)
+		}
+
 		r.logger.ErrorCtx(ctx, "cannot create audit program", log.Error(err))
 
 		return nil, gqlutils.Internal(ctx)
@@ -163,14 +167,18 @@ func (r *mutationResolver) UpdateAuditProgram(ctx context.Context, input types.U
 	req := probo.UpdateAuditProgramRequest{
 		ID:         input.ID,
 		Name:       input.Name,
-		ValidFrom:  input.ValidFrom,
-		ValidUntil: input.ValidUntil,
+		ValidFrom:  gqlutils.UnwrapOmittable(input.ValidFrom),
+		ValidUntil: gqlutils.UnwrapOmittable(input.ValidUntil),
 	}
 
 	auditProgram, err := r.probo.AuditPrograms.Update(ctx, scope, &req)
 	if err != nil {
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+		}
+
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, gqlutils.NotFound(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot update audit program", log.Error(err))

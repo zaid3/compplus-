@@ -230,6 +230,53 @@ WHERE
 	return nil
 }
 
+func (a *AuditPrograms) LoadByIDs(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	auditProgramIDs []gid.GID,
+) error {
+	q := `
+SELECT
+	id,
+	organization_id,
+	framework_id,
+	name,
+	valid_from,
+	valid_until,
+	created_at,
+	updated_at
+FROM
+	audit_programs
+WHERE
+	%s
+	AND id = ANY(@audit_program_ids)
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"audit_program_ids": auditProgramIDs}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query audit programs: %w", err)
+	}
+
+	auditPrograms, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[AuditProgram])
+	if err != nil {
+		return fmt.Errorf("cannot collect audit programs: %w", err)
+	}
+
+	*a = auditPrograms
+
+	if len(auditPrograms) != len(gid.NewSet(auditProgramIDs...)) {
+		return ErrResourceNotFound
+	}
+
+	return nil
+}
+
 func (a *AuditProgram) Insert(
 	ctx context.Context,
 	conn pg.Tx,
@@ -307,9 +354,13 @@ WHERE
 	}
 	maps.Copy(args, scope.SQLArguments())
 
-	_, err := conn.Exec(ctx, q, args)
+	result, err := conn.Exec(ctx, q, args)
 	if err != nil {
 		return fmt.Errorf("cannot update audit program: %w", err)
+	}
+
+	if result.RowsAffected() == 0 {
+		return ErrResourceNotFound
 	}
 
 	return nil

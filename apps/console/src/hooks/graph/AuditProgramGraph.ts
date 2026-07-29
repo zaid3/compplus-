@@ -65,39 +65,7 @@ export const auditProgramNodeQuery = graphql`
         updatedAt
         canUpdate: permission(action: "core:audit-program:update")
         canDelete: permission(action: "core:audit-program:delete")
-        audits(first: 20) {
-          edges {
-            node {
-              id
-              name
-              state
-              framework {
-                id
-                name
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-`;
-
-export const auditProgramOptionsQuery = graphql`
-  query AuditProgramGraphOptionsQuery($organizationId: ID!) {
-    node(id: $organizationId) {
-      ... on Organization {
-        auditPrograms(first: 100) {
-          edges {
-            node {
-              id
-              name
-              framework {
-                id
-              }
-            }
-          }
-        }
+        ...AuditProgramDetailsPageAuditsFragment
       }
     }
   }

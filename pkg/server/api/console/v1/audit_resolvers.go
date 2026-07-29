@@ -73,14 +73,15 @@ func (r *auditResolver) AuditProgram(ctx context.Context, obj *types.Audit) (*ty
 		return nil, nil
 	}
 
-	scope, err := r.authorize(ctx, obj.AuditProgram.ID, probo.ActionAuditProgramGet)
-	if err != nil {
+	if _, err := r.authorize(ctx, obj.AuditProgram.ID, probo.ActionAuditProgramGet); err != nil {
 		return nil, err
 	}
 
-	auditProgram, err := r.probo.AuditPrograms.Get(ctx, scope, obj.AuditProgram.ID)
+	loaders := dataloader.FromContext(ctx)
+
+	auditProgram, err := loaders.AuditProgram.Load(ctx, obj.AuditProgram.ID)
 	if err != nil {
-		if errors.Is(err, coredata.ErrResourceNotFound) {
+		if errors.Is(err, coredata.ErrResourceNotFound) || errors.Is(err, dataloadgen.ErrNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
 		}
 
@@ -430,6 +431,10 @@ func (r *mutationResolver) CreateAudit(ctx context.Context, input types.CreateAu
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
 		}
 
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, gqlutils.NotFound(ctx, err)
+		}
+
 		r.logger.ErrorCtx(ctx, "cannot create audit", log.Error(err))
 
 		return nil, gqlutils.Internal(ctx)
@@ -486,6 +491,10 @@ func (r *mutationResolver) UpdateAudit(ctx context.Context, input types.UpdateAu
 	if err != nil {
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+		}
+
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, gqlutils.NotFound(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot update audit", log.Error(err))

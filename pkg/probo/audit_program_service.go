@@ -22,6 +22,7 @@ package probo
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -48,8 +49,8 @@ type (
 	UpdateAuditProgramRequest struct {
 		ID         gid.GID
 		Name       *string
-		ValidFrom  *time.Time
-		ValidUntil *time.Time
+		ValidFrom  **time.Time
+		ValidUntil **time.Time
 	}
 )
 
@@ -98,6 +99,35 @@ func (s AuditProgramService) Get(
 	return auditProgram, nil
 }
 
+func (s AuditProgramService) GetByIDs(
+	ctx context.Context,
+	scope coredata.Scoper,
+	auditProgramIDs ...gid.GID,
+) (coredata.AuditPrograms, error) {
+	var auditPrograms coredata.AuditPrograms
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			if err := auditPrograms.LoadByIDs(
+				ctx,
+				conn,
+				scope,
+				auditProgramIDs,
+			); err != nil && !errors.Is(err, coredata.ErrResourceNotFound) {
+				return fmt.Errorf("cannot load audit programs by ids: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return auditPrograms, nil
+}
+
 func (s *AuditProgramService) Create(
 	ctx context.Context,
 	scope coredata.Scoper,
@@ -133,11 +163,7 @@ func (s *AuditProgramService) Create(
 			}
 
 			if framework.OrganizationID != organization.ID {
-				return validator.ValidationErrors{{
-					Field:   "framework_id",
-					Code:    validator.ErrorCodeCustom,
-					Message: "framework belongs to a different organization",
-				}}
+				return fmt.Errorf("framework belongs to a different organization: %w", coredata.ErrResourceNotFound)
 			}
 
 			if err := auditProgram.Insert(ctx, conn, scope); err != nil {
@@ -177,11 +203,17 @@ func (s *AuditProgramService) Update(
 			}
 
 			if req.ValidFrom != nil {
-				auditProgram.ValidFrom = req.ValidFrom
+				auditProgram.ValidFrom = *req.ValidFrom
 			}
 
 			if req.ValidUntil != nil {
-				auditProgram.ValidUntil = req.ValidUntil
+				auditProgram.ValidUntil = *req.ValidUntil
+			}
+
+			v := validator.New()
+			v.Check(auditProgram.ValidUntil, "valid_until", validator.After(auditProgram.ValidFrom))
+			if err := v.Error(); err != nil {
+				return err
 			}
 
 			auditProgram.UpdatedAt = time.Now()

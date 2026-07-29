@@ -217,7 +217,6 @@ func (s *AuditService) Create(
 					*req.AuditProgramID,
 					req.OrganizationID,
 					req.FrameworkID,
-					"audit_program_id",
 				)
 				if err != nil {
 					return err
@@ -272,7 +271,6 @@ func (s *AuditService) Update(
 						**req.AuditProgramID,
 						audit.OrganizationID,
 						audit.FrameworkID,
-						"audit_program_id",
 					)
 					if err != nil {
 						return err
@@ -690,31 +688,18 @@ func (s AuditService) loadAuditProgram(
 	auditProgramID gid.GID,
 	organizationID gid.GID,
 	frameworkID gid.GID,
-	field string,
 ) (*coredata.AuditProgram, error) {
 	program := &coredata.AuditProgram{}
 	if err := program.LoadByID(ctx, conn, scope, auditProgramID); err != nil {
-		return nil, validator.ValidationErrors{{
-			Field:   field,
-			Code:    validator.ErrorCodeCustom,
-			Message: "audit program not found",
-		}}
+		return nil, fmt.Errorf("cannot load audit program: %w", err)
 	}
 
 	if program.OrganizationID != organizationID {
-		return nil, validator.ValidationErrors{{
-			Field:   field,
-			Code:    validator.ErrorCodeCustom,
-			Message: "audit program belongs to a different organization",
-		}}
+		return nil, fmt.Errorf("audit program not found: %w", coredata.ErrResourceNotFound)
 	}
 
 	if program.FrameworkID != frameworkID {
-		return nil, validator.ValidationErrors{{
-			Field:   field,
-			Code:    validator.ErrorCodeCustom,
-			Message: "audit program belongs to a different framework",
-		}}
+		return nil, fmt.Errorf("audit program not found: %w", coredata.ErrResourceNotFound)
 	}
 
 	return program, nil

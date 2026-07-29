@@ -104,4 +104,16 @@ func TestMCP_AuditProgram_CRUD(t *testing.T) {
 		"id": addResult.AuditProgram.ID,
 	}, &deleteResult)
 	assert.Equal(t, addResult.AuditProgram.ID, deleteResult.DeletedAuditProgramID)
+
+	var getAuditResult struct {
+		Audit struct {
+			ID             string  `json:"id"`
+			AuditProgramID *string `json:"auditProgramId"`
+		} `json:"audit"`
+	}
+	mc.CallToolInto("getAudit", map[string]any{
+		"id": addAuditResult.Audit.ID,
+	}, &getAuditResult)
+	assert.Equal(t, addAuditResult.Audit.ID, getAuditResult.Audit.ID)
+	assert.Nil(t, getAuditResult.Audit.AuditProgramID)
 }

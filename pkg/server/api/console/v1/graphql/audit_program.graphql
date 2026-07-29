@@ -29,8 +29,8 @@ input AuditProgramOrder
 type AuditProgram implements Node {
     id: ID!
     name: String!
-    organization: Organization @goField(forceResolver: true)
-    framework: Framework @goField(forceResolver: true)
+    organization: Organization! @goField(forceResolver: true)
+    framework: Framework! @goField(forceResolver: true)
     validFrom: Datetime
     validUntil: Datetime
     audits(
@@ -82,8 +82,8 @@ input CreateAuditProgramInput {
 input UpdateAuditProgramInput {
     id: ID!
     name: String
-    validFrom: Datetime
-    validUntil: Datetime
+    validFrom: Datetime @goField(omittable: true)
+    validUntil: Datetime @goField(omittable: true)
 }
 
 input DeleteAuditProgramInput {

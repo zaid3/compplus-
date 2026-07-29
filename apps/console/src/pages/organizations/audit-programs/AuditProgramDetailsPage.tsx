@@ -46,13 +46,21 @@ import {
 import { useTranslation } from "react-i18next";
 import {
   ConnectionHandler,
+  graphql,
   type PreloadedQuery,
+  usePaginationFragment,
   usePreloadedQuery,
 } from "react-relay";
 import { Link, useNavigate } from "react-router";
 import { z } from "zod";
 
+import type {
+  AuditProgramDetailsPageAuditsFragment$data,
+  AuditProgramDetailsPageAuditsFragment$key,
+} from "#/__generated__/core/AuditProgramDetailsPageAuditsFragment.graphql";
 import type { AuditProgramGraphNodeQuery } from "#/__generated__/core/AuditProgramGraphNodeQuery.graphql";
+import type { NodeOf } from "#/types";
+import { SortableTable } from "#/components/SortableTable";
 import {
   auditProgramNodeQuery,
   useDeleteAuditProgram,
@@ -62,10 +70,47 @@ import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 const updateAuditProgramSchema = z.object({
-  name: z.string().min(1),
+  name: z.string().trim().min(1),
   validFrom: z.string().optional(),
   validUntil: z.string().optional(),
 });
+
+const auditsFragment = graphql`
+  fragment AuditProgramDetailsPageAuditsFragment on AuditProgram
+  @refetchable(queryName: "AuditProgramDetailsPageAuditsQuery")
+  @argumentDefinitions(
+    first: { type: "Int", defaultValue: 10 }
+    order: { type: "AuditOrder", defaultValue: null }
+    after: { type: "CursorKey", defaultValue: null }
+    before: { type: "CursorKey", defaultValue: null }
+    last: { type: "Int", defaultValue: null }
+  ) {
+    audits(
+      first: $first
+      after: $after
+      last: $last
+      before: $before
+      orderBy: $order
+    ) @connection(key: "AuditProgramDetailsPage_audits") {
+      __id
+      edges {
+        node {
+          id
+          name
+          state
+          framework {
+            id
+            name
+          }
+        }
+      }
+    }
+  }
+`;
+
+type LinkedAudit = NodeOf<
+  AuditProgramDetailsPageAuditsFragment$data["audits"]
+>;
 
 type Props = {
   queryRef: PreloadedQuery<AuditProgramGraphNodeQuery>;
@@ -83,6 +128,14 @@ export default function AuditProgramDetailsPage(props: Props) {
   const organizationId = useOrganizationId();
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  // eslint-disable-next-line relay/generated-typescript-types
+  const pagination = usePaginationFragment(
+    auditsFragment,
+    program as AuditProgramDetailsPageAuditsFragment$key | null,
+  );
+  const linkedAudits
+    = pagination.data?.audits?.edges?.map(edge => edge.node) ?? [];
 
   const deleteAuditProgram = useDeleteAuditProgram(
     { id: programId, name: programName },
@@ -134,8 +187,6 @@ export default function AuditProgramDetailsPage(props: Props) {
     }
   });
 
-  const linkedAudits = program?.audits?.edges?.map(edge => edge.node) ?? [];
-
   if (!programId) {
     return null;
   }
@@ -182,15 +233,24 @@ export default function AuditProgramDetailsPage(props: Props) {
             <Input
               {...register("name")}
               placeholder={t("auditProgramDetailsPage.fields.namePlaceholder")}
+              disabled={!program.canUpdate}
             />
           </Field>
 
           <Field label={t("auditProgramDetailsPage.fields.validFrom")}>
-            <Input {...register("validFrom")} type="date" />
+            <Input
+              {...register("validFrom")}
+              type="date"
+              disabled={!program.canUpdate}
+            />
           </Field>
 
           <Field label={t("auditProgramDetailsPage.fields.validUntil")}>
-            <Input {...register("validUntil")} type="date" />
+            <Input
+              {...register("validUntil")}
+              type="date"
+              disabled={!program.canUpdate}
+            />
           </Field>
 
           <div className="flex justify-end">
@@ -215,7 +275,7 @@ export default function AuditProgramDetailsPage(props: Props) {
                 </p>
               )
             : (
-                <table className="w-full text-sm">
+                <SortableTable {...pagination} pageSize={10}>
                   <Thead>
                     <Tr>
                       <Th>{t("auditProgramDetailsPage.audits.columns.name")}</Th>
@@ -224,30 +284,14 @@ export default function AuditProgramDetailsPage(props: Props) {
                   </Thead>
                   <Tbody>
                     {linkedAudits.map(audit => (
-                      <Tr key={audit.id}>
-                        <Td>
-                          <Link
-                            className="text-primary hover:underline"
-                            to={`/organizations/${organizationId}/audits/${audit.id}`}
-                          >
-                            {audit.name || audit.framework?.name}
-                          </Link>
-                        </Td>
-                        <Td>
-                          <Badge
-                            variant={getAuditStateVariant(
-                              audit.state || "NOT_STARTED",
-                            )}
-                          >
-                            {t(
-                              `auditProgramDetailsPage.auditStates.${(audit.state || "NOT_STARTED").toLowerCase()}`,
-                            )}
-                          </Badge>
-                        </Td>
-                      </Tr>
+                      <LinkedAuditRow
+                        key={audit.id}
+                        audit={audit}
+                        organizationId={organizationId}
+                      />
                     ))}
                   </Tbody>
-                </table>
+                </SortableTable>
               )}
           <p className="text-txt-tertiary text-xs">
             {t("auditProgramDetailsPage.meta.updated", {
@@ -257,5 +301,37 @@ export default function AuditProgramDetailsPage(props: Props) {
         </Card>
       </div>
     </div>
+  );
+}
+
+function LinkedAuditRow({
+  audit,
+  organizationId,
+}: {
+  audit: LinkedAudit;
+  organizationId: string;
+}) {
+  const { t } = useTranslation("organizations/audit-programs");
+
+  return (
+    <Tr>
+      <Td>
+        <Link
+          className="text-primary hover:underline"
+          to={`/organizations/${organizationId}/audits/${audit.id}`}
+        >
+          {audit.name || audit.framework?.name}
+        </Link>
+      </Td>
+      <Td>
+        <Badge
+          variant={getAuditStateVariant(audit.state || "NOT_STARTED")}
+        >
+          {t(
+            `auditProgramDetailsPage.auditStates.${(audit.state || "NOT_STARTED").toLowerCase()}`,
+          )}
+        </Badge>
+      </Td>
+    </Tr>
   );
 }
