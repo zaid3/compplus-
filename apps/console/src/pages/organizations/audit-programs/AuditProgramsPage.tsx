@@ -101,7 +101,7 @@ type Props = {
 };
 
 export default function AuditProgramsPage(props: Props) {
-  const { t } = useTranslation();
+  const { t } = useTranslation("organizations/audit-programs");
   const organizationId = useOrganizationId();
 
   const data = usePreloadedQuery<AuditProgramGraphListQuery>(
@@ -177,7 +177,7 @@ function AuditProgramRow({
   hasAnyAction: boolean;
 }) {
   const organizationId = useOrganizationId();
-  const { i18n, t } = useTranslation();
+  const { i18n, t } = useTranslation("organizations/audit-programs");
   const deleteAuditProgram = useDeleteAuditProgram(
     { id: entry.id, name: entry.name },
     connectionId,

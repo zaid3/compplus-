@@ -66,5 +66,19 @@
       "validUntil": "Valid until"
     },
     "actions": { "create": "Create" }
+  },
+  "auditProgramGraph": {
+    "deleteConfirmation": "This will permanently delete audit program \"{{name}}\". Linked audits will be detached. This action cannot be undone.",
+    "messages": { "deleted": "Audit program deleted successfully" },
+    "errors": {
+      "delete": "Failed to delete audit program",
+      "createOrganizationRequired": "Failed to create audit program: organization is required",
+      "createFrameworkRequired": "Failed to create audit program: framework is required",
+      "createNameRequired": "Failed to create audit program: name is required",
+      "updateIdRequired": "Failed to update audit program: program ID is required"
+    }
+  },
+  "auditProgramSelect": {
+    "none": "No audit program"
   }
 }

@@ -1491,20 +1491,6 @@
       "deleteReport": "Échec de la suppression du rapport d’audit"
     }
   },
-  "auditProgramGraph": {
-    "deleteConfirmation": "Cette action supprimera définitivement le programme d'audit « {{name}} ». Les audits liés seront détachés. Cette action est irréversible.",
-    "messages": { "deleted": "Programme d'audit supprimé avec succès" },
-    "errors": {
-      "delete": "Échec de la suppression du programme d'audit",
-      "createOrganizationRequired": "Échec de la création du programme : l'organisation est requise",
-      "createFrameworkRequired": "Échec de la création du programme : le référentiel est requis",
-      "createNameRequired": "Échec de la création du programme : le nom est requis",
-      "updateIdRequired": "Échec de la mise à jour du programme : l'identifiant est requis"
-    }
-  },
-  "auditProgramSelect": {
-    "none": "Aucun programme d'audit"
-  },
   "datumGraph": {
     "deleteConfirmation": "Cela supprimera définitivement « {{name}} ». Cette action est irréversible.",
     "errors": {

@@ -41,7 +41,7 @@ export function AuditProgramSelectField<T extends FieldValues>({
   name,
   disabled,
 }: Props<T>) {
-  const { t } = useTranslation();
+  const { t } = useTranslation("organizations/audit-programs");
   const data = useLazyLoadQuery<AuditProgramGraphOptionsQuery>(
     auditProgramOptionsQuery,
     { organizationId },

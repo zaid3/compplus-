@@ -162,7 +162,7 @@ export const useDeleteAuditProgram = (
   connectionId: string,
   onSuccess?: () => void,
 ) => {
-  const { t } = useTranslation();
+  const { t } = useTranslation("organizations/audit-programs");
   const [mutate] = useMutationWithToasts(deleteAuditProgramMutation, {
     successMessage: t("auditProgramGraph.messages.deleted"),
     errorMessage: t("auditProgramGraph.errors.delete"),
@@ -194,7 +194,7 @@ export const useDeleteAuditProgram = (
 export const useCreateAuditProgram = (connectionId: string) => {
   // eslint-disable-next-line relay/generated-typescript-types
   const [mutate] = useMutation(createAuditProgramMutation);
-  const { t } = useTranslation();
+  const { t } = useTranslation("organizations/audit-programs");
 
   return (input: {
     organizationId: string;
@@ -231,7 +231,7 @@ export const useCreateAuditProgram = (connectionId: string) => {
 export const useUpdateAuditProgram = () => {
   // eslint-disable-next-line relay/generated-typescript-types
   const [mutate] = useMutation(updateAuditProgramMutation);
-  const { t } = useTranslation();
+  const { t } = useTranslation("organizations/audit-programs");
 
   return (input: {
     id: string;

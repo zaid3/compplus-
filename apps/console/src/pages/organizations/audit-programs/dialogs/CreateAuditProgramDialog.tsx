@@ -75,7 +75,7 @@ export function CreateAuditProgramDialog({
   connection,
   organizationId,
 }: Props) {
-  const { t } = useTranslation();
+  const { t } = useTranslation("organizations/audit-programs");
   const { toast } = useToast();
   const schema = z.object({
     frameworkId: z
@@ -193,7 +193,7 @@ function FrameworkSelect({
   organizationId: string;
   control: Control<FormSchema>;
 }) {
-  const { t } = useTranslation();
+  const { t } = useTranslation("organizations/audit-programs");
   const data = useLazyLoadQuery<CreateAuditProgramDialogFrameworksQuery>(
     frameworksQuery,
     { organizationId },

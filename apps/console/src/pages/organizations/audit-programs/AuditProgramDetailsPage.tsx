@@ -79,7 +79,7 @@ export default function AuditProgramDetailsPage(props: Props) {
   const program = auditProgram.node;
   const programId = program?.id ?? "";
   const programName = program?.name ?? "";
-  const { i18n, t } = useTranslation();
+  const { i18n, t } = useTranslation("organizations/audit-programs");
   const organizationId = useOrganizationId();
   const navigate = useNavigate();
   const { toast } = useToast();
