@@ -36,7 +36,7 @@ func hubspotRegistration() *Registration {
 		AuthURL:        "https://app.hubspot.com/oauth/authorize",
 		TokenURL:       "https://api.hubapi.com/oauth/v1/token",
 		ProbeURL:       "https://api.hubapi.com/account-info/v3/details",
-		OAuth2Scopes:   []string{"settings.users.read"},
+		OAuth2Scopes:   []string{"settings.users.read", "crm.objects.owners.read"},
 		SupportsAPIKey: true,
 		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger) (drivers.Driver, error) {
 			return drivers.NewHubSpotDriver(c), nil
