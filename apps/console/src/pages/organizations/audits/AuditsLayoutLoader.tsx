@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -18,28 +18,32 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { lazy } from "@probo/react-lazy";
-import type { AppRoute } from "@probo/routes";
+import { Tabs } from "@probo/ui";
+import { Suspense, useEffect } from "react";
+import { useQueryLoader } from "react-relay";
+import { Outlet } from "react-router";
 
-import { PageSkeleton } from "#/components/skeletons/PageSkeleton";
+import type { AuditsTabsQuery } from "#/__generated__/core/AuditsTabsQuery.graphql";
+import { useOrganizationId } from "#/hooks/useOrganizationId";
 
-export const auditProgramRoutes = [
-  {
-    path: "audit-programs",
-    Fallback: PageSkeleton,
-    Component: lazy(
-      () =>
-        import("#/pages/organizations/audit-programs/AuditProgramsPageLoader"),
-    ),
-  },
-  {
-    path: "audit-programs/:auditProgramId",
-    Fallback: PageSkeleton,
-    Component: lazy(
-      () =>
-        import(
-          "#/pages/organizations/audit-programs/AuditProgramDetailsPageLoader"
-        ),
-    ),
-  },
-] satisfies AppRoute[];
+import { AuditsTabs, auditsTabsQuery } from "./AuditsTabs";
+
+export default function AuditsLayoutLoader() {
+  const organizationId = useOrganizationId();
+  const [queryRef, loadQuery]
+    = useQueryLoader<AuditsTabsQuery>(auditsTabsQuery);
+
+  useEffect(() => {
+    loadQuery({ organizationId });
+  }, [loadQuery, organizationId]);
+
+  return (
+    <div className="space-y-6">
+      <Suspense fallback={<Tabs />}>
+        {queryRef && <AuditsTabs queryRef={queryRef} />}
+      </Suspense>
+
+      <Outlet />
+    </div>
+  );
+}

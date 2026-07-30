@@ -185,7 +185,7 @@ function AuditProgramRow({
 
   return (
     <Tr
-      to={`/organizations/${organizationId}/audit-programs/${entry.id}`}
+      to={`/organizations/${organizationId}/audits/programs/${entry.id}`}
     >
       <Td>{entry.name}</Td>
       <Td>

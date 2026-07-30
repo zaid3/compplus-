@@ -35,7 +35,6 @@ import { RootErrorBoundary } from "./components/RootErrorBoundary";
 import { PageSkeleton } from "./components/skeletons/PageSkeleton";
 import { ViewerLayoutLoading } from "./pages/iam/memberships/ViewerLayoutLoading";
 import { peopleRoutes } from "./pages/iam/organizations/people/routes";
-import { auditProgramRoutes } from "./pages/organizations/audit-programs/routes";
 import { compliancePageRoutes } from "./pages/organizations/compliance-page/routes";
 import { cookieBannerRoutes } from "./pages/organizations/cookie-banners/routes";
 import { deviceRoutes } from "./pages/organizations/devices/routes";
@@ -341,7 +340,6 @@ const routes = [
           ...assetRoutes,
           ...dataRoutes,
           ...auditRoutes,
-          ...auditProgramRoutes,
           ...contextRoutes,
           ...findingRoutes,
           ...obligationRoutes,

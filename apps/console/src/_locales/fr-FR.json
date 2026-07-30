@@ -2392,7 +2392,6 @@
     "devices": "Appareils",
     "data": "Données",
     "audits": "Audits",
-    "auditPrograms": "Programmes d'audit",
     "findings": "Constats",
     "obligations": "Obligations",
     "processingActivities": "Activités de traitement",
@@ -4487,6 +4486,10 @@
       "residualRisk": "Risque résiduel",
       "owner": "Propriétaire"
     }
+  },
+  "auditsTabs": {
+    "audits": "Audits",
+    "programs": "Programmes"
   },
   "risksTabs": {
     "risks": "Risques",

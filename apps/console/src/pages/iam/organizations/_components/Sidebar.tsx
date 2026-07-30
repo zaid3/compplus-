@@ -63,7 +63,6 @@ const fragment = graphql`
         canListDevices: permission(action: "itam:device:list")
         canListData: permission(action: "core:datum:list")
         canListAudits: permission(action: "core:audit:list")
-        canListAuditPrograms: permission(action: "core:audit-program:list")
         canListFindings: permission(action: "core:finding:list")
         canListObligations: permission(action: "core:obligation:list")
         canListProcessingActivities: permission(
@@ -177,13 +176,6 @@ export function Sidebar(props: { fKey: SidebarFragment$key }) {
           label={t("sidebar.audits")}
           icon={IconMedal}
           to={`${prefix}/audits`}
-        />
-      )}
-      {organization.canListAuditPrograms && (
-        <SidebarItem
-          label={t("sidebar.auditPrograms")}
-          icon={IconPageCheck}
-          to={`${prefix}/audit-programs`}
         />
       )}
       {organization.canListFindings && (

@@ -144,7 +144,7 @@ export default function AuditProgramDetailsPage(props: Props) {
       organizationId,
       "AuditProgramsPage_auditPrograms",
     ),
-    () => void navigate(`/organizations/${organizationId}/audit-programs`),
+    () => void navigate(`/organizations/${organizationId}/audits/programs`),
   );
 
   const { formState, handleSubmit, register, reset } = useFormWithSchema(
@@ -198,7 +198,7 @@ export default function AuditProgramDetailsPage(props: Props) {
         items={[
           {
             label: t("auditProgramDetailsPage.breadcrumb.auditPrograms"),
-            to: `/organizations/${organizationId}/audit-programs`,
+            to: `/organizations/${organizationId}/audits/programs`,
           },
           { label: programName },
         ]}
