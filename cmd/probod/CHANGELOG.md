@@ -6,7 +6,7 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ### Fixed
 
-- HubSpot access-review connector now marks deactivated/archived users as inactive by consulting the Owners API (`archived=true`) instead of treating every Settings Users row as active
+- HubSpot access-review connector now marks deactivated/archived users as inactive by consulting the Owners API (`archived=true`) instead of treating every Settings Users row as active. Existing HubSpot connectors must reconnect (or private apps must grant `crm.objects.owners.read`) before inactive detection works.
 
 ## [0.241.0] - 2026-07-30
 
