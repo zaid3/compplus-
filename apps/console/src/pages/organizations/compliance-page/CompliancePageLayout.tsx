@@ -38,6 +38,7 @@ export const compliancePageLayoutQuery = graphql`
         canListAudits: permission(action: "core:audit:list")
         canListThirdParties: permission(action: "core:thirdParty:list")
         compliancePage: compliancePortal {
+          # eslint-disable-next-line relay/unused-fields
           id
           active
           publicUrl

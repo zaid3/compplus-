@@ -279,7 +279,7 @@ const routes = [
                   return <Navigate to="compliance-page/access" />;
                 default:
                   return <Navigate to="tasks" />;
-                }
+              }
             },
           },
           {
