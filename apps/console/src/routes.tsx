@@ -273,9 +273,11 @@ const routes = [
                   return <Navigate to="employee" />;
                 case Role.AUDITOR:
                   return <Navigate to="measures" />;
+                case Role.COMPLIANCE_MANAGER:
+                  return <Navigate to="compliance-page" />;
                 default:
                   return <Navigate to="tasks" />;
-              }
+                }
             },
           },
           {
