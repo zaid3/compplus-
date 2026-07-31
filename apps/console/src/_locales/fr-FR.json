@@ -3451,6 +3451,7 @@
       "audits": "Audits"
     },
     "unknownAudit": "Audit inconnu",
+    "loading": "Chargement...",
     "errors": {
       "update": "Échec de la mise à jour de l’audit"
     },
@@ -3471,6 +3472,7 @@
       "name": "Nom",
       "namePlaceholder": "Nom de l’audit",
       "state": "État",
+      "auditProgram": "Programme d'audit",
       "validFrom": "Valide à partir de",
       "validUntil": "Valide jusqu’au",
       "auditStartDate": "Date de début de l’audit",
@@ -3548,6 +3550,7 @@
     "fields": {
       "framework": "Référentiel",
       "frameworkPlaceholder": "Sélectionner un référentiel",
+      "auditProgram": "Programme d'audit",
       "name": "Nom",
       "namePlaceholder": "Nom de l’audit",
       "state": "État",
@@ -4484,6 +4487,10 @@
       "residualRisk": "Risque résiduel",
       "owner": "Propriétaire"
     }
+  },
+  "auditsTabs": {
+    "audits": "Audits",
+    "programs": "Programmes"
   },
   "risksTabs": {
     "risks": "Risques",
