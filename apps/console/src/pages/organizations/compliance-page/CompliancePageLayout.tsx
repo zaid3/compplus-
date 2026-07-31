@@ -34,20 +34,10 @@ export const compliancePageLayoutQuery = graphql`
     organization: node(id: $organizationId) {
       __typename
       ... on Organization {
-        canListDocuments: permission(action: "core:document:list")
-        canListAudits: permission(action: "core:audit:list")
-        canListThirdParties: permission(action: "core:thirdParty:list")
         compliancePage: compliancePortal {
-          # eslint-disable-next-line relay/unused-fields
           id
           active
           publicUrl
-          canUpdatePortal: permission(action: "compliance-portal:portal:update")
-          canListReferences: permission(action: "compliance-portal:portal-reference:list")
-          canListCommitmentGroups: permission(action: "compliance-portal:commitment-group:list")
-          canListFiles: permission(action: "compliance-portal:portal-file:list")
-          canListAccess: permission(action: "compliance-portal:portal-access:list")
-          canListMailingUpdates: permission(action: "compliance-portal:mailing-list-update:list")
         }
       }
     }
@@ -67,9 +57,7 @@ export function CompliancePageLayout(props: { queryRef: PreloadedQuery<Complianc
     throw new Error("invalid type for node");
   }
 
-  const compliancePage = organization.compliancePage;
-  const compliancePageUrl = compliancePage?.publicUrl || null;
-  const prefix = `/organizations/${organizationId}/compliance-page`;
+  const compliancePageUrl = organization.compliancePage?.publicUrl || null;
 
   return (
     <div className="space-y-6">
@@ -77,12 +65,12 @@ export function CompliancePageLayout(props: { queryRef: PreloadedQuery<Complianc
         title={t("layout.title")}
         description={t("layout.description")}
       >
-        <Badge variant={compliancePage?.active ? "success" : "danger"}>
-          {compliancePage?.active
+        <Badge variant={organization.compliancePage?.active ? "success" : "danger"}>
+          {organization.compliancePage?.active
             ? t("layout.status.active")
             : t("layout.status.inactive")}
         </Badge>
-        {compliancePage?.active && compliancePageUrl && (
+        {organization.compliancePage?.active && compliancePageUrl && (
           <Button
             variant="secondary"
             onClick={() => safeOpenUrl(compliancePageUrl)}
@@ -93,66 +81,46 @@ export function CompliancePageLayout(props: { queryRef: PreloadedQuery<Complianc
       </PageHeader>
 
       <Tabs>
-        {(compliancePage?.canUpdatePortal || compliancePage?.canListReferences) && (
-          <TabLink to={prefix} end>
-            <IconSettingsGear2 className="size-4" />
-            {t("layout.tabs.overview")}
-          </TabLink>
-        )}
-        {compliancePage?.canUpdatePortal && (
-          <TabLink to={`${prefix}/brand`}>
-            <IconPencil className="size-4" />
-            {t("layout.tabs.brand")}
-          </TabLink>
-        )}
-        {compliancePage?.canListReferences && (
-          <TabLink to={`${prefix}/references`}>
-            <IconCheckmark1 className="size-4" />
-            {t("layout.tabs.references")}
-          </TabLink>
-        )}
-        {compliancePage?.canListCommitmentGroups && (
-          <TabLink to={`${prefix}/commitments`}>
-            <IconShield className="size-4" />
-            {t("layout.tabs.commitments")}
-          </TabLink>
-        )}
-        {organization.canListAudits && (
-          <TabLink to={`${prefix}/audits`}>
-            <IconMedal className="size-4" />
-            {t("layout.tabs.audits")}
-          </TabLink>
-        )}
-        {organization.canListDocuments && (
-          <TabLink to={`${prefix}/documents`}>
-            <IconPageTextLine className="size-4" />
-            {t("layout.tabs.documents")}
-          </TabLink>
-        )}
-        {compliancePage?.canListFiles && (
-          <TabLink to={`${prefix}/files`}>
-            <IconFolder2 className="size-4" />
-            {t("layout.tabs.files")}
-          </TabLink>
-        )}
-        {organization.canListThirdParties && (
-          <TabLink to={`${prefix}/third-parties`}>
-            <IconStore className="size-4" />
-            {t("layout.tabs.subprocessors")}
-          </TabLink>
-        )}
-        {compliancePage?.canListAccess && (
-          <TabLink to={`${prefix}/access`}>
-            <IconPeopleAdd className="size-4" />
-            {t("layout.tabs.access")}
-          </TabLink>
-        )}
-        {compliancePage?.canListMailingUpdates && (
-          <TabLink to={`${prefix}/mailing-list`}>
-            <IconBell2 className="size-4" />
-            {t("layout.tabs.mailingList")}
-          </TabLink>
-        )}
+        <TabLink to={`/organizations/${organizationId}/compliance-page`} end>
+          <IconSettingsGear2 className="size-4" />
+          {t("layout.tabs.overview")}
+        </TabLink>
+        <TabLink to={`/organizations/${organizationId}/compliance-page/brand`}>
+          <IconPencil className="size-4" />
+          {t("layout.tabs.brand")}
+        </TabLink>
+        <TabLink to={`/organizations/${organizationId}/compliance-page/references`}>
+          <IconCheckmark1 className="size-4" />
+          {t("layout.tabs.references")}
+        </TabLink>
+        <TabLink to={`/organizations/${organizationId}/compliance-page/commitments`}>
+          <IconShield className="size-4" />
+          {t("layout.tabs.commitments")}
+        </TabLink>
+        <TabLink to={`/organizations/${organizationId}/compliance-page/audits`}>
+          <IconMedal className="size-4" />
+          {t("layout.tabs.audits")}
+        </TabLink>
+        <TabLink to={`/organizations/${organizationId}/compliance-page/documents`}>
+          <IconPageTextLine className="size-4" />
+          {t("layout.tabs.documents")}
+        </TabLink>
+        <TabLink to={`/organizations/${organizationId}/compliance-page/files`}>
+          <IconFolder2 className="size-4" />
+          {t("layout.tabs.files")}
+        </TabLink>
+        <TabLink to={`/organizations/${organizationId}/compliance-page/third-parties`}>
+          <IconStore className="size-4" />
+          {t("layout.tabs.subprocessors")}
+        </TabLink>
+        <TabLink to={`/organizations/${organizationId}/compliance-page/access`}>
+          <IconPeopleAdd className="size-4" />
+          {t("layout.tabs.access")}
+        </TabLink>
+        <TabLink to={`/organizations/${organizationId}/compliance-page/mailing-list`}>
+          <IconBell2 className="size-4" />
+          {t("layout.tabs.mailingList")}
+        </TabLink>
       </Tabs>
 
       <Outlet />
