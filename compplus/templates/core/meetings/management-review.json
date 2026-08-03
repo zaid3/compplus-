@@ -1,0 +1,19 @@
+{
+  "title": "Integrated Management Review",
+  "instructions": "CompPlus pre-fills available metrics, open risks, findings, incidents, objectives and overdue actions. Management records only decisions, changes and resources required.",
+  "default_attendees": ["{{ roles.executive_owner }}", "{{ roles.system_manager }}", "{{ roles.security_owner }}", "{{ roles.privacy_owner }}", "{{ roles.quality_owner }}", "{{ roles.environment_owner }}", "{{ roles.ai_owner }}"],
+  "agenda": [
+    {"topic": "Previous actions", "auto_input": "Open and overdue management-review actions", "decision_required": true},
+    {"topic": "Changes in context and interested parties", "auto_input": "Changes recorded since the previous review", "decision_required": true},
+    {"topic": "Legal, regulatory, contractual and standards updates", "auto_input": "Legal register changes and template update alerts", "decision_required": true},
+    {"topic": "Objectives and performance", "auto_input": "KPI results and missed targets", "decision_required": true},
+    {"topic": "Risks and opportunities", "auto_input": "Highest residual risks and overdue treatments", "decision_required": true},
+    {"topic": "Incidents, complaints and nonconformities", "auto_input": "Trend summary and open corrective actions", "decision_required": true},
+    {"topic": "Audit and assessment results", "auto_input": "Open findings and completed audit results", "decision_required": true},
+    {"topic": "Supplier performance", "auto_input": "Critical supplier reviews and issues", "decision_required": true},
+    {"topic": "Resources and competence", "auto_input": "Training completion, workload and resource constraints", "decision_required": true},
+    {"topic": "Improvement opportunities", "auto_input": "Suggestions, lessons and recurring issues", "decision_required": true}
+  ],
+  "decision_columns": ["decision_or_action", "reason", "owner", "due_date", "priority", "resources", "status"],
+  "approval": {"chair": "{{ roles.executive_owner }}", "date": "{{ meeting.approval_date | confirm }}", "status": "{{ meeting.approval_status | confirm }}"}
+}
