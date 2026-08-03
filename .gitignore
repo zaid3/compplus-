@@ -12,4 +12,8 @@ sbom-docker.json
 *.pem
 *.crt
 *.key
+.env
+.env.*
+!.env.coolify.example
+secrets/
 compose/keycloak/probo-realm.json
