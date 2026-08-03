@@ -34,10 +34,14 @@ COPY --from=frontend /src/apps/console/dist ./apps/console/dist
 COPY --from=frontend /src/apps/compliance-portal/dist ./apps/compliance-portal/dist
 COPY --from=frontend /src/packages/emails/dist ./packages/emails/dist
 
-# Use the repository's dependency-aware generation target. The GraphQL
-# generators must run in order because later APIs compile against types
-# produced by earlier generators.
-RUN make generate
+# Generate each API exactly once and in dependency order. Running the shared
+# make target inside a highly parallel Docker build can start the same gqlgen
+# target twice, causing concurrent writes to a resolver file.
+RUN go generate ./pkg/server/api/connect/v1 \
+    && go generate ./pkg/server/api/console/v1 \
+    && go generate ./pkg/server/api/mcp/v1 \
+    && go generate ./pkg/server/api/complianceportal/v1
+
 RUN CGO_ENABLED=0 GOOS=linux go build \
       -trimpath \
       -ldflags="-s -w -X main.env=staging -X main.version=compplus-staging" \
