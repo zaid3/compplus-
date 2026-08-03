@@ -9,6 +9,8 @@ import (
 	"strings"
 
 	"go.gearno.de/kit/log"
+	compplustemplates "go.probo.inc/probo/compplus/templates"
+	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
 	"go.probo.inc/probo/pkg/server/gqlutils"
@@ -66,7 +68,7 @@ func (r *mutationResolver) InstallTemplatePack(
 		return nil, err
 	}
 
-	for _, action := range []string{
+	for _, action := range []iam.Action{
 		probo.ActionMeasureImport,
 		probo.ActionDocumentCreate,
 		probo.ActionMeasureDocumentMappingCreate,
@@ -126,8 +128,15 @@ func (r *mutationResolver) InstallTemplatePack(
 	}, nil
 }
 
-func compiledWorkCounts(compiled interface {
-	GetMeasures() []proboTemplateMeasure
-}) (int, int) {
-	return 0, 0
+func compiledWorkCounts(compiled *compplustemplates.CompiledPack) (int, int) {
+	tasksCount := 0
+	evidenceRequestsCount := 0
+	for _, measure := range compiled.Measures {
+		tasksCount += len(measure.Tasks)
+		for _, task := range measure.Tasks {
+			evidenceRequestsCount += len(task.RequestedEvidences)
+		}
+	}
+
+	return tasksCount, evidenceRequestsCount
 }
