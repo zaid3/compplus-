@@ -1,0 +1,193 @@
+services:
+  oauth-keygen:
+    image: "alpine:3.20"
+    restart: "no"
+    exclude_from_hc: true
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        apk add --no-cache openssl >/dev/null
+        if [ ! -s /oauth2/private.pem ]; then
+          openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out /oauth2/private.pem
+          chmod 644 /oauth2/private.pem
+        fi
+    volumes:
+      - "oauth2-key:/oauth2"
+
+  postgres:
+    image: "postgres@sha256:7ad98329d513dd497293b951c195ca354274a77f12ddbbbbf85e68a811823d72"
+    restart: unless-stopped
+    shm_size: "1g"
+    command: >
+      postgres -c "shared_buffers=256MB"
+               -c "max_connections=200"
+    environment:
+      POSTGRES_USER: "postgres"
+      POSTGRES_PASSWORD: "postgres"
+    volumes:
+      - "postgres-data:/var/lib/postgresql/data:rw"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  postgres-init:
+    image: "postgres@sha256:7ad98329d513dd497293b951c195ca354274a77f12ddbbbbf85e68a811823d72"
+    restart: "no"
+    exclude_from_hc: true
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      PGPASSWORD: "postgres"
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        set -e
+        until pg_isready -h postgres -U postgres; do sleep 1; done
+        if ! psql -h postgres -U postgres -tAc "SELECT 1 FROM pg_roles WHERE rolname='probod'" | grep -q 1; then
+          psql -h postgres -U postgres -c "CREATE ROLE probod LOGIN SUPERUSER PASSWORD 'probod'"
+        fi
+        if ! psql -h postgres -U postgres -tAc "SELECT 1 FROM pg_database WHERE datname='probod'" | grep -q 1; then
+          createdb -h postgres -U postgres -O probod probod
+        fi
+        psql -h postgres -U postgres -d probod -c "ALTER SCHEMA public OWNER TO probod"
+        psql -h postgres -U postgres -d probod -c "GRANT ALL ON SCHEMA public TO probod"
+        psql -h postgres -U postgres -d postgres -c "ALTER DATABASE probod SET probo.trust_center_base_domain TO '72.61.16.251'"
+
+  seaweed-config-init:
+    image: "alpine:3.20"
+    restart: "no"
+    exclude_from_hc: true
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        mkdir -p /config
+        cat > /config/s3.json <<'JSON'
+        {
+          "identities": [
+            {
+              "name": "probod",
+              "credentials": [
+                {
+                  "accessKey": "probod",
+                  "secretKey": "thisisnotasecret"
+                }
+              ],
+              "actions": ["Admin", "Read", "Write", "List", "Tagging", "Lock"]
+            }
+          ]
+        }
+        JSON
+    volumes:
+      - "seaweedfs-config:/config"
+
+  seaweedfs:
+    image: "chrislusf/seaweedfs@sha256:cea8339d21dad1b200adce581dd7434d254b8f5975f142c3b4c930ba78647eef"
+    restart: unless-stopped
+    depends_on:
+      seaweed-config-init:
+        condition: service_completed_successfully
+    command: >
+      server
+      -s3
+      -s3.config=/etc/seaweedfs/s3.json
+      -s3.port=8333
+      -volume.max=100
+      -master.volumeSizeLimitMB=1024
+      -dir=/data
+    volumes:
+      - "seaweedfs-config:/etc/seaweedfs:ro"
+      - "seaweedfs-data:/data:rw"
+
+  chrome:
+    image: "chromedp/headless-shell@sha256:b24482ae166e2c67135f5a8ba9575c257efdd8e2fd6b2e931f9d88ede3d72f3b"
+    restart: unless-stopped
+    command:
+      - "--headless"
+      - "--disable-gpu"
+      - "--disable-dev-shm-usage"
+      - "--hide-scrollbars"
+      - "--mute-audio"
+      - "--no-default-browser-check"
+      - "--no-first-run"
+      - "--disable-background-networking"
+      - "--disable-background-timer-throttling"
+      - "--disable-extensions"
+
+  probo:
+    build:
+      context: "."
+      dockerfile: "Dockerfile.compplus"
+    restart: unless-stopped
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        export PROBOD_OAUTH2_SERVER_SIGNING_KEY="$$(cat /oauth2/private.pem)"
+        exec /usr/local/bin/entrypoint.sh
+    environment:
+      PROBOD_ENCRYPTION_KEY: ${SERVICE_REALBASE64_32_ENCRYPTIONKEY}
+      PROBOD_AUTH_COOKIE_SECRET: ${SERVICE_PASSWORD_64_COOKIESECRET}
+      PROBOD_AUTH_PASSWORD_PEPPER: ${SERVICE_PASSWORD_64_PASSWORDPEPPER}
+      PROBOD_TRUST_AUTH_TOKEN_SECRET: ${SERVICE_PASSWORD_64_TRUSTTOKEN}
+
+      PROBOD_BASE_URL: "http://72.61.16.251:8091"
+      PROBOD_API_ADDR: ":8080"
+      PROBOD_API_CORS_ALLOWED_ORIGINS: "http://72.61.16.251:8091"
+
+      PROBOD_AUTH_COOKIE_NAME: "COMPPLUS_STAGING_SSID"
+      PROBOD_AUTH_COOKIE_DOMAIN: "72.61.16.251"
+      PROBOD_AUTH_COOKIE_SECURE: "false"
+      PROBOD_AUTH_COOKIE_SAMESITE: "lax"
+      PROBOD_AUTH_DISABLE_SIGNUP: "false"
+
+      PROBOD_PG_ADDR: "postgres:5432"
+      PROBOD_PG_USERNAME: "probod"
+      PROBOD_PG_PASSWORD: "probod"
+      PROBOD_PG_DATABASE: "probod"
+      PROBOD_PG_POOL_SIZE: "100"
+      PROBOD_PG_MIN_POOL_SIZE: "10"
+
+      PROBOD_AWS_REGION: "us-east-1"
+      PROBOD_AWS_BUCKET: "probod"
+      PROBOD_AWS_ACCESS_KEY_ID: "probod"
+      PROBOD_AWS_SECRET_ACCESS_KEY: "thisisnotasecret"
+      PROBOD_AWS_ENDPOINT: "http://seaweedfs:8333"
+      PROBOD_AWS_USE_PATH_STYLE: "true"
+
+      PROBOD_METRICS_ADDR: ":8081"
+      PROBOD_TRACING_ADDR: ""
+
+      PROBOD_SMTP_ADDR: ""
+      PROBOD_SMTP_TLS_REQUIRED: "false"
+      PROBOD_MAILER_SENDER_NAME: "CompPlus Staging"
+      PROBOD_MAILER_SENDER_EMAIL: "no-reply@example.com"
+
+      PROBOD_CHROME_DP_ADDR: "chrome:9222"
+
+      PROBOD_OPENAI_API_KEY: "disabled-for-initial-hosting"
+      PROBOD_AGENT_DEFAULT_PROVIDER: "openai"
+      PROBOD_AGENT_DEFAULT_MODEL_NAME: "gpt-4o"
+
+    ports:
+      - "8091:8080"
+    volumes:
+      - "probo-data:/data"
+      - "oauth2-key:/oauth2:ro"
+    depends_on:
+      oauth-keygen:
+        condition: service_completed_successfully
+      postgres-init:
+        condition: service_completed_successfully
+      seaweedfs:
+        condition: service_started
+      chrome:
+        condition: service_started
+
+volumes:
+  probo-data:
+  postgres-data:
+  seaweedfs-data:
+  seaweedfs-config:
+  oauth2-key:
