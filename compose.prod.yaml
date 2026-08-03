@@ -41,9 +41,7 @@ services:
       # Chrome for PDF generation
       PROBOD_CHROME_DP_ADDR: "chrome:9222"
     ports:
-      - "8080:8080"
-      - "8081:8081"
-      - "8443:8443"
+      - "8090:8080"
     volumes:
       - "probo-data:/data"
     depends_on:
@@ -54,7 +52,6 @@ services:
       chrome:
         condition: service_started
 
-
   postgres:
     image: "postgres@sha256:7ad98329d513dd497293b951c195ca354274a77f12ddbbbbf85e68a811823d72"
     shm_size: "1g"
@@ -62,8 +59,6 @@ services:
       postgres -c "shared_buffers=4GB"
                -c "max_connections=200"
                -c "log_statement=all"
-    ports:
-      - "5432:5432"
     volumes:
       - "./compose/postgres:/docker-entrypoint-initdb.d:ro"
       - "postgres-data:/var/lib/postgresql/data:rw"
@@ -86,18 +81,12 @@ services:
       -volume.max=100
       -master.volumeSizeLimitMB=1024
       -dir=/data
-    ports:
-      - "8333:8333"
-      - "9333:9333"
-      - "8888:8888"
     volumes:
       - "./compose/seaweedfs/s3.json:/etc/seaweedfs/s3.json:ro"
       - "seaweedfs-data:/data:rw"
 
   chrome:
     image: "chromedp/headless-shell@sha256:b24482ae166e2c67135f5a8ba9575c257efdd8e2fd6b2e931f9d88ede3d72f3b"
-    ports:
-      - "9222:9222"
     command:
       - "--headless"
       - "--disable-gpu"
@@ -109,7 +98,6 @@ services:
       - "--disable-background-networking"
       - "--disable-background-timer-throttling"
       - "--disable-extensions"
-
 
 volumes:
   probo-data:
