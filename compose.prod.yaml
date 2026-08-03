@@ -164,6 +164,12 @@ services:
 
       PROBOD_CHROME_DP_ADDR: "chrome:9222"
 
+      # Register the default provider so the app can start without a paid API key.
+      # Replace this placeholder later to enable AI features.
+      PROBOD_OPENAI_API_KEY: "disabled-for-initial-hosting"
+      PROBOD_AGENT_DEFAULT_PROVIDER: "openai"
+      PROBOD_AGENT_DEFAULT_MODEL_NAME: "gpt-4o"
+
     ports:
       - "8090:8080"
     volumes:
