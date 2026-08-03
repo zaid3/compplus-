@@ -64,7 +64,7 @@ func (tca *CompliancePortalAccess) AuthorizationAttributes(
 	conn pg.Querier,
 	resourceIDs []gid.GID,
 ) (policy.AttributesByID, error) {
-	q := `SELECT id, organization_id FROM trust_center_accesses WHERE id = ANY(@resource_ids::text[])`
+	q := `SELECT id, organization_id FROM cp_accesses WHERE id = ANY(@resource_ids::text[])`
 
 	args := pgx.StrictNamedArgs{
 		"resource_ids": resourceIDs,
@@ -115,7 +115,7 @@ SELECT
 	created_at,
 	updated_at
 FROM
-	trust_center_accesses
+	cp_accesses
 WHERE
 	%s
 	AND id = @access_id
@@ -164,7 +164,7 @@ SELECT
 	created_at,
 	updated_at
 FROM
-	trust_center_accesses
+	cp_accesses
 WHERE
 	%s
 	AND trust_center_id = @trust_center_id
@@ -199,13 +199,61 @@ LIMIT 1;
 	return nil
 }
 
+func (tca *CompliancePortalAccess) LoadByElectronicSignatureID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	electronicSignatureID gid.GID,
+) error {
+	q := `
+SELECT
+	id,
+	organization_id,
+	tenant_id,
+	identity_id,
+	trust_center_id,
+	electronic_signature_id,
+	created_at,
+	updated_at
+FROM
+	cp_accesses
+WHERE
+	%s
+	AND electronic_signature_id = @electronic_signature_id
+LIMIT 1;
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"electronic_signature_id": electronicSignatureID}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query compliance portal access by electronic signature: %w", err)
+	}
+
+	access, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[CompliancePortalAccess])
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrResourceNotFound
+		}
+
+		return fmt.Errorf("cannot collect compliance portal access by electronic signature: %w", err)
+	}
+
+	*tca = access
+
+	return nil
+}
+
 func (tca *CompliancePortalAccess) Insert(
 	ctx context.Context,
 	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
-INSERT INTO trust_center_accesses (
+INSERT INTO cp_accesses (
 	id,
 	tenant_id,
 	organization_id,
@@ -240,7 +288,7 @@ INSERT INTO trust_center_accesses (
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
 		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
-			if pgErr.Code == "23505" && pgErr.ConstraintName == "trust_center_accesses_trust_center_id_email_key" {
+			if pgErr.Code == "23505" && pgErr.ConstraintName == "cp_accesses_identity_id_cp_id_key" {
 				return ErrResourceAlreadyExists
 			}
 		}
@@ -257,7 +305,7 @@ func (tca *CompliancePortalAccess) Update(
 	scope Scoper,
 ) error {
 	q := `
-UPDATE trust_center_accesses SET
+UPDATE cp_accesses SET
 	updated_at = @updated_at,
 	electronic_signature_id = @electronic_signature_id
 WHERE
@@ -288,7 +336,7 @@ func (tca *CompliancePortalAccess) Delete(
 	scope Scoper,
 ) error {
 	q := `
-DELETE FROM trust_center_accesses
+DELETE FROM cp_accesses
 WHERE
 	%s
 	AND id = @id
@@ -327,7 +375,7 @@ SELECT
 	created_at,
 	updated_at
 FROM
-	trust_center_accesses
+	cp_accesses
 WHERE
 	%s
 	AND trust_center_id = @trust_center_id

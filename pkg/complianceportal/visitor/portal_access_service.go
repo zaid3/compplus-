@@ -339,7 +339,7 @@ func (s *Service) GetPortalFileAccess(
 func (s *Service) GrantPortalAccessByIDs(
 	ctx context.Context,
 	scope coredata.Scoper,
-	organizationID gid.GID,
+	compliancePortalID gid.GID,
 	email mail.Addr,
 	documentIDs []gid.GID,
 	reportIDs []gid.GID,
@@ -349,8 +349,8 @@ func (s *Service) GrantPortalAccessByIDs(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			compliancePage := &coredata.CompliancePortal{}
-			if err := compliancePage.LoadByOrganizationID(ctx, tx, scope, organizationID); err != nil {
-				return fmt.Errorf("cannot load compliance page: %w", err)
+			if err := loadPortalByID(ctx, tx, scope, compliancePortalID, compliancePage); err != nil {
+				return err
 			}
 
 			identity := &coredata.Identity{}
@@ -368,40 +368,39 @@ func (s *Service) GrantPortalAccessByIDs(
 				if errors.Is(err, coredata.ErrResourceNotFound) {
 					return ErrUserNotFound
 				}
+
+				return fmt.Errorf("cannot load profile: %w", err)
 			}
 
 			if profile.State != coredata.ProfileStateActive {
 				return ErrUserInactive
 			}
 
-			shouldSendEmail := profile.State != coredata.ProfileStateActive
 			now := time.Now()
+			shouldSendEmail := false
 
 			if len(documentIDs) > 0 {
+				shouldSendEmail = true
 				if err := coredata.GrantByDocumentIDs(ctx, tx, scope, access.ID, documentIDs, now); err != nil {
 					return fmt.Errorf("cannot grant document accesses: %w", err)
 				}
 			}
 
 			if len(reportIDs) > 0 {
+				shouldSendEmail = true
 				if err := coredata.GrantByReportFileIDs(ctx, tx, scope, access.ID, reportIDs, now); err != nil {
 					return fmt.Errorf("cannot grant report accesses: %w", err)
 				}
 			}
 
 			if len(fileIDs) > 0 {
+				shouldSendEmail = true
 				if err := coredata.GrantByCompliancePortalFileIDs(ctx, tx, scope, access.ID, fileIDs, now); err != nil {
 					return fmt.Errorf("cannot grant compliance page file accesses: %w", err)
 				}
 			}
 
 			if shouldSendEmail {
-				profile.MarkActive(now)
-
-				if err := profile.Update(ctx, tx, scope); err != nil {
-					return fmt.Errorf("cannot update profile: %w", err)
-				}
-
 				if err := s.sendPortalAccessEmail(ctx, tx, scope, access, profile); err != nil {
 					return fmt.Errorf("cannot send access email: %w", err)
 				}
@@ -464,7 +463,7 @@ func (s *Service) sendPortalAccessEmail(
 func (s *Service) RejectOrRevokePortalAccessByIDs(
 	ctx context.Context,
 	scope coredata.Scoper,
-	organizationID gid.GID,
+	compliancePortalID gid.GID,
 	email mail.Addr,
 	documentIDs []gid.GID,
 	reportIDs []gid.GID,
@@ -474,8 +473,8 @@ func (s *Service) RejectOrRevokePortalAccessByIDs(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			compliancePage := &coredata.CompliancePortal{}
-			if err := compliancePage.LoadByOrganizationID(ctx, tx, scope, organizationID); err != nil {
-				return fmt.Errorf("cannot load compliance page: %w", err)
+			if err := loadPortalByID(ctx, tx, scope, compliancePortalID, compliancePage); err != nil {
+				return err
 			}
 
 			identity := &coredata.Identity{}

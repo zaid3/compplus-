@@ -83,7 +83,7 @@ func (r *Resolver) ListThirdPartiesTool(ctx context.Context, req *mcp.CallToolRe
 		level = new(1)
 	}
 
-	thirdPartyFilter := coredata.NewThirdPartyFilter(nil, level, nil, nil, nil)
+	thirdPartyFilter := coredata.NewThirdPartyFilter(level, nil, nil, nil)
 
 	page, err := prb.ThirdParties.ListForOrganizationID(ctx, scope, input.OrganizationID, cursor, thirdPartyFilter)
 	if err != nil {
@@ -1540,14 +1540,13 @@ func (r *Resolver) UpdateAuditTool(ctx context.Context, req *mcp.CallToolRequest
 	audit, err := svc.Audits.Update(
 		ctx, scope,
 		&probo.UpdateAuditRequest{
-			ID:                         input.ID,
-			Name:                       UnwrapOmittable(input.Name),
-			ValidFrom:                  input.ValidFrom,
-			ValidUntil:                 input.ValidUntil,
-			AuditStartDate:             input.AuditStartDate,
-			AuditEndDate:               input.AuditEndDate,
-			State:                      input.State,
-			CompliancePortalVisibility: input.CompliancePortalVisibility,
+			ID:             input.ID,
+			Name:           UnwrapOmittable(input.Name),
+			ValidFrom:      input.ValidFrom,
+			ValidUntil:     input.ValidUntil,
+			AuditStartDate: input.AuditStartDate,
+			AuditEndDate:   input.AuditEndDate,
+			State:          input.State,
 		},
 	)
 	if err != nil {
@@ -2259,11 +2258,6 @@ func (r *Resolver) AddDocumentTool(ctx context.Context, req *mcp.CallToolRequest
 
 	svc := r.proboSvc
 
-	var compliancePortalVisibility *coredata.CompliancePortalVisibility
-	if input.CompliancePortalVisibility != nil {
-		compliancePortalVisibility = input.CompliancePortalVisibility
-	}
-
 	contentJSON, err := markdownToProseMirrorJSON(input.Content)
 	if err != nil {
 		panic(fmt.Errorf("cannot convert markdown to prosemirror: %w", err))
@@ -2272,13 +2266,12 @@ func (r *Resolver) AddDocumentTool(ctx context.Context, req *mcp.CallToolRequest
 	document, documentVersion, err := svc.Documents.Create(
 		ctx, scope,
 		probo.CreateDocumentRequest{
-			OrganizationID:             input.OrganizationID,
-			Title:                      input.Title,
-			Content:                    contentJSON,
-			Classification:             input.Classification,
-			DocumentType:               input.DocumentType,
-			CompliancePortalVisibility: compliancePortalVisibility,
-			DefaultApproverIDs:         input.DefaultApproverIds,
+			OrganizationID:     input.OrganizationID,
+			Title:              input.Title,
+			Content:            contentJSON,
+			Classification:     input.Classification,
+			DocumentType:       input.DocumentType,
+			DefaultApproverIDs: input.DefaultApproverIds,
 		},
 	)
 	if err != nil {
@@ -2315,13 +2308,12 @@ func (r *Resolver) UpdateDocumentTool(ctx context.Context, req *mcp.CallToolRequ
 	document, documentVersion, _, err := svc.Documents.Update(
 		ctx, scope,
 		probo.UpdateDocumentRequest{
-			DocumentID:                 input.ID,
-			Title:                      input.Title,
-			Content:                    content,
-			Classification:             input.Classification,
-			DocumentType:               input.DocumentType,
-			CompliancePortalVisibility: input.CompliancePortalVisibility,
-			DefaultApproverIDs:         defaultApproverIDs,
+			DocumentID:         input.ID,
+			Title:              input.Title,
+			Content:            content,
+			Classification:     input.Classification,
+			DocumentType:       input.DocumentType,
+			DefaultApproverIDs: defaultApproverIDs,
 		},
 	)
 	if err != nil {
@@ -4927,16 +4919,16 @@ func (r *Resolver) DeleteRightsRequestTool(ctx context.Context, req *mcp.CallToo
 }
 
 // GetCompliancePortalTool handles the getCompliancePortal tool
-// Get the compliance portal for an organization
+// Get a compliance portal
 func (r *Resolver) GetCompliancePortalTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetCompliancePortalInput) (*mcp.CallToolResult, types.GetCompliancePortalOutput, error) {
-	scope, err := r.Authorize(ctx, input.OrganizationID, management.ActionCompliancePortalGet)
+	scope, err := r.Authorize(ctx, input.CompliancePortalID, management.ActionCompliancePortalGet)
 	if err != nil {
 		return nil, types.GetCompliancePortalOutput{}, err
 	}
 
 	prb := r.management
 
-	compliancePortal, err := prb.GetByOrganizationID(ctx, scope, input.OrganizationID)
+	compliancePortal, err := prb.Get(ctx, scope, input.CompliancePortalID)
 	if err != nil {
 		return nil, types.GetCompliancePortalOutput{}, fmt.Errorf("cannot get compliance portal: %w", err)
 	}
@@ -5145,7 +5137,7 @@ func (r *Resolver) DeleteCompliancePortalReferenceTool(ctx context.Context, req 
 // ListCompliancePortalFilesTool handles the listCompliancePortalFiles tool
 // List all files for the compliance portal
 func (r *Resolver) ListCompliancePortalFilesTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListCompliancePortalFilesInput) (*mcp.CallToolResult, types.ListCompliancePortalFilesOutput, error) {
-	scope, err := r.Authorize(ctx, input.OrganizationID, management.ActionCompliancePortalFileList)
+	scope, err := r.Authorize(ctx, input.CompliancePortalID, management.ActionCompliancePortalFileList)
 	if err != nil {
 		return nil, types.ListCompliancePortalFilesOutput{}, err
 	}
@@ -5167,7 +5159,7 @@ func (r *Resolver) ListCompliancePortalFilesTool(ctx context.Context, req *mcp.C
 	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
 	filter := coredata.NewCompliancePortalFileFilter()
 
-	p, err := prb.ListFilesForOrganizationID(ctx, scope, input.OrganizationID, cursor, filter)
+	p, err := prb.ListFilesForCompliancePortalID(ctx, scope, input.CompliancePortalID, cursor, filter)
 	if err != nil {
 		return nil, types.ListCompliancePortalFilesOutput{}, fmt.Errorf("cannot list compliance portal files: %w", err)
 	}
@@ -8149,4 +8141,306 @@ func (r *Resolver) DeleteCompliancePortalFrameworkTool(ctx context.Context, req 
 	return nil, types.DeleteCompliancePortalFrameworkOutput{
 		DeletedCompliancePortalFrameworkID: input.ID,
 	}, nil
+}
+
+func (r *Resolver) ListCompliancePortalsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListCompliancePortalsInput) (*mcp.CallToolResult, types.ListCompliancePortalsOutput, error) {
+	scope, err := r.Authorize(ctx, input.OrganizationID, management.ActionCompliancePortalList)
+	if err != nil {
+		return nil, types.ListCompliancePortalsOutput{}, err
+	}
+
+	pageOrderBy := page.OrderBy[coredata.CompliancePortalOrderField]{
+		Field:     coredata.CompliancePortalOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if input.OrderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.CompliancePortalOrderField]{
+			Field:     input.OrderBy.Field,
+			Direction: input.OrderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
+
+	portalPage, err := r.management.ListForOrganizationID(ctx, scope, input.OrganizationID, cursor)
+	if err != nil {
+		return nil, types.ListCompliancePortalsOutput{}, fmt.Errorf("cannot list compliance portals: %w", err)
+	}
+
+	portals := make([]*types.CompliancePortal, 0, len(portalPage.Data))
+	for _, portal := range portalPage.Data {
+		portals = append(portals, types.NewCompliancePortal(portal))
+	}
+
+	return nil, types.NewListCompliancePortalsOutput(portals, portalPage), nil
+}
+func (r *Resolver) CreateCompliancePortalTool(ctx context.Context, req *mcp.CallToolRequest, input *types.CreateCompliancePortalInput) (*mcp.CallToolResult, types.CreateCompliancePortalOutput, error) {
+	scope, err := r.Authorize(ctx, input.OrganizationID, management.ActionCompliancePortalCreate)
+	if err != nil {
+		return nil, types.CreateCompliancePortalOutput{}, err
+	}
+
+	portal, err := r.management.Create(
+		ctx,
+		scope,
+		&management.CreateCompliancePortalRequest{
+			OrganizationID: input.OrganizationID,
+			EntityName:     input.EntityName,
+		},
+	)
+	if err != nil {
+		return nil, types.CreateCompliancePortalOutput{}, fmt.Errorf("cannot create compliance portal: %w", err)
+	}
+
+	return nil, types.CreateCompliancePortalOutput{
+		CompliancePortal: types.NewCompliancePortal(portal),
+	}, nil
+}
+func (r *Resolver) DeleteCompliancePortalTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteCompliancePortalInput) (*mcp.CallToolResult, types.DeleteCompliancePortalOutput, error) {
+	scope, err := r.Authorize(ctx, input.CompliancePortalID, management.ActionCompliancePortalDelete)
+	if err != nil {
+		return nil, types.DeleteCompliancePortalOutput{}, err
+	}
+
+	if err := r.management.Delete(ctx, scope, input.CompliancePortalID); err != nil {
+		return nil, types.DeleteCompliancePortalOutput{}, fmt.Errorf("cannot delete compliance portal: %w", err)
+	}
+
+	return nil, types.DeleteCompliancePortalOutput{
+		DeletedCompliancePortalID: input.CompliancePortalID,
+	}, nil
+}
+func (r *Resolver) UpdateCompliancePortalDocumentVisibilityTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateCompliancePortalDocumentVisibilityInput) (*mcp.CallToolResult, types.UpdateCompliancePortalDocumentVisibilityOutput, error) {
+	scope, err := r.Authorize(ctx, input.CompliancePortalID, management.ActionCompliancePortalUpdate)
+	if err != nil {
+		return nil, types.UpdateCompliancePortalDocumentVisibilityOutput{}, err
+	}
+
+	err = r.management.UpdateDocumentVisibility(
+		ctx,
+		scope,
+		&management.UpdateCompliancePortalDocumentVisibilityRequest{
+			CompliancePortalID:         input.CompliancePortalID,
+			DocumentID:                 input.DocumentID,
+			CompliancePortalVisibility: input.CompliancePortalVisibility,
+		},
+	)
+	if err != nil {
+		return nil, types.UpdateCompliancePortalDocumentVisibilityOutput{}, fmt.Errorf("cannot update compliance portal document visibility: %w", err)
+	}
+
+	entry, err := r.management.GetDocument(ctx, scope, input.CompliancePortalID, input.DocumentID)
+	if err != nil {
+		return nil, types.UpdateCompliancePortalDocumentVisibilityOutput{}, fmt.Errorf("cannot get compliance portal document: %w", err)
+	}
+
+	return nil, types.UpdateCompliancePortalDocumentVisibilityOutput{
+		CatalogDocument: types.NewCompliancePortalCatalogDocument(entry),
+	}, nil
+}
+func (r *Resolver) DeleteCompliancePortalDocumentTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteCompliancePortalDocumentInput) (*mcp.CallToolResult, types.DeleteCompliancePortalDocumentOutput, error) {
+	scope, err := r.Authorize(ctx, input.ID, management.ActionCompliancePortalUpdate)
+	if err != nil {
+		return nil, types.DeleteCompliancePortalDocumentOutput{}, err
+	}
+
+	err = r.management.DeleteDocument(
+		ctx,
+		scope,
+		&management.DeleteCompliancePortalDocumentRequest{ID: input.ID},
+	)
+	if err != nil {
+		return nil, types.DeleteCompliancePortalDocumentOutput{}, fmt.Errorf("cannot delete compliance portal document: %w", err)
+	}
+
+	return nil, types.DeleteCompliancePortalDocumentOutput{
+		DeletedCompliancePortalDocumentID: input.ID,
+	}, nil
+}
+func (r *Resolver) UpdateCompliancePortalAuditVisibilityTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateCompliancePortalAuditVisibilityInput) (*mcp.CallToolResult, types.UpdateCompliancePortalAuditVisibilityOutput, error) {
+	scope, err := r.Authorize(ctx, input.CompliancePortalID, management.ActionCompliancePortalUpdate)
+	if err != nil {
+		return nil, types.UpdateCompliancePortalAuditVisibilityOutput{}, err
+	}
+
+	err = r.management.UpdateAuditVisibility(
+		ctx,
+		scope,
+		&management.UpdateCompliancePortalAuditVisibilityRequest{
+			CompliancePortalID:         input.CompliancePortalID,
+			AuditID:                    input.AuditID,
+			CompliancePortalVisibility: input.CompliancePortalVisibility,
+		},
+	)
+	if err != nil {
+		return nil, types.UpdateCompliancePortalAuditVisibilityOutput{}, fmt.Errorf("cannot update compliance portal audit visibility: %w", err)
+	}
+
+	entry, err := r.management.GetAudit(ctx, scope, input.CompliancePortalID, input.AuditID)
+	if err != nil {
+		return nil, types.UpdateCompliancePortalAuditVisibilityOutput{}, fmt.Errorf("cannot get compliance portal audit: %w", err)
+	}
+
+	return nil, types.UpdateCompliancePortalAuditVisibilityOutput{
+		CatalogAudit: types.NewCompliancePortalCatalogAudit(entry, nil),
+	}, nil
+}
+func (r *Resolver) DeleteCompliancePortalAuditTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteCompliancePortalAuditInput) (*mcp.CallToolResult, types.DeleteCompliancePortalAuditOutput, error) {
+	scope, err := r.Authorize(ctx, input.ID, management.ActionCompliancePortalUpdate)
+	if err != nil {
+		return nil, types.DeleteCompliancePortalAuditOutput{}, err
+	}
+
+	err = r.management.DeleteAudit(
+		ctx,
+		scope,
+		&management.DeleteCompliancePortalAuditRequest{ID: input.ID},
+	)
+	if err != nil {
+		return nil, types.DeleteCompliancePortalAuditOutput{}, fmt.Errorf("cannot delete compliance portal audit: %w", err)
+	}
+
+	return nil, types.DeleteCompliancePortalAuditOutput{
+		DeletedCompliancePortalAuditID: input.ID,
+	}, nil
+}
+func (r *Resolver) UpdateCompliancePortalThirdPartyPublishedTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateCompliancePortalThirdPartyPublishedInput) (*mcp.CallToolResult, types.UpdateCompliancePortalThirdPartyPublishedOutput, error) {
+	scope, err := r.Authorize(ctx, input.CompliancePortalID, management.ActionCompliancePortalUpdate)
+	if err != nil {
+		return nil, types.UpdateCompliancePortalThirdPartyPublishedOutput{}, err
+	}
+
+	err = r.management.UpdateThirdPartyPublished(
+		ctx,
+		scope,
+		&management.UpdateCompliancePortalThirdPartyPublishedRequest{
+			CompliancePortalID: input.CompliancePortalID,
+			ThirdPartyID:       input.ThirdPartyID,
+			Published:          input.Published,
+		},
+	)
+	if err != nil {
+		return nil, types.UpdateCompliancePortalThirdPartyPublishedOutput{}, fmt.Errorf("cannot update compliance portal third party: %w", err)
+	}
+
+	entry, err := r.management.GetThirdParty(ctx, scope, input.CompliancePortalID, input.ThirdPartyID)
+	if err != nil {
+		return nil, types.UpdateCompliancePortalThirdPartyPublishedOutput{}, fmt.Errorf("cannot get compliance portal third party: %w", err)
+	}
+
+	return nil, types.UpdateCompliancePortalThirdPartyPublishedOutput{
+		CatalogThirdParty: types.NewCompliancePortalCatalogThirdParty(entry),
+	}, nil
+}
+func (r *Resolver) DeleteCompliancePortalThirdPartyTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteCompliancePortalThirdPartyInput) (*mcp.CallToolResult, types.DeleteCompliancePortalThirdPartyOutput, error) {
+	scope, err := r.Authorize(ctx, input.ID, management.ActionCompliancePortalUpdate)
+	if err != nil {
+		return nil, types.DeleteCompliancePortalThirdPartyOutput{}, err
+	}
+
+	err = r.management.DeleteThirdParty(
+		ctx,
+		scope,
+		&management.DeleteCompliancePortalThirdPartyRequest{ID: input.ID},
+	)
+	if err != nil {
+		return nil, types.DeleteCompliancePortalThirdPartyOutput{}, fmt.Errorf("cannot delete compliance portal third party: %w", err)
+	}
+
+	return nil, types.DeleteCompliancePortalThirdPartyOutput{
+		DeletedCompliancePortalThirdPartyID: input.ID,
+	}, nil
+}
+func (r *Resolver) ListCompliancePortalDocumentsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListCompliancePortalDocumentsInput) (*mcp.CallToolResult, types.ListCompliancePortalDocumentsOutput, error) {
+	scope, err := r.Authorize(ctx, input.CompliancePortalID, management.ActionCompliancePortalGet)
+	if err != nil {
+		return nil, types.ListCompliancePortalDocumentsOutput{}, err
+	}
+
+	pageOrderBy := page.OrderBy[coredata.DocumentOrderField]{
+		Field:     coredata.DocumentOrderFieldTitle,
+		Direction: page.OrderDirectionAsc,
+	}
+	if input.OrderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.DocumentOrderField]{
+			Field:     input.OrderBy.Field,
+			Direction: input.OrderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
+
+	entryPage, err := r.management.ListDocuments(ctx, scope, input.CompliancePortalID, cursor)
+	if err != nil {
+		return nil, types.ListCompliancePortalDocumentsOutput{}, fmt.Errorf("cannot list compliance portal documents: %w", err)
+	}
+
+	entries := make([]*types.CompliancePortalCatalogDocument, 0, len(entryPage.Data))
+	for _, entry := range entryPage.Data {
+		entries = append(entries, types.NewCompliancePortalCatalogDocument(entry))
+	}
+
+	return nil, types.NewListCompliancePortalDocumentsOutput(entries, entryPage), nil
+}
+func (r *Resolver) ListCompliancePortalAuditsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListCompliancePortalAuditsInput) (*mcp.CallToolResult, types.ListCompliancePortalAuditsOutput, error) {
+	scope, err := r.Authorize(ctx, input.CompliancePortalID, management.ActionCompliancePortalGet)
+	if err != nil {
+		return nil, types.ListCompliancePortalAuditsOutput{}, err
+	}
+
+	pageOrderBy := page.OrderBy[coredata.AuditOrderField]{
+		Field:     coredata.AuditOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if input.OrderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.AuditOrderField]{
+			Field:     input.OrderBy.Field,
+			Direction: input.OrderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
+
+	entryPage, err := r.management.ListAudits(ctx, scope, input.CompliancePortalID, cursor)
+	if err != nil {
+		return nil, types.ListCompliancePortalAuditsOutput{}, fmt.Errorf("cannot list compliance portal audits: %w", err)
+	}
+
+	entries := make([]*types.CompliancePortalCatalogAudit, 0, len(entryPage.Data))
+	for _, entry := range entryPage.Data {
+		entries = append(entries, types.NewCompliancePortalCatalogAudit(entry, nil))
+	}
+
+	return nil, types.NewListCompliancePortalAuditsOutput(entries, entryPage), nil
+}
+func (r *Resolver) ListCompliancePortalThirdPartiesTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListCompliancePortalThirdPartiesInput) (*mcp.CallToolResult, types.ListCompliancePortalThirdPartiesOutput, error) {
+	scope, err := r.Authorize(ctx, input.CompliancePortalID, management.ActionCompliancePortalGet)
+	if err != nil {
+		return nil, types.ListCompliancePortalThirdPartiesOutput{}, err
+	}
+
+	pageOrderBy := page.OrderBy[coredata.ThirdPartyOrderField]{
+		Field:     coredata.ThirdPartyOrderFieldName,
+		Direction: page.OrderDirectionAsc,
+	}
+	if input.OrderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.ThirdPartyOrderField]{
+			Field:     input.OrderBy.Field,
+			Direction: input.OrderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
+
+	entryPage, err := r.management.ListThirdParties(ctx, scope, input.CompliancePortalID, cursor)
+	if err != nil {
+		return nil, types.ListCompliancePortalThirdPartiesOutput{}, fmt.Errorf("cannot list compliance portal third parties: %w", err)
+	}
+
+	entries := make([]*types.CompliancePortalCatalogThirdParty, 0, len(entryPage.Data))
+	for _, entry := range entryPage.Data {
+		entries = append(entries, types.NewCompliancePortalCatalogThirdParty(entry))
+	}
+
+	return nil, types.NewListCompliancePortalThirdPartiesOutput(entries, entryPage), nil
 }
