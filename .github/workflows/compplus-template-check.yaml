@@ -11,6 +11,8 @@ on:
       - "pkg/server/api/console/v1/template_pack_helpers.go"
       - "pkg/server/api/console/v1/template_pack_resolvers.go"
       - "pkg/server/api/console/v1/types/template_pack.go"
+      - "apps/console/src/pages/organizations/frameworks/FrameworksPage.tsx"
+      - "apps/console/src/pages/organizations/frameworks/dialogs/CorePackSetupDialog.tsx"
       - ".github/workflows/compplus-template-check.yaml"
   workflow_dispatch:
 
@@ -21,13 +23,17 @@ jobs:
   test:
     name: "compile-and-test-template-installer"
     runs-on: "ubuntu-latest"
-    timeout-minutes: 20
+    timeout-minutes: 30
     steps:
       - uses: "actions/checkout@v4"
       - uses: "actions/setup-go@v5"
         with:
           go-version-file: "go.mod"
           cache: true
+      - uses: "actions/setup-node@v4"
+        with:
+          node-version: "24"
+          cache: "npm"
       - name: "Show formatting differences"
         continue-on-error: true
         run: |
@@ -70,3 +76,9 @@ jobs:
         run: "go generate ./pkg/server/api/console/v1"
       - name: "Compile template pack GraphQL API"
         run: "go test ./pkg/server/api/console/v1 -run '^$'"
+      - name: "Install frontend dependencies"
+        run: "npm ci"
+      - name: "Generate Relay artifacts"
+        run: "npm run relay"
+      - name: "Type-check Fast Start wizard"
+        run: "npm -w @probo/console run check"
