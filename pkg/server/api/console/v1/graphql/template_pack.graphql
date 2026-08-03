@@ -1,0 +1,87 @@
+extend type Mutation {
+    previewTemplatePack(
+        input: PreviewTemplatePackInput!
+    ): PreviewTemplatePackPayload!
+    installTemplatePack(
+        input: InstallTemplatePackInput!
+    ): InstallTemplatePackPayload!
+}
+
+input TemplatePackAnswersInput
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.TemplatePackAnswersInput"
+    ) {
+    legalName: String!
+    tradingName: String
+    address: String!
+    services: String!
+    locations: String!
+    employeeCount: Int!
+    executiveOwner: String!
+    systemManager: String!
+    securityOwner: String
+    privacyOwner: String
+    qualityOwner: String
+    environmentalOwner: String
+    aiOwner: String @goField(name: "AIOwner")
+    certificationTarget: String
+    reviewMonth: String!
+    usesSuppliers: Boolean!
+    usesAI: Boolean! @goField(name: "UsesAI")
+    processesPersonalData: Boolean!
+    environmentalImpacts: Boolean!
+    selectedStandards: [String!]!
+}
+
+input PreviewTemplatePackInput
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.PreviewTemplatePackInput"
+    ) {
+    organizationId: ID! @goField(name: "OrganizationID")
+    packId: String! @goField(name: "PackID")
+    answers: TemplatePackAnswersInput!
+}
+
+input InstallTemplatePackInput
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.InstallTemplatePackInput"
+    ) {
+    organizationId: ID! @goField(name: "OrganizationID")
+    packId: String! @goField(name: "PackID")
+    answers: TemplatePackAnswersInput!
+}
+
+type TemplatePackPreview
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.TemplatePackPreview"
+    ) {
+    packId: String! @goField(name: "PackID")
+    version: String!
+    frameworkName: String!
+    controlsCount: Int!
+    measuresCount: Int!
+    documentsCount: Int!
+    tasksCount: Int!
+    evidenceRequestsCount: Int!
+    confirmationFieldsCount: Int!
+}
+
+type PreviewTemplatePackPayload
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.PreviewTemplatePackPayload"
+    ) {
+    preview: TemplatePackPreview!
+}
+
+type InstallTemplatePackPayload
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.InstallTemplatePackPayload"
+    ) {
+    packId: String! @goField(name: "PackID")
+    version: String!
+    framework: Framework!
+    measuresCreated: Int!
+    documentsCreated: Int!
+    tasksCreated: Int!
+    evidenceRequestsCreated: Int!
+}
