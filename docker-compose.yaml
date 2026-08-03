@@ -2,13 +2,12 @@ services:
   compplus:
     image: "artifact.probo.inc/probo/probo:latest"
     restart: unless-stopped
+    ports:
+      - "8080:8080"
     environment:
-      SERVICE_URL_COMPPLUS_8080:
-      SERVICE_FQDN_COMPPLUS:
-
-      PROBOD_BASE_URL: ${SERVICE_URL_COMPPLUS_8080}
+      PROBOD_BASE_URL: "http://72.61.16.251:8080"
       PROBOD_API_ADDR: ":8080"
-      PROBOD_API_CORS_ALLOWED_ORIGINS: ${SERVICE_URL_COMPPLUS_8080}
+      PROBOD_API_CORS_ALLOWED_ORIGINS: "http://72.61.16.251:8080"
 
       PROBOD_ENCRYPTION_KEY: ${SERVICE_REALBASE64_32_ENCRYPTIONKEY}
       PROBOD_AUTH_COOKIE_SECRET: ${SERVICE_PASSWORD_64_COOKIESECRET}
@@ -16,13 +15,13 @@ services:
       PROBOD_TRUST_AUTH_TOKEN_SECRET: ${SERVICE_PASSWORD_64_TRUSTTOKEN}
 
       PROBOD_AUTH_COOKIE_NAME: "COMPPLUS_SSID"
-      PROBOD_AUTH_COOKIE_DOMAIN: ${SERVICE_FQDN_COMPPLUS}
-      PROBOD_AUTH_COOKIE_SECURE: ${PROBOD_AUTH_COOKIE_SECURE:-false}
+      PROBOD_AUTH_COOKIE_DOMAIN: "72.61.16.251"
+      PROBOD_AUTH_COOKIE_SECURE: "false"
       PROBOD_AUTH_COOKIE_SAMESITE: "lax"
-      PROBOD_AUTH_DISABLE_SIGNUP: ${PROBOD_AUTH_DISABLE_SIGNUP:-false}
+      PROBOD_AUTH_DISABLE_SIGNUP: "false"
 
       PROBOD_PG_ADDR: "postgres:5432"
-      PROBOD_PG_USERNAME: "postgres"
+      PROBOD_PG_USERNAME: "probod"
       PROBOD_PG_PASSWORD: ${SERVICE_PASSWORD_64_POSTGRES}
       PROBOD_PG_DATABASE: "probod"
       PROBOD_PG_POOL_SIZE: "100"
@@ -41,21 +40,18 @@ services:
 
       PROBOD_TRUST_CENTER_HTTP_ADDR: ":10080"
       PROBOD_TRUST_CENTER_HTTPS_ADDR: ":10443"
+      PROBOD_TRUST_CENTER_BASE_DOMAIN: "72.61.16.251"
 
-      PROBOD_SMTP_ADDR: ${PROBOD_SMTP_ADDR:-}
-      PROBOD_SMTP_USER: ${PROBOD_SMTP_USER:-}
-      PROBOD_SMTP_PASSWORD: ${PROBOD_SMTP_PASSWORD:-}
-      PROBOD_SMTP_TLS_REQUIRED: ${PROBOD_SMTP_TLS_REQUIRED:-false}
-      PROBOD_MAILER_SENDER_NAME: ${PROBOD_MAILER_SENDER_NAME:-CompPlus}
-      PROBOD_MAILER_SENDER_EMAIL: ${PROBOD_MAILER_SENDER_EMAIL:-no-reply@example.com}
+      PROBOD_SMTP_ADDR: ""
+      PROBOD_SMTP_TLS_REQUIRED: "false"
+      PROBOD_MAILER_SENDER_NAME: "CompPlus"
+      PROBOD_MAILER_SENDER_EMAIL: "no-reply@example.com"
 
-      PROBOD_OPENAI_API_KEY: ${PROBOD_OPENAI_API_KEY:-}
-      PROBOD_ANTHROPIC_API_KEY: ${PROBOD_ANTHROPIC_API_KEY:-}
-      PROBOD_AGENT_DEFAULT_PROVIDER: ${PROBOD_AGENT_DEFAULT_PROVIDER:-openai}
-      PROBOD_AGENT_DEFAULT_MODEL_NAME: ${PROBOD_AGENT_DEFAULT_MODEL_NAME:-gpt-4o}
+      PROBOD_OPENAI_API_KEY: ""
+      PROBOD_ANTHROPIC_API_KEY: ""
+      PROBOD_AGENT_DEFAULT_PROVIDER: "openai"
+      PROBOD_AGENT_DEFAULT_MODEL_NAME: "gpt-4o"
 
-    expose:
-      - "8080"
     volumes:
       - compplus-data:/data
     depends_on:
@@ -67,7 +63,7 @@ services:
         condition: service_started
 
   postgres:
-    image: "postgres@sha256:7ad98329d513dd497293b951c195ca354274a77f12ddbbbbf85e68a811823d72"
+    image: "postgres:17.4"
     restart: unless-stopped
     shm_size: "1g"
     command:
@@ -77,19 +73,22 @@ services:
       - -c
       - max_connections=200
     environment:
-      POSTGRES_USER: "postgres"
+      POSTGRES_USER: "probod"
       POSTGRES_PASSWORD: ${SERVICE_PASSWORD_64_POSTGRES}
+      POSTGRES_DB: "probod"
     volumes:
-      - ./compose/postgres:/docker-entrypoint-initdb.d:ro
       - postgres-data:/var/lib/postgresql/data
+    configs:
+      - source: postgres-init
+        target: /docker-entrypoint-initdb.d/01-compplus.sql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ["CMD-SHELL", "pg_isready -U probod -d probod"]
       interval: 5s
       timeout: 5s
       retries: 10
 
   seaweedfs:
-    image: "chrislusf/seaweedfs@sha256:cea8339d21dad1b200adce581dd7434d254b8f5975f142c3b4c930ba78647eef"
+    image: "chrislusf/seaweedfs:4.13"
     restart: unless-stopped
     command: >
       server
@@ -99,12 +98,14 @@ services:
       -volume.max=100
       -master.volumeSizeLimitMB=1024
       -dir=/data
+    configs:
+      - source: seaweed-s3
+        target: /etc/seaweedfs/s3.json
     volumes:
-      - ./compose/seaweedfs/s3.json:/etc/seaweedfs/s3.json:ro
       - seaweedfs-data:/data
 
   chrome:
-    image: "chromedp/headless-shell@sha256:b24482ae166e2c67135f5a8ba9575c257efdd8e2fd6b2e931f9d88ede3d72f3b"
+    image: "chromedp/headless-shell:140.0.7259.2"
     restart: unless-stopped
     command:
       - "--headless"
@@ -117,6 +118,27 @@ services:
       - "--disable-background-networking"
       - "--disable-background-timer-throttling"
       - "--disable-extensions"
+
+configs:
+  postgres-init:
+    content: |
+      ALTER DATABASE probod SET probo.trust_center_base_domain TO '72.61.16.251';
+  seaweed-s3:
+    content: |
+      {
+        "identities": [
+          {
+            "name": "probod",
+            "credentials": [
+              {
+                "accessKey": "probod",
+                "secretKey": "thisisnotasecret"
+              }
+            ],
+            "actions": ["Admin", "Read", "Write", "List", "Tagging", "Lock"]
+          }
+        ]
+      }
 
 volumes:
   compplus-data:
