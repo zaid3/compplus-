@@ -157,7 +157,7 @@ export default function FrameworksPage(props: Props) {
       <CorePackSetupDialog
         ref={corePackDialogRef}
         organizationId={data.organization.id!}
-        organizationName=""
+        organizationName={data.organization.name}
       />
       <PageHeader
         title={t("frameworksPage.title")}
