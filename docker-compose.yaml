@@ -3,11 +3,11 @@ services:
     image: "artifact.probo.inc/probo/probo:latest"
     restart: unless-stopped
     ports:
-      - "8080:8080"
+      - "8082:8080"
     environment:
-      PROBOD_BASE_URL: "http://72.61.16.251:8080"
+      PROBOD_BASE_URL: "http://72.61.16.251:8082"
       PROBOD_API_ADDR: ":8080"
-      PROBOD_API_CORS_ALLOWED_ORIGINS: "http://72.61.16.251:8080"
+      PROBOD_API_CORS_ALLOWED_ORIGINS: "http://72.61.16.251:8082"
 
       PROBOD_ENCRYPTION_KEY: ${SERVICE_REALBASE64_32_ENCRYPTIONKEY}
       PROBOD_AUTH_COOKIE_SECRET: ${SERVICE_PASSWORD_64_COOKIESECRET}
