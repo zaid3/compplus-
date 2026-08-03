@@ -4,16 +4,23 @@ FROM node:24-bookworm AS frontend
 
 WORKDIR /src
 
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends make \
-    && rm -rf /var/lib/apt/lists/*
-
-COPY package.json package-lock.json ./
+COPY . .
 RUN npm ci
 
-COPY . .
-RUN make relay
-RUN npm run build
+RUN contrib/merge-graphql-schema.sh \
+      pkg/server/api/connect/v1/schema.graphql \
+      pkg/server/api/connect/v1/graphql \
+    && contrib/merge-graphql-schema.sh \
+      pkg/server/api/console/v1/schema.graphql \
+      pkg/server/api/console/v1/graphql \
+    && contrib/merge-graphql-schema.sh \
+      pkg/server/api/complianceportal/v1/schema.graphql \
+      pkg/server/api/complianceportal/v1/graphql \
+    && npm run relay
+
+RUN npm -w @probo/emails run build \
+    && npm -w @probo/console run build \
+    && npm -w @probo/compliance-portal run build
 
 FROM golang:1.26.5-bookworm AS backend
 
