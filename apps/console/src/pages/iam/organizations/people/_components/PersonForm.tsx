@@ -228,6 +228,12 @@ export function PersonForm(props: {
                 {watchedRole === "EMPLOYEE" && (
                   <p>{t("personForm.roleDescriptions.employee")}</p>
                 )}
+                {watchedRole === "COMPLIANCE_MANAGER" && (
+                  <p>{t("personForm.roleDescriptions.complianceManager")}</p>
+                )}
+                {watchedRole === "COMPLIANCE_ACCESS_MANAGER" && (
+                  <p>{t("personForm.roleDescriptions.complianceAccessManager")}</p>
+                )}
               </div>
             </>
           )}
