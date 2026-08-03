@@ -34,7 +34,7 @@ COPY --from=frontend /src/apps/console/dist ./apps/console/dist
 COPY --from=frontend /src/apps/compliance-portal/dist ./apps/compliance-portal/dist
 COPY --from=frontend /src/packages/emails/dist ./packages/emails/dist
 
-RUN go generate ./pkg/server/api/console/v1
+RUN go generate ./pkg/server/api/...
 RUN CGO_ENABLED=0 GOOS=linux go build \
       -trimpath \
       -ldflags="-s -w -X main.env=staging -X main.version=compplus-staging" \
