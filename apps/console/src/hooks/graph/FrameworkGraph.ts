@@ -34,6 +34,7 @@ export const frameworksQuery = graphql`
     organization: node(id: $organizationId) {
       ... on Organization {
         id
+        name
         canCreateFramework: permission(action: "core:framework:create")
         frameworks(first: 100)
           @connection(key: "FrameworksListQuery_frameworks") {
@@ -169,7 +170,8 @@ export const frameworkControlNodeQuery = graphql`
             }
           }
         }
-        audits(first: 100) @connection(key: "FrameworkGraphControl_audits") {
+        audits(first: 100)
+          @connection(key: "FrameworkGraphControl_audits") {
           __id
           edges {
             node {
