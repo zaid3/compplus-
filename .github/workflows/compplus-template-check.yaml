@@ -29,5 +29,11 @@ jobs:
         run: "gofmt -d compplus/templates/*.go pkg/probo/template_pack_service*.go"
       - name: "Compile and test template compiler"
         run: "go test ./compplus/templates"
+      - name: "Create placeholder embedded assets"
+        run: |
+          mkdir -p apps/console/dist apps/compliance-portal/dist packages/emails/dist
+          echo dev-server > apps/console/dist/index.html
+          echo dev-server > apps/compliance-portal/dist/index.html
+          echo dev-server > packages/emails/dist/placeholder
       - name: "Compile installer service"
         run: "go test ./pkg/probo -run '^$'"
