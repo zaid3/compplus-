@@ -1,0 +1,361 @@
+{
+  "id": "core",
+  "name": "CompPlus Core Compliance Pack",
+  "version": "2026.08-draft.1",
+  "status": "draft",
+  "effective_date": "2026-08-03",
+  "jurisdiction": null,
+  "standards": [
+    {"reference": "ISO/IEC 27001", "edition": "2022 + Amd 1:2024", "status": "published"},
+    {"reference": "ISO 9001", "edition": "2015 + Amd 1:2024", "status": "current pending 2026 publication"},
+    {"reference": "ISO 14001", "edition": "2026", "status": "published"},
+    {"reference": "ISO/IEC 42001", "edition": "2023", "status": "published"},
+    {"reference": "UK GDPR", "edition": "current at 2026-08-03", "status": "in force"}
+  ],
+  "sources": [
+    {
+      "title": "ISO/IEC 27001:2022/Amd 1:2024",
+      "url": "https://www.iso.org/standard/88435.html",
+      "publisher": "ISO",
+      "checked_on": "2026-08-03",
+      "licence": null,
+      "notes": "Reference and edition metadata only; ISO wording is not reproduced."
+    },
+    {
+      "title": "ISO 9001",
+      "url": "https://www.iso.org/standard/88464.html",
+      "publisher": "ISO",
+      "checked_on": "2026-08-03",
+      "licence": null,
+      "notes": "2026 edition is under publication; migration review required after publication."
+    },
+    {
+      "title": "ISO 14001:2026",
+      "url": "https://www.iso.org/standard/14001",
+      "publisher": "ISO",
+      "checked_on": "2026-08-03",
+      "licence": null,
+      "notes": "Reference and edition metadata only; ISO wording is not reproduced."
+    },
+    {
+      "title": "ISO/IEC 42001:2023",
+      "url": "https://www.iso.org/standard/42001",
+      "publisher": "ISO",
+      "checked_on": "2026-08-03",
+      "licence": null,
+      "notes": "Reference and edition metadata only; ISO wording is not reproduced."
+    },
+    {
+      "title": "ICO Accountability and governance resources",
+      "url": "https://ico.org.uk/for-organisations/uk-gdpr-guidance-and-resources/accountability-and-governance/",
+      "publisher": "Information Commissioner's Office",
+      "checked_on": "2026-08-03",
+      "licence": null,
+      "notes": "Used for UK GDPR implementation guidance and template design."
+    },
+    {
+      "title": "NCSC Incident management guidance",
+      "url": "https://www.ncsc.gov.uk/collection/incident-management/cyber-incident-response-processes",
+      "publisher": "National Cyber Security Centre",
+      "checked_on": "2026-08-03",
+      "licence": null,
+      "notes": "Used to design practical incident-plan fields and playbooks."
+    }
+  ],
+  "questionnaire": [
+    {"key": "organization.legal_name", "label": "Legal company name", "help": "Used automatically in every policy and register.", "type": "text", "required": true},
+    {"key": "organization.trading_name", "label": "Trading name", "help": "Leave blank if the same as the legal name.", "type": "text", "required": false},
+    {"key": "organization.address", "label": "Main business address", "help": null, "type": "textarea", "required": true},
+    {"key": "organization.services", "label": "Products and services", "help": "A short description is enough.", "type": "textarea", "required": true},
+    {"key": "organization.locations", "label": "Business locations", "help": "Include remote-only operations where relevant.", "type": "textarea", "required": true},
+    {"key": "organization.employee_count", "label": "Number of workers", "help": "Include employees and regular contractors.", "type": "number", "required": true},
+    {"key": "roles.executive_owner", "label": "Executive owner", "help": "The senior person accountable for the management system.", "type": "text", "required": true},
+    {"key": "roles.system_manager", "label": "Compliance or management-system manager", "help": "The person coordinating day-to-day work.", "type": "text", "required": true},
+    {"key": "roles.security_owner", "label": "Information-security owner", "help": "Can be the same person as the system manager.", "type": "text", "required": false},
+    {"key": "roles.privacy_owner", "label": "Privacy or data-protection owner", "help": null, "type": "text", "required": false},
+    {"key": "roles.quality_owner", "label": "Quality owner", "help": null, "type": "text", "required": false},
+    {"key": "roles.environment_owner", "label": "Environmental owner", "help": null, "type": "text", "required": false},
+    {"key": "roles.ai_owner", "label": "AI governance owner", "help": null, "type": "text", "required": false},
+    {"key": "organization.certification_target", "label": "Target certification or assessment date", "help": "CompPlus uses this to propose task deadlines.", "type": "date", "required": false},
+    {"key": "organization.review_month", "label": "Preferred annual review month", "help": null, "type": "single_select", "required": true, "options": ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"], "default": "January"},
+    {"key": "organization.uses_suppliers", "label": "Do suppliers process data or deliver important services?", "help": null, "type": "boolean", "required": true, "default": true},
+    {"key": "organization.uses_ai", "label": "Does the organisation develop or use AI systems?", "help": null, "type": "boolean", "required": true, "default": false},
+    {"key": "organization.processes_personal_data", "label": "Does the organisation process personal data?", "help": null, "type": "boolean", "required": true, "default": true},
+    {"key": "organization.environmental_impacts", "label": "Does the organisation have material environmental impacts?", "help": "Examples include energy, travel, waste, emissions, water or purchased goods.", "type": "boolean", "required": true, "default": true}
+  ],
+  "templates": [
+    {
+      "id": "management-system-scope",
+      "name": "Management System Scope",
+      "kind": "document",
+      "purpose": "Define what parts of the organisation, services and locations are covered.",
+      "owner_role": "system_manager",
+      "review_frequency_months": 12,
+      "user_effort": {"estimated_minutes": 10, "confirmations": 4, "evidence_requests": 0},
+      "fields": [
+        {"key": "organization.legal_name", "mode": "auto", "source": "questionnaire", "prompt": null},
+        {"key": "organization.services", "mode": "auto", "source": "questionnaire", "prompt": null},
+        {"key": "organization.locations", "mode": "auto", "source": "questionnaire", "prompt": null},
+        {"key": "scope.exclusions", "mode": "confirm", "source": null, "prompt": "Confirm whether anything is outside scope and explain why."}
+      ],
+      "mappings": [
+        {"framework": "ISO/IEC 27001", "reference": "4.3", "mapping_type": "direct"},
+        {"framework": "ISO 9001", "reference": "4.3", "mapping_type": "direct"},
+        {"framework": "ISO 14001", "reference": "4.3", "mapping_type": "direct"},
+        {"framework": "ISO/IEC 42001", "reference": "4.3", "mapping_type": "direct"}
+      ],
+      "content_file": "documents/management-system-scope.md",
+      "creates": ["document", "task"]
+    },
+    {
+      "id": "roles-responsibilities-matrix",
+      "name": "Roles and Responsibilities Matrix",
+      "kind": "register",
+      "purpose": "Assign accountable owners and remove uncertainty about who does what.",
+      "owner_role": "executive_owner",
+      "review_frequency_months": 12,
+      "user_effort": {"estimated_minutes": 12, "confirmations": 7, "evidence_requests": 0},
+      "fields": [
+        {"key": "roles", "mode": "auto", "source": "questionnaire", "prompt": null},
+        {"key": "roles.delegates", "mode": "confirm", "source": null, "prompt": "Add a deputy for each critical role."}
+      ],
+      "mappings": [
+        {"framework": "ISO/IEC 27001", "reference": "5.3", "mapping_type": "direct"},
+        {"framework": "ISO 9001", "reference": "5.3", "mapping_type": "direct"},
+        {"framework": "ISO 14001", "reference": "5.3", "mapping_type": "direct"},
+        {"framework": "ISO/IEC 42001", "reference": "5.3", "mapping_type": "direct"},
+        {"framework": "UK GDPR", "reference": "Accountability roles", "mapping_type": "supporting"}
+      ],
+      "content_file": "registers/roles-and-responsibilities.json",
+      "creates": ["register", "task"]
+    },
+    {
+      "id": "document-control-procedure",
+      "name": "Document and Record Control Procedure",
+      "kind": "procedure",
+      "purpose": "Control drafting, approval, versioning, access, retention and disposal of documents and records.",
+      "owner_role": "system_manager",
+      "review_frequency_months": 12,
+      "user_effort": {"estimated_minutes": 8, "confirmations": 3, "evidence_requests": 1},
+      "fields": [
+        {"key": "document.approver", "mode": "auto", "source": "roles.executive_owner", "prompt": null},
+        {"key": "document.storage_location", "mode": "confirm", "source": null, "prompt": "Confirm where controlled documents are stored."},
+        {"key": "document.sample_approved_record", "mode": "evidence", "source": null, "prompt": "Attach one approved, versioned document as evidence."}
+      ],
+      "mappings": [
+        {"framework": "ISO/IEC 27001", "reference": "7.5", "mapping_type": "direct"},
+        {"framework": "ISO 9001", "reference": "7.5", "mapping_type": "direct"},
+        {"framework": "ISO 14001", "reference": "7.5", "mapping_type": "direct"},
+        {"framework": "ISO/IEC 42001", "reference": "7.5", "mapping_type": "direct"},
+        {"framework": "UK GDPR", "reference": "Accountability documentation", "mapping_type": "supporting"}
+      ],
+      "content_file": "documents/document-control-procedure.md",
+      "creates": ["document", "measure", "task", "evidence_request"]
+    },
+    {
+      "id": "risk-management-procedure",
+      "name": "Integrated Risk Management Procedure",
+      "kind": "procedure",
+      "purpose": "Provide one repeatable method for identifying, scoring, treating and reviewing risks.",
+      "owner_role": "system_manager",
+      "review_frequency_months": 12,
+      "user_effort": {"estimated_minutes": 15, "confirmations": 5, "evidence_requests": 1},
+      "fields": [
+        {"key": "risk.method", "mode": "auto", "source": "CompPlus default 5x5 method", "prompt": null},
+        {"key": "risk.appetite", "mode": "confirm", "source": null, "prompt": "Confirm the score above which treatment and executive approval are required."},
+        {"key": "risk.first_register", "mode": "evidence", "source": null, "prompt": "Complete or import the initial risk register."}
+      ],
+      "mappings": [
+        {"framework": "ISO/IEC 27001", "reference": "6.1", "mapping_type": "direct"},
+        {"framework": "ISO 9001", "reference": "6.1", "mapping_type": "direct"},
+        {"framework": "ISO 14001", "reference": "6.1", "mapping_type": "direct"},
+        {"framework": "ISO/IEC 42001", "reference": "6.1", "mapping_type": "direct"},
+        {"framework": "UK GDPR", "reference": "Risk-based accountability", "mapping_type": "supporting"}
+      ],
+      "content_file": "documents/risk-management-procedure.md",
+      "creates": ["document", "measure", "task", "evidence_request"]
+    },
+    {
+      "id": "objectives-kpi-register",
+      "name": "Objectives and KPI Register",
+      "kind": "register",
+      "purpose": "Track measurable objectives, owners, deadlines and results across all selected standards.",
+      "owner_role": "executive_owner",
+      "review_frequency_months": 3,
+      "user_effort": {"estimated_minutes": 15, "confirmations": 6, "evidence_requests": 0},
+      "fields": [
+        {"key": "objectives.suggestions", "mode": "auto", "source": "selected packs and questionnaire", "prompt": null},
+        {"key": "objectives.targets", "mode": "confirm", "source": null, "prompt": "Confirm targets, owners and target dates."}
+      ],
+      "mappings": [
+        {"framework": "ISO/IEC 27001", "reference": "6.2", "mapping_type": "direct"},
+        {"framework": "ISO 9001", "reference": "6.2", "mapping_type": "direct"},
+        {"framework": "ISO 14001", "reference": "6.2", "mapping_type": "direct"},
+        {"framework": "ISO/IEC 42001", "reference": "6.2", "mapping_type": "direct"}
+      ],
+      "content_file": "registers/objectives-and-kpis.json",
+      "creates": ["register", "task"]
+    },
+    {
+      "id": "competence-training-procedure",
+      "name": "Competence, Awareness and Training Procedure",
+      "kind": "procedure",
+      "purpose": "Identify required competence, deliver training and retain proof.",
+      "owner_role": "system_manager",
+      "review_frequency_months": 12,
+      "user_effort": {"estimated_minutes": 10, "confirmations": 4, "evidence_requests": 2},
+      "fields": [
+        {"key": "training.roles", "mode": "auto", "source": "roles questionnaire", "prompt": null},
+        {"key": "training.frequency", "mode": "confirm", "source": null, "prompt": "Confirm induction and refresher frequency."},
+        {"key": "training.records", "mode": "evidence", "source": null, "prompt": "Upload recent attendance or completion records."}
+      ],
+      "mappings": [
+        {"framework": "ISO/IEC 27001", "reference": "7.2-7.3", "mapping_type": "direct"},
+        {"framework": "ISO 9001", "reference": "7.2-7.3", "mapping_type": "direct"},
+        {"framework": "ISO 14001", "reference": "7.2-7.3", "mapping_type": "direct"},
+        {"framework": "ISO/IEC 42001", "reference": "7.2-7.3", "mapping_type": "direct"},
+        {"framework": "UK GDPR", "reference": "Staff awareness and training", "mapping_type": "supporting"}
+      ],
+      "content_file": "documents/competence-and-training-procedure.md",
+      "creates": ["document", "register", "task", "evidence_request"]
+    },
+    {
+      "id": "supplier-management-procedure",
+      "name": "Supplier Due Diligence and Monitoring Procedure",
+      "kind": "procedure",
+      "purpose": "Assess suppliers before use, record contracts and review ongoing performance and risk.",
+      "owner_role": "system_manager",
+      "review_frequency_months": 12,
+      "user_effort": {"estimated_minutes": 12, "confirmations": 5, "evidence_requests": 2},
+      "fields": [
+        {"key": "supplier.criteria", "mode": "auto", "source": "selected packs", "prompt": null},
+        {"key": "supplier.criticality_rules", "mode": "confirm", "source": null, "prompt": "Confirm how critical suppliers are identified."},
+        {"key": "supplier.contract_sample", "mode": "evidence", "source": null, "prompt": "Attach one current critical-supplier agreement or review."}
+      ],
+      "mappings": [
+        {"framework": "ISO/IEC 27001", "reference": "Supplier controls", "mapping_type": "supporting"},
+        {"framework": "ISO 9001", "reference": "8.4", "mapping_type": "direct"},
+        {"framework": "ISO 14001", "reference": "8.1", "mapping_type": "supporting"},
+        {"framework": "ISO/IEC 42001", "reference": "Third-party AI resources", "mapping_type": "supporting"},
+        {"framework": "UK GDPR", "reference": "Processor accountability", "mapping_type": "supporting"}
+      ],
+      "content_file": "documents/supplier-management-procedure.md",
+      "creates": ["document", "measure", "register", "task", "evidence_request"]
+    },
+    {
+      "id": "incident-management-plan",
+      "name": "Integrated Incident Management Plan",
+      "kind": "plan",
+      "purpose": "Give staff a usable plan for security, privacy, quality, environmental and AI incidents.",
+      "owner_role": "system_manager",
+      "review_frequency_months": 12,
+      "user_effort": {"estimated_minutes": 20, "confirmations": 8, "evidence_requests": 2},
+      "fields": [
+        {"key": "incident.contacts", "mode": "auto", "source": "roles questionnaire", "prompt": null},
+        {"key": "incident.escalation", "mode": "confirm", "source": null, "prompt": "Confirm severity thresholds and escalation contacts."},
+        {"key": "incident.playbooks", "mode": "confirm", "source": null, "prompt": "Choose the three most relevant incident playbooks."},
+        {"key": "incident.test_record", "mode": "evidence", "source": null, "prompt": "Record a tabletop test after approval."}
+      ],
+      "mappings": [
+        {"framework": "ISO/IEC 27001", "reference": "Information-security incident management", "mapping_type": "direct"},
+        {"framework": "ISO 9001", "reference": "8.7 and 10.2", "mapping_type": "supporting"},
+        {"framework": "ISO 14001", "reference": "8.2", "mapping_type": "direct"},
+        {"framework": "ISO/IEC 42001", "reference": "AI incident handling", "mapping_type": "supporting"},
+        {"framework": "UK GDPR", "reference": "Personal data breach management", "mapping_type": "direct"}
+      ],
+      "content_file": "documents/incident-management-plan.md",
+      "creates": ["document", "measure", "register", "task", "evidence_request"]
+    },
+    {
+      "id": "internal-audit-programme",
+      "name": "Internal Audit Programme and Report",
+      "kind": "assessment",
+      "purpose": "Plan risk-based audits and record evidence, findings and follow-up actions.",
+      "owner_role": "system_manager",
+      "review_frequency_months": 12,
+      "user_effort": {"estimated_minutes": 15, "confirmations": 6, "evidence_requests": 1},
+      "fields": [
+        {"key": "audit.scope", "mode": "auto", "source": "selected packs and scope", "prompt": null},
+        {"key": "audit.schedule", "mode": "confirm", "source": null, "prompt": "Confirm audit dates and independent auditors."},
+        {"key": "audit.report", "mode": "evidence", "source": null, "prompt": "Attach the completed audit report after each audit."}
+      ],
+      "mappings": [
+        {"framework": "ISO/IEC 27001", "reference": "9.2", "mapping_type": "direct"},
+        {"framework": "ISO 9001", "reference": "9.2", "mapping_type": "direct"},
+        {"framework": "ISO 14001", "reference": "9.2", "mapping_type": "direct"},
+        {"framework": "ISO/IEC 42001", "reference": "9.2", "mapping_type": "direct"},
+        {"framework": "UK GDPR", "reference": "Accountability monitoring", "mapping_type": "supporting"}
+      ],
+      "content_file": "assessments/internal-audit-programme.json",
+      "creates": ["audit", "document", "task", "evidence_request"]
+    },
+    {
+      "id": "management-review-pack",
+      "name": "Management Review Agenda and Minutes",
+      "kind": "meeting",
+      "purpose": "Run one integrated senior-management review covering all selected standards.",
+      "owner_role": "executive_owner",
+      "review_frequency_months": 12,
+      "user_effort": {"estimated_minutes": 20, "confirmations": 8, "evidence_requests": 1},
+      "fields": [
+        {"key": "review.inputs", "mode": "auto", "source": "selected packs and system data", "prompt": null},
+        {"key": "review.attendees", "mode": "auto", "source": "roles questionnaire", "prompt": null},
+        {"key": "review.decisions", "mode": "confirm", "source": null, "prompt": "Record decisions, actions, owners and deadlines."},
+        {"key": "review.minutes", "mode": "evidence", "source": null, "prompt": "Approve and retain the meeting minutes."}
+      ],
+      "mappings": [
+        {"framework": "ISO/IEC 27001", "reference": "9.3", "mapping_type": "direct"},
+        {"framework": "ISO 9001", "reference": "9.3", "mapping_type": "direct"},
+        {"framework": "ISO 14001", "reference": "9.3", "mapping_type": "direct"},
+        {"framework": "ISO/IEC 42001", "reference": "9.3", "mapping_type": "direct"}
+      ],
+      "content_file": "meetings/management-review.json",
+      "creates": ["meeting", "document", "task", "evidence_request"]
+    },
+    {
+      "id": "corrective-action-process",
+      "name": "Nonconformity and Corrective Action Process",
+      "kind": "procedure",
+      "purpose": "Record problems, contain them, identify root causes, implement actions and verify effectiveness.",
+      "owner_role": "system_manager",
+      "review_frequency_months": 12,
+      "user_effort": {"estimated_minutes": 10, "confirmations": 4, "evidence_requests": 1},
+      "fields": [
+        {"key": "corrective.method", "mode": "auto", "source": "CompPlus default workflow", "prompt": null},
+        {"key": "corrective.approval", "mode": "confirm", "source": null, "prompt": "Confirm who approves closure for major findings."},
+        {"key": "corrective.sample", "mode": "evidence", "source": null, "prompt": "Complete one corrective-action record when an issue occurs."}
+      ],
+      "mappings": [
+        {"framework": "ISO/IEC 27001", "reference": "10.2", "mapping_type": "direct"},
+        {"framework": "ISO 9001", "reference": "10.2", "mapping_type": "direct"},
+        {"framework": "ISO 14001", "reference": "10.2", "mapping_type": "direct"},
+        {"framework": "ISO/IEC 42001", "reference": "10.2", "mapping_type": "direct"},
+        {"framework": "UK GDPR", "reference": "Remediation and accountability", "mapping_type": "supporting"}
+      ],
+      "content_file": "documents/corrective-action-procedure.md",
+      "creates": ["document", "register", "task", "evidence_request"]
+    },
+    {
+      "id": "legal-requirements-register",
+      "name": "Legal, Regulatory and Contractual Requirements Register",
+      "kind": "register",
+      "purpose": "Keep applicable obligations, owners, evidence and review dates in one place.",
+      "owner_role": "system_manager",
+      "review_frequency_months": 6,
+      "user_effort": {"estimated_minutes": 20, "confirmations": 8, "evidence_requests": 0},
+      "fields": [
+        {"key": "legal.suggestions", "mode": "auto", "source": "jurisdiction, sector and selected packs", "prompt": null},
+        {"key": "legal.applicability", "mode": "confirm", "source": null, "prompt": "Confirm applicability and add sector-specific requirements."}
+      ],
+      "mappings": [
+        {"framework": "ISO/IEC 27001", "reference": "Legal, statutory, regulatory and contractual requirements", "mapping_type": "supporting"},
+        {"framework": "ISO 9001", "reference": "Applicable statutory and regulatory requirements", "mapping_type": "supporting"},
+        {"framework": "ISO 14001", "reference": "Compliance obligations", "mapping_type": "direct"},
+        {"framework": "ISO/IEC 42001", "reference": "Applicable legal and contractual requirements", "mapping_type": "supporting"},
+        {"framework": "UK GDPR", "reference": "Data-protection obligations", "mapping_type": "direct"}
+      ],
+      "content_file": "registers/legal-requirements.json",
+      "creates": ["register", "task"]
+    }
+  ]
+}
