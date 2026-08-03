@@ -9,7 +9,6 @@ import (
 	"strings"
 
 	"go.gearno.de/kit/log"
-	compplustemplates "go.probo.inc/probo/compplus/templates"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
@@ -126,17 +125,4 @@ func (r *mutationResolver) InstallTemplatePack(
 		TasksCreated:            tasksCount,
 		EvidenceRequestsCreated: evidenceRequestsCount,
 	}, nil
-}
-
-func compiledWorkCounts(compiled *compplustemplates.CompiledPack) (int, int) {
-	tasksCount := 0
-	evidenceRequestsCount := 0
-	for _, measure := range compiled.Measures {
-		tasksCount += len(measure.Tasks)
-		for _, task := range measure.Tasks {
-			evidenceRequestsCount += len(task.RequestedEvidences)
-		}
-	}
-
-	return tasksCount, evidenceRequestsCount
 }
