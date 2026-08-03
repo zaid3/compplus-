@@ -8,16 +8,10 @@ RUN apt-get update \
     && apt-get install -y --no-install-recommends make \
     && rm -rf /var/lib/apt/lists/*
 
-COPY package.json package-lock.json relay.config.json ./
-COPY apps ./apps
-COPY packages ./packages
-COPY contrib ./contrib
-COPY pkg/server/api/connect/v1/graphql ./pkg/server/api/connect/v1/graphql
-COPY pkg/server/api/console/v1/graphql ./pkg/server/api/console/v1/graphql
-COPY pkg/server/api/complianceportal/v1/graphql ./pkg/server/api/complianceportal/v1/graphql
-COPY Makefile* ./
-
+COPY package.json package-lock.json ./
 RUN npm ci
+
+COPY . .
 RUN make relay
 RUN npm run build
 
