@@ -1,7 +1,27 @@
 services:
+  oauth-keygen:
+    image: "alpine:3.20"
+    restart: "no"
+    exclude_from_hc: true
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        apk add --no-cache openssl >/dev/null
+        if [ ! -s /oauth2/private.pem ]; then
+          openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out /oauth2/private.pem
+          chmod 644 /oauth2/private.pem
+        fi
+    volumes:
+      - "oauth2-key:/oauth2"
+
   probo:
     image: "artifact.probo.inc/probo/probo:latest"
     restart: unless-stopped
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        export PROBOD_OAUTH2_SERVER_SIGNING_KEY="$$(cat /oauth2/private.pem)"
+        exec /usr/local/bin/entrypoint.sh
     environment:
       # Required secrets generated and persisted by Coolify
       PROBOD_ENCRYPTION_KEY: ${SERVICE_REALBASE64_32_ENCRYPTIONKEY}
@@ -54,7 +74,10 @@ services:
       - "8090:8080"
     volumes:
       - "probo-data:/data"
+      - "oauth2-key:/oauth2:ro"
     depends_on:
+      oauth-keygen:
+        condition: service_completed_successfully
       postgres:
         condition: service_healthy
       seaweedfs:
@@ -116,3 +139,4 @@ volumes:
   probo-data:
   postgres-data:
   seaweedfs-data:
+  oauth2-key:
