@@ -60,6 +60,38 @@ export type Regulation =
   | "DPDP"
   | "PDPL";
 
+export type Presentation = "OPT_IN" | "OPT_OUT" | "NOTICE";
+
+export type BannerState = "banner" | "hidden" | "panel";
+
+export type SettingsLinkStyle = "default" | "ccpa_privacy_choices";
+
+export interface LayoutButtons {
+  accept_all: boolean;
+  reject_all: boolean;
+  customize: boolean;
+  save: boolean;
+}
+
+export interface BannerLayout {
+  presentation: Presentation;
+  initial_state: BannerState;
+  reopen_state: BannerState;
+  default_non_necessary_granted: boolean;
+  buttons: LayoutButtons;
+  settings_link: SettingsLinkStyle;
+}
+
+// BannerText is the wording for the top banner card, resolved for the active
+// presentation's text variant. `secondaryButton` is absent when the variant
+// has no secondary action (e.g. the notice presentation).
+export interface BannerText {
+  title: string;
+  description: string;
+  primaryButton: string;
+  secondaryButton?: string;
+}
+
 export interface BannerConfig {
   banner_id: string;
   version: number;
@@ -70,6 +102,7 @@ export interface BannerConfig {
   consent_expiry_days: number;
   consent_mode: "OPT_IN" | "OPT_OUT";
   regulation: Regulation | null;
+  layout: BannerLayout;
   show_branding: boolean;
   categories: Category[];
   texts: BannerTexts;

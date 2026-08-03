@@ -28,7 +28,6 @@ import (
 	"maps"
 	"net/url"
 	"slices"
-	"strconv"
 	"strings"
 	"time"
 
@@ -209,6 +208,7 @@ type (
 		ConsentExpiryDays int                                            `json:"consent_expiry_days"`
 		ConsentMode       string                                         `json:"consent_mode"`
 		Regulation        Regulation                                     `json:"regulation"`
+		Layout            Layout                                         `json:"layout"`
 		ShowBranding      bool                                           `json:"show_branding"`
 		Categories        []coredata.CookieBannerVersionSnapshotCategory `json:"categories"`
 		Texts             map[string]string                              `json:"texts"`
@@ -1771,11 +1771,10 @@ func (s *Service) GetActiveBannerConfig(
 	}
 
 	config.Regulation = regulation
-
 	config.ConsentMode = ConsentModeForRegulation(regulation)
-	if !isLegacySDK(sdkVersion) {
-		remapTextsForConsentMode(config.Texts, config.ConsentMode)
-	}
+	config.Layout = LayoutForRegulation(regulation)
+
+	applyBannerTextCompat(config, sdkVersion)
 
 	return config, nil
 }
@@ -1846,65 +1845,6 @@ func buildBannerConfig(
 		ShowBranding:      banner.ShowBranding,
 		Categories:        categories,
 		Texts:             texts,
-	}
-}
-
-// remapTextsForConsentMode overrides the generic banner text keys with
-// mode-specific variants so the client renders the appropriate copy
-// without needing consent-mode awareness itself.
-func remapTextsForConsentMode(texts map[string]string, consentMode string) {
-	if texts == nil {
-		return
-	}
-
-	if consentMode == ConsentModeOptOut {
-		remapTextKey(texts, "banner_title_opt_out", "banner_title")
-		remapTextKey(texts, "banner_description_opt_out", "banner_description")
-		remapTextKey(texts, "button_acknowledge", "button_accept_all")
-		remapTextKey(texts, "button_opt_out", "button_reject_all")
-		texts["button_customize"] = ""
-	}
-}
-
-// isLegacySDK returns true when the SDK version is <= 0.2.x.
-// Empty or unparseable versions are treated as current.
-func isLegacySDK(version string) bool {
-	if version == "" {
-		return false
-	}
-
-	major, minor, ok := parseMajorMinor(version)
-	if !ok {
-		return false
-	}
-
-	return major == 0 && minor <= 2
-}
-
-func parseMajorMinor(version string) (major, minor int, ok bool) {
-	v := strings.TrimPrefix(version, "v")
-
-	parts := strings.SplitN(v, ".", 3)
-	if len(parts) < 2 {
-		return 0, 0, false
-	}
-
-	maj, err := strconv.Atoi(parts[0])
-	if err != nil {
-		return 0, 0, false
-	}
-
-	min, err := strconv.Atoi(parts[1])
-	if err != nil {
-		return 0, 0, false
-	}
-
-	return maj, min, true
-}
-
-func remapTextKey(texts map[string]string, src, dst string) {
-	if v, ok := texts[src]; ok && v != "" {
-		texts[dst] = v
 	}
 }
 
