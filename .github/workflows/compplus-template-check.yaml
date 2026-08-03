@@ -1,0 +1,33 @@
+name: "compplus-template-check"
+
+on:
+  pull_request:
+    branches:
+      - "main"
+    paths:
+      - "compplus/templates/**"
+      - "pkg/probo/template_pack_service*.go"
+      - ".github/workflows/compplus-template-check.yaml"
+  workflow_dispatch:
+
+permissions:
+  contents: "read"
+
+jobs:
+  test:
+    name: "compile-and-test-template-installer"
+    runs-on: "ubuntu-latest"
+    timeout-minutes: 20
+    steps:
+      - uses: "actions/checkout@v4"
+      - uses: "actions/setup-go@v5"
+        with:
+          go-version-file: "go.mod"
+          cache: true
+      - name: "Format check"
+        run: |
+          test -z "$(gofmt -l compplus/templates/*.go pkg/probo/template_pack_service*.go)"
+      - name: "Compile and test template compiler"
+        run: "go test ./compplus/templates"
+      - name: "Compile installer service"
+        run: "go test ./pkg/probo -run '^$'"
