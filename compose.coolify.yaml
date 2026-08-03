@@ -1,0 +1,130 @@
+services:
+  compplus:
+    build:
+      context: .
+      dockerfile: Dockerfile.coolify
+    restart: unless-stopped
+    environment:
+      # Public application settings
+      PROBOD_BASE_URL: ${PROBOD_BASE_URL:?Set the public CompPlus URL}
+      API_ADDR: ":8080"
+      API_CORS_ALLOWED_ORIGINS: ${API_CORS_ALLOWED_ORIGINS:?Set allowed browser origin}
+
+      # Required application secrets
+      PROBOD_ENCRYPTION_KEY: ${PROBOD_ENCRYPTION_KEY:?Generate a secure encryption key}
+      AUTH_COOKIE_SECRET: ${AUTH_COOKIE_SECRET:?Generate a secure cookie secret}
+      AUTH_PASSWORD_PEPPER: ${AUTH_PASSWORD_PEPPER:?Generate a secure password pepper}
+      TRUST_AUTH_TOKEN_SECRET: ${TRUST_AUTH_TOKEN_SECRET:?Generate a secure trust token secret}
+
+      # Authentication
+      AUTH_COOKIE_NAME: "COMPPLUS_SSID"
+      AUTH_COOKIE_DOMAIN: ${AUTH_COOKIE_DOMAIN:?Set the application hostname only}
+      AUTH_COOKIE_DURATION: "24"
+      AUTH_COOKIE_SECURE: "true"
+      AUTH_DISABLE_SIGNUP: ${AUTH_DISABLE_SIGNUP:-false}
+
+      # Internal service addresses
+      PG_ADDR: "postgres:5432"
+      PG_USERNAME: "postgres"
+      PG_PASSWORD: ${POSTGRES_PASSWORD:?Generate a strong database password}
+      PG_DATABASE: "probod"
+      PG_POOL_SIZE: "100"
+      CHROME_DP_ADDR: "chrome:9222"
+
+      # Internal S3-compatible storage
+      AWS_REGION: "us-east-1"
+      AWS_BUCKET: "probod"
+      AWS_ACCESS_KEY_ID: "probod"
+      AWS_SECRET_ACCESS_KEY: "thisisnotasecret"
+      AWS_ENDPOINT: "http://seaweedfs:8333"
+      AWS_USE_PATH_STYLE: "true"
+
+      # The trust-centre listeners remain private during the initial deployment.
+      TRUST_CENTER_HTTP_ADDR: ":10080"
+      TRUST_CENTER_HTTPS_ADDR: ":10443"
+
+      # Email
+      SMTP_ADDR: ${SMTP_ADDR:-}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_TLS_REQUIRED: ${SMTP_TLS_REQUIRED:-true}
+      MAILER_SENDER_NAME: ${MAILER_SENDER_NAME:-CompPlus}
+      MAILER_SENDER_EMAIL: ${MAILER_SENDER_EMAIL:-no-reply@example.com}
+
+      # AI features supported by this imported Probo version
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_MODEL_NAME: ${OPENAI_MODEL_NAME:-gpt-4o}
+      OPENAI_TEMPERATURE: ${OPENAI_TEMPERATURE:-0.1}
+
+      # Observability
+      METRICS_ADDR: ":8081"
+      TRACING_ADDR: ""
+
+    expose:
+      - "8080"
+    volumes:
+      - compplus-data:/data
+    depends_on:
+      postgres:
+        condition: service_healthy
+      seaweedfs:
+        condition: service_started
+      chrome:
+        condition: service_started
+
+  postgres:
+    image: postgres:17.4
+    restart: unless-stopped
+    shm_size: "1g"
+    command:
+      - postgres
+      - -c
+      - shared_buffers=256MB
+      - -c
+      - max_connections=200
+    environment:
+      POSTGRES_USER: "postgres"
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Generate a strong database password}
+    volumes:
+      - ./compose/postgres:/docker-entrypoint-initdb.d:ro
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  seaweedfs:
+    image: chrislusf/seaweedfs:4.13
+    restart: unless-stopped
+    command: >
+      server
+      -s3
+      -s3.config=/etc/seaweedfs/s3.json
+      -s3.port=8333
+      -volume.max=100
+      -master.volumeSizeLimitMB=1024
+      -dir=/data
+    volumes:
+      - ./compose/seaweedfs/s3.json:/etc/seaweedfs/s3.json:ro
+      - seaweedfs-data:/data
+
+  chrome:
+    image: chromedp/headless-shell:140.0.7259.2
+    restart: unless-stopped
+    command:
+      - "--headless"
+      - "--disable-gpu"
+      - "--disable-dev-shm-usage"
+      - "--hide-scrollbars"
+      - "--mute-audio"
+      - "--no-default-browser-check"
+      - "--no-first-run"
+      - "--disable-background-networking"
+      - "--disable-background-timer-throttling"
+      - "--disable-extensions"
+
+volumes:
+  compplus-data:
+  postgres-data:
+  seaweedfs-data:
