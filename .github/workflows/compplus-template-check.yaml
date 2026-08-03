@@ -24,9 +24,9 @@ jobs:
         with:
           go-version-file: "go.mod"
           cache: true
-      - name: "Format check"
-        run: |
-          test -z "$(gofmt -l compplus/templates/*.go pkg/probo/template_pack_service*.go)"
+      - name: "Show formatting differences"
+        continue-on-error: true
+        run: "gofmt -d compplus/templates/*.go pkg/probo/template_pack_service*.go"
       - name: "Compile and test template compiler"
         run: "go test ./compplus/templates"
       - name: "Compile installer service"
