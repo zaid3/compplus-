@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"time"
 
+	"go.gearno.de/kit/pg"
 	compplustemplates "go.probo.inc/probo/compplus/templates"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
@@ -69,9 +70,8 @@ func (s *TemplatePackService) Compile(
 }
 
 // Install creates the framework, controls, measures, tasks, evidence requests
-// and editable draft documents for one organization. The method deliberately
-// reuses the application's existing import and creation services so normal
-// validation, tenant scoping and audit behaviour remain in force.
+// and editable draft documents for one organization. It reuses the existing
+// application services so normal validation and tenant scoping remain in force.
 func (s *TemplatePackService) Install(
 	ctx context.Context,
 	scope coredata.Scoper,
@@ -170,33 +170,17 @@ func (s *TemplatePackService) isInstalled(
 	frameworkReferenceID string,
 ) (bool, error) {
 	framework := &coredata.Framework{}
-	err := s.svc.pg.WithConn(ctx, func(ctx context.Context, conn interface {
-		Query(context.Context, string, ...any) (coredata.Rows, error)
-	}) error {
-		return nil
+	err := s.svc.pg.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
+		return framework.LoadByReferenceID(ctx, conn, scope, frameworkReferenceID)
 	})
-	_ = framework
-	_ = err
-
-	// Framework references are unique per organization. The public framework
-	// service does not currently expose a lookup by organization and reference,
-	// so use the organization list to keep this check correctly scoped.
-	page, err := s.svc.Frameworks.ListForOrganizationID(
-		ctx,
-		scope,
-		organizationID,
-		nil,
-	)
+	if errors.Is(err, coredata.ErrResourceNotFound) {
+		return false, nil
+	}
 	if err != nil {
 		return false, err
 	}
-	for _, candidate := range page.Data {
-		if candidate.ReferenceID == frameworkReferenceID {
-			return true, nil
-		}
-	}
 
-	return false, nil
+	return framework.OrganizationID == organizationID, nil
 }
 
 func frameworkImportRequest(definition compplustemplates.FrameworkDefinition) (ImportFrameworkRequest, error) {
@@ -238,5 +222,3 @@ func measureImportRequest(measures []compplustemplates.CompiledMeasure) (ImportM
 
 	return request, nil
 }
-
-var _ = errors.Is
