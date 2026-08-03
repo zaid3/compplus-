@@ -1,0 +1,63 @@
+# syntax=docker/dockerfile:1.7
+
+# CompPlus is built from this repository's source code. We deliberately do not
+# use the upstream prebuilt Probo image, so future white-label changes are
+# included in each Coolify deployment.
+FROM node:24-bookworm AS node-toolchain
+
+FROM golang:1.26-bookworm AS builder
+COPY --from=node-toolchain /usr/local/ /usr/local/
+
+WORKDIR /src
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends ca-certificates git make \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY . .
+
+RUN npm install --global npm@11.8.0 \
+    && npm ci
+
+# The upstream make target builds the React applications, generated GraphQL/MCP
+# code, email package and the main Go server binary.
+RUN make bin/probod
+
+# The runtime entrypoint generates configuration from environment variables.
+RUN CGO_ENABLED=0 go build \
+      -ldflags "-s -w" \
+      -o /out/probod-bootstrap \
+      ./cmd/probod-bootstrap/main.go \
+    && cp bin/probod /out/probod
+
+FROM ubuntu:24.04
+
+LABEL org.opencontainers.image.title="CompPlus"
+LABEL org.opencontainers.image.description="Self-hosted compliance platform"
+LABEL org.opencontainers.image.licenses="MIT"
+
+RUN useradd --create-home probo \
+    && apt-get update \
+    && apt-get upgrade -y \
+    && apt-get install -y --no-install-recommends ca-certificates curl libcap2-bin \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY --from=builder /out/probod /usr/local/bin/probod
+COPY --from=builder /out/probod-bootstrap /usr/local/bin/probod-bootstrap
+COPY entrypoint.sh /usr/local/bin/entrypoint.sh
+
+RUN chmod +x /usr/local/bin/probod \
+      /usr/local/bin/probod-bootstrap \
+      /usr/local/bin/entrypoint.sh \
+    && setcap CAP_NET_BIND_SERVICE=+eip /usr/local/bin/probod \
+    && mkdir -p /etc/probod /data \
+    && chown -R probo:probo /etc/probod /data
+
+USER probo
+
+EXPOSE 8080 8081 10080 10443
+
+HEALTHCHECK --interval=30s --timeout=10s --start-period=90s --retries=5 \
+  CMD curl -fsS http://127.0.0.1:8080/ >/dev/null || exit 1
+
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
