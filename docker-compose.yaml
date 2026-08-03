@@ -1,9 +1,28 @@
 services:
+  oauth-keygen:
+    image: "alpine:3.20"
+    restart: "no"
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        apk add --no-cache openssl >/dev/null
+        if [ ! -s /oauth2/private.pem ]; then
+          umask 077
+          openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out /oauth2/private.pem
+        fi
+    volumes:
+      - oauth2-key:/oauth2
+
   compplus:
     image: "artifact.probo.inc/probo/probo:latest"
     restart: unless-stopped
     ports:
       - "8082:8080"
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        export PROBOD_OAUTH2_SERVER_SIGNING_KEY="$$(cat /oauth2/private.pem)"
+        exec /usr/local/bin/entrypoint.sh
     environment:
       PROBOD_BASE_URL: "http://72.61.16.251:8082"
       PROBOD_API_ADDR: ":8080"
@@ -54,7 +73,10 @@ services:
 
     volumes:
       - compplus-data:/data
+      - oauth2-key:/oauth2:ro
     depends_on:
+      oauth-keygen:
+        condition: service_completed_successfully
       postgres:
         condition: service_healthy
       seaweedfs:
@@ -144,3 +166,4 @@ volumes:
   compplus-data:
   postgres-data:
   seaweedfs-data:
+  oauth2-key:
