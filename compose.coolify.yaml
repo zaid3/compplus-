@@ -6,19 +6,19 @@ services:
     restart: unless-stopped
     environment:
       # Public application settings
-      PROBOD_BASE_URL: ${PROBOD_BASE_URL:?Set the public CompPlus URL}
+      PROBOD_BASE_URL: ${PROBOD_BASE_URL}
       API_ADDR: ":8080"
-      API_CORS_ALLOWED_ORIGINS: ${API_CORS_ALLOWED_ORIGINS:?Set allowed browser origin}
+      API_CORS_ALLOWED_ORIGINS: ${API_CORS_ALLOWED_ORIGINS}
 
       # Required application secrets
-      PROBOD_ENCRYPTION_KEY: ${PROBOD_ENCRYPTION_KEY:?Generate a secure encryption key}
-      AUTH_COOKIE_SECRET: ${AUTH_COOKIE_SECRET:?Generate a secure cookie secret}
-      AUTH_PASSWORD_PEPPER: ${AUTH_PASSWORD_PEPPER:?Generate a secure password pepper}
-      TRUST_AUTH_TOKEN_SECRET: ${TRUST_AUTH_TOKEN_SECRET:?Generate a secure trust token secret}
+      PROBOD_ENCRYPTION_KEY: ${PROBOD_ENCRYPTION_KEY}
+      AUTH_COOKIE_SECRET: ${AUTH_COOKIE_SECRET}
+      AUTH_PASSWORD_PEPPER: ${AUTH_PASSWORD_PEPPER}
+      TRUST_AUTH_TOKEN_SECRET: ${TRUST_AUTH_TOKEN_SECRET}
 
       # Authentication
       AUTH_COOKIE_NAME: "COMPPLUS_SSID"
-      AUTH_COOKIE_DOMAIN: ${AUTH_COOKIE_DOMAIN:?Set the application hostname only}
+      AUTH_COOKIE_DOMAIN: ${AUTH_COOKIE_DOMAIN}
       AUTH_COOKIE_DURATION: "24"
       AUTH_COOKIE_SECURE: "true"
       AUTH_DISABLE_SIGNUP: ${AUTH_DISABLE_SIGNUP:-false}
@@ -26,7 +26,7 @@ services:
       # Internal service addresses
       PG_ADDR: "postgres:5432"
       PG_USERNAME: "postgres"
-      PG_PASSWORD: ${POSTGRES_PASSWORD:?Generate a strong database password}
+      PG_PASSWORD: ${POSTGRES_PASSWORD}
       PG_DATABASE: "probod"
       PG_POOL_SIZE: "100"
       CHROME_DP_ADDR: "chrome:9222"
@@ -84,7 +84,7 @@ services:
       - max_connections=200
     environment:
       POSTGRES_USER: "postgres"
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Generate a strong database password}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
       - ./compose/postgres:/docker-entrypoint-initdb.d:ro
       - postgres-data:/var/lib/postgresql/data
