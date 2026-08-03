@@ -79,6 +79,6 @@ jobs:
       - name: "Install frontend dependencies"
         run: "npm ci"
       - name: "Generate Relay artifacts"
-        run: "npm run relay"
+        run: "make relay"
       - name: "Type-check Fast Start wizard"
         run: "npm -w @probo/console run check"
