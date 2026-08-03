@@ -46,15 +46,15 @@ type (
 	}
 
 	TemplatePackPreview struct {
-		PackID                    string
-		Version                   string
-		FrameworkName             string
-		ControlsCount             int
-		MeasuresCount             int
-		DocumentsCount            int
-		TasksCount                int
-		EvidenceRequestsCount     int
-		EstimatedConfirmationWork int
+		PackID                  string
+		Version                 string
+		FrameworkName           string
+		ControlsCount           int
+		MeasuresCount           int
+		DocumentsCount          int
+		TasksCount              int
+		EvidenceRequestsCount   int
+		ConfirmationFieldsCount int
 	}
 
 	PreviewTemplatePackPayload struct {
@@ -74,19 +74,19 @@ type (
 
 func (a TemplatePackAnswersInput) Values() map[string]any {
 	values := map[string]any{
-		"organization.legal_name":              strings.TrimSpace(a.LegalName),
-		"organization.address":                 strings.TrimSpace(a.Address),
-		"organization.services":                strings.TrimSpace(a.Services),
+		"organization.legal_name":             strings.TrimSpace(a.LegalName),
+		"organization.address":                strings.TrimSpace(a.Address),
+		"organization.services":               strings.TrimSpace(a.Services),
 		"organization.locations":               strings.TrimSpace(a.Locations),
 		"organization.employee_count":          a.EmployeeCount,
 		"organization.review_month":            strings.TrimSpace(a.ReviewMonth),
 		"organization.uses_suppliers":           a.UsesSuppliers,
 		"organization.uses_ai":                  a.UsesAI,
-		"organization.processes_personal_data":  a.ProcessesPersonalData,
-		"organization.environmental_impacts":    a.EnvironmentalImpacts,
-		"organization.selected_standards":       strings.Join(a.SelectedStandards, ", "),
-		"roles.executive_owner":                 strings.TrimSpace(a.ExecutiveOwner),
-		"roles.system_manager":                  strings.TrimSpace(a.SystemManager),
+		"organization.processes_personal_data": a.ProcessesPersonalData,
+		"organization.environmental_impacts":   a.EnvironmentalImpacts,
+		"organization.selected_standards":      strings.Join(a.SelectedStandards, ", "),
+		"roles.executive_owner":                strings.TrimSpace(a.ExecutiveOwner),
+		"roles.system_manager":                 strings.TrimSpace(a.SystemManager),
 	}
 
 	setOptional(values, "organization.trading_name", a.TradingName)
