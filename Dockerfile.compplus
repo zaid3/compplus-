@@ -1,0 +1,70 @@
+# syntax=docker/dockerfile:1.7
+
+FROM node:24-bookworm AS frontend
+
+WORKDIR /src
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends make \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY package.json package-lock.json relay.config.json ./
+COPY apps ./apps
+COPY packages ./packages
+COPY contrib ./contrib
+COPY pkg/server/api/connect/v1/graphql ./pkg/server/api/connect/v1/graphql
+COPY pkg/server/api/console/v1/graphql ./pkg/server/api/console/v1/graphql
+COPY pkg/server/api/complianceportal/v1/graphql ./pkg/server/api/complianceportal/v1/graphql
+COPY Makefile* ./
+
+RUN npm ci
+RUN make relay
+RUN npm run build
+
+FROM golang:1.26.5-bookworm AS backend
+
+WORKDIR /src
+
+COPY go.mod go.sum ./
+RUN go mod download
+
+COPY . .
+COPY --from=frontend /src/apps/console/dist ./apps/console/dist
+COPY --from=frontend /src/apps/compliance-portal/dist ./apps/compliance-portal/dist
+COPY --from=frontend /src/packages/emails/dist ./packages/emails/dist
+
+RUN go generate ./pkg/server/api/console/v1
+RUN CGO_ENABLED=0 GOOS=linux go build \
+      -trimpath \
+      -ldflags="-s -w -X main.env=staging -X main.version=compplus-staging" \
+      -o /out/probod ./cmd/probod
+RUN CGO_ENABLED=0 GOOS=linux go build \
+      -trimpath \
+      -ldflags="-s -w -X main.version=compplus-staging" \
+      -o /out/probod-bootstrap ./cmd/probod-bootstrap
+
+FROM ubuntu:24.04
+
+LABEL org.opencontainers.image.source="https://github.com/zaid3/compplus-"
+LABEL org.opencontainers.image.licenses="MIT"
+LABEL org.opencontainers.image.vendor="CompPlus"
+
+RUN useradd -m probo \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends ca-certificates libcap2-bin \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY --from=backend /out/probod /usr/local/bin/probod
+COPY --from=backend /out/probod-bootstrap /usr/local/bin/probod-bootstrap
+COPY entrypoint.sh /usr/local/bin/entrypoint.sh
+
+RUN chmod +x /usr/local/bin/probod \
+    && chmod +x /usr/local/bin/probod-bootstrap \
+    && chmod +x /usr/local/bin/entrypoint.sh \
+    && setcap CAP_NET_BIND_SERVICE=+eip /usr/local/bin/probod \
+    && mkdir -p /etc/probod \
+    && chown probo:probo /etc/probod
+
+USER probo
+
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
