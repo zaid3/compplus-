@@ -1,0 +1,48 @@
+{
+  "catalog_version": "2026.08.1",
+  "checked_on": "2026-08-03",
+  "packs": [
+    {
+      "id": "core",
+      "name": "Core Compliance Pack",
+      "status": "content-draft-complete",
+      "path": "core/pack.json",
+      "customer_goal": "Complete shared management-system work once and reuse it across every selected standard."
+    },
+    {
+      "id": "iso27001",
+      "name": "ISO/IEC 27001 Fast Start",
+      "standard_version": "ISO/IEC 27001:2022 + Amd 1:2024",
+      "status": "planned",
+      "customer_goal": "Generate the ISMS policies, risk treatment workflow, Annex A implementation records and Statement of Applicability."
+    },
+    {
+      "id": "uk-gdpr",
+      "name": "UK GDPR Fast Start",
+      "standard_version": "Current UK GDPR and ICO guidance at 2026-08-03",
+      "status": "planned",
+      "customer_goal": "Generate ROPA, privacy notices, lawful-basis records, DPIAs, rights-request workflows, retention and breach records."
+    },
+    {
+      "id": "iso9001",
+      "name": "ISO 9001 Fast Start",
+      "standard_version": "ISO 9001:2015 + Amd 1:2024; migration review when ISO 9001:2026 is published",
+      "status": "planned",
+      "customer_goal": "Generate quality policies, process records, objectives, complaints, supplier evaluation, nonconformity and improvement workflows."
+    },
+    {
+      "id": "iso14001",
+      "name": "ISO 14001 Fast Start",
+      "standard_version": "ISO 14001:2026",
+      "status": "planned",
+      "customer_goal": "Generate the EMS scope, aspects and impacts, compliance obligations, objectives, operational controls and emergency records."
+    },
+    {
+      "id": "iso42001",
+      "name": "ISO/IEC 42001 Fast Start",
+      "standard_version": "ISO/IEC 42001:2023",
+      "status": "planned",
+      "customer_goal": "Generate AI inventory, impact assessments, risk, oversight, transparency, monitoring, incident and supplier records."
+    }
+  ]
+}
