@@ -34,6 +34,25 @@ jobs:
           mkdir -p apps/console/dist apps/compliance-portal/dist packages/emails/dist
           echo dev-server > apps/console/dist/index.html
           echo dev-server > apps/compliance-portal/dist/index.html
-          echo dev-server > packages/emails/dist/placeholder
+          for name in \
+            confirm-email \
+            password-reset \
+            invitation \
+            document-approval \
+            document-signing \
+            document-export \
+            framework-export \
+            compliance-portal-access \
+            compliance-portal-document-access-rejected \
+            magic-link \
+            electronic-signature-certificate \
+            mailing-list-subscription \
+            mailing-list-unsubscription \
+            mailing-list-updates \
+            log-export
+          do
+            echo '<html><body>Build placeholder</body></html>' > "packages/emails/dist/${name}.html.tmpl"
+            echo 'Build placeholder' > "packages/emails/dist/${name}.txt.tmpl"
+          done
       - name: "Compile installer service"
         run: "go test ./pkg/probo -run '^$'"
