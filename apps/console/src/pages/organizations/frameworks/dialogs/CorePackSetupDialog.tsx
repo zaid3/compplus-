@@ -16,6 +16,8 @@ import { useState } from "react";
 import { graphql } from "relay-runtime";
 import { z } from "zod";
 
+import type { CorePackSetupDialogInstallMutation } from "#/__generated__/core/CorePackSetupDialogInstallMutation.graphql";
+import type { CorePackSetupDialogPreviewMutation } from "#/__generated__/core/CorePackSetupDialogPreviewMutation.graphql";
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
 
@@ -144,14 +146,14 @@ export function CorePackSetupDialog(props: Props) {
     },
   });
 
-  const [preparePreview, isPreparingPreview] = useMutationWithToasts(
+  const [preparePreview, isPreparingPreview] = useMutationWithToasts<CorePackSetupDialogPreviewMutation>(
     previewTemplatePackMutation,
     {
       successMessage: "Your Core Pack preview is ready.",
       errorMessage: "The Core Pack preview could not be prepared.",
     },
   );
-  const [installPack, isInstalling] = useMutationWithToasts(
+  const [installPack, isInstalling] = useMutationWithToasts<CorePackSetupDialogInstallMutation>(
     installTemplatePackMutation,
     {
       successMessage: "The CompPlus Core Pack has been installed.",
@@ -198,7 +200,7 @@ export function CorePackSetupDialog(props: Props) {
   };
 
   const onInstall = async () => {
-    const data = getValues();
+    const data = schema.parse(getValues());
     await installPack({
       variables: {
         input: buildInput(data),
