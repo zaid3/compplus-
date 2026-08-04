@@ -54,7 +54,7 @@ services:
         fi
         psql -h postgres -U postgres -d probod -c "ALTER SCHEMA public OWNER TO probod"
         psql -h postgres -U postgres -d probod -c "GRANT ALL ON SCHEMA public TO probod"
-        psql -h postgres -U postgres -d postgres -c "ALTER DATABASE probod SET probo.trust_center_base_domain TO '72.61.16.251'"
+        psql -h postgres -U postgres -d postgres -c "ALTER DATABASE probod SET probo.trust_center_base_domain TO 'compplus.72.61.16.251.sslip.io'"
 
   seaweed-config-init:
     image: "alpine:3.20"
@@ -132,12 +132,12 @@ services:
       PROBOD_AUTH_PASSWORD_PEPPER: ${SERVICE_PASSWORD_64_PASSWORDPEPPER}
       PROBOD_TRUST_AUTH_TOKEN_SECRET: ${SERVICE_PASSWORD_64_TRUSTTOKEN}
 
-      PROBOD_BASE_URL: "http://72.61.16.251:8091"
+      PROBOD_BASE_URL: "http://compplus.72.61.16.251.sslip.io"
       PROBOD_API_ADDR: ":8080"
-      PROBOD_API_CORS_ALLOWED_ORIGINS: "http://72.61.16.251:8091"
+      PROBOD_API_CORS_ALLOWED_ORIGINS: "http://compplus.72.61.16.251.sslip.io"
 
       PROBOD_AUTH_COOKIE_NAME: "COMPPLUS_STAGING_SSID"
-      PROBOD_AUTH_COOKIE_DOMAIN: "72.61.16.251"
+      PROBOD_AUTH_COOKIE_DOMAIN: "compplus.72.61.16.251.sslip.io"
       PROBOD_AUTH_COOKIE_SECURE: "false"
       PROBOD_AUTH_COOKIE_SAMESITE: "lax"
       PROBOD_AUTH_DISABLE_SIGNUP: "false"
@@ -170,8 +170,15 @@ services:
       PROBOD_AGENT_DEFAULT_PROVIDER: "openai"
       PROBOD_AGENT_DEFAULT_MODEL_NAME: "gpt-4o"
 
+    expose:
+      - "8080"
     ports:
       - "8091:8080"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.compplus-staging.rule=Host(`compplus.72.61.16.251.sslip.io`)"
+      - "traefik.http.routers.compplus-staging.entrypoints=http"
+      - "traefik.http.services.compplus-staging.loadbalancer.server.port=8080"
     volumes:
       - "probo-data:/data"
       - "oauth2-key:/oauth2:ro"
