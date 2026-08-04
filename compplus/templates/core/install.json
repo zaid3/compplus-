@@ -1,0 +1,133 @@
+{
+  "pack_id": "core",
+  "version": "2026.08-draft.2",
+  "framework": {
+    "id": "COMPPLUS-CORE-2026",
+    "name": "CompPlus Core Compliance Pack",
+    "description": "Plain-English shared management controls used once across ISO 27001, ISO 9001, ISO 14001, ISO 42001 and UK GDPR.",
+    "controls": [
+      {"id": "CORE-01", "name": "Define the management-system scope", "description": "Define the organisation, services, locations, systems, dependencies and exclusions covered by the management system."},
+      {"id": "CORE-02", "name": "Assign roles and responsibilities", "description": "Assign accountable owners, responsibilities, authority and deputies for critical compliance roles."},
+      {"id": "CORE-03", "name": "Control documents and records", "description": "Create, approve, version, protect, retain and dispose of controlled information."},
+      {"id": "CORE-04", "name": "Manage risks and opportunities", "description": "Identify, assess, treat, accept, monitor and review risks and opportunities consistently."},
+      {"id": "CORE-05", "name": "Set objectives and monitor performance", "description": "Set measurable objectives, assign owners and review performance against targets."},
+      {"id": "CORE-06", "name": "Maintain competence and awareness", "description": "Identify competence needs, provide training and keep evidence of awareness and capability."},
+      {"id": "CORE-07", "name": "Manage suppliers", "description": "Assess, approve, contract with and monitor suppliers according to their risk and importance."},
+      {"id": "CORE-08", "name": "Manage incidents", "description": "Prepare for, report, assess, contain, recover from and learn from incidents."},
+      {"id": "CORE-09", "name": "Correct nonconformities", "description": "Contain problems, analyse root causes, complete corrective actions and verify effectiveness."},
+      {"id": "CORE-10", "name": "Maintain applicable obligations", "description": "Identify, assign, review and evidence legal, regulatory, contractual and standards obligations."},
+      {"id": "CORE-11", "name": "Perform internal audits", "description": "Plan independent audits based on importance, risk, change and previous results."},
+      {"id": "CORE-12", "name": "Perform management reviews", "description": "Senior management reviews performance, risks, changes, resources and improvement decisions."}
+    ]
+  },
+  "items": [
+    {
+      "id": "management-system-scope",
+      "control": "CORE-01",
+      "category": "Governance",
+      "document": {"title": "Management System Scope", "content_file": "documents/management-system-scope.md", "type": "GOVERNANCE", "classification": "INTERNAL"},
+      "measure": {"reference_id": "compplus-core-scope", "name": "Management-system scope is defined and approved", "description": "Keep the scope accurate after organisational, service, location or technology changes."},
+      "task": {"reference_id": "compplus-core-scope-review", "name": "Review and approve the management-system scope", "description": "Confirm included services, locations, systems, dependencies and any justified exclusions."},
+      "evidence": [{"reference_id": "compplus-core-scope-evidence", "type": "FILE", "name": "Approved management-system scope"}]
+    },
+    {
+      "id": "roles-and-responsibilities",
+      "control": "CORE-02",
+      "category": "Governance",
+      "document": {"title": "Roles and Responsibilities Register", "content_file": "documents/roles-and-responsibilities-register.md", "type": "REGISTER", "classification": "INTERNAL"},
+      "measure": {"reference_id": "compplus-core-roles", "name": "Compliance roles and authority are assigned", "description": "Maintain named owners and deputies for the responsibilities required by selected packs."},
+      "task": {"reference_id": "compplus-core-roles-confirm", "name": "Confirm compliance owners and deputies", "description": "Review the proposed roles, assign named people and confirm their authority."},
+      "evidence": [{"reference_id": "compplus-core-roles-evidence", "type": "FILE", "name": "Approved roles and responsibilities register"}]
+    },
+    {
+      "id": "document-control",
+      "control": "CORE-03",
+      "category": "Governance",
+      "document": {"title": "Document and Record Control Procedure", "content_file": "documents/document-control-procedure.md", "type": "PROCEDURE", "classification": "INTERNAL"},
+      "measure": {"reference_id": "compplus-core-document-control", "name": "Documents and records are controlled", "description": "Apply approval, version, access, retention and disposal rules to controlled information."},
+      "task": {"reference_id": "compplus-core-document-control-apply", "name": "Confirm document-control arrangements", "description": "Confirm storage, approval, versioning, retention and disposal arrangements."},
+      "evidence": [{"reference_id": "compplus-core-document-control-evidence", "type": "FILE", "name": "Example approved and version-controlled document"}]
+    },
+    {
+      "id": "risk-management",
+      "control": "CORE-04",
+      "category": "Risk Management",
+      "document": {"title": "Integrated Risk Management Procedure", "content_file": "documents/risk-management-procedure.md", "type": "PROCEDURE", "classification": "INTERNAL"},
+      "measure": {"reference_id": "compplus-core-risk", "name": "Risks and opportunities are assessed and treated", "description": "Use one repeatable method to score, treat, accept and review risks."},
+      "task": {"reference_id": "compplus-core-risk-register", "name": "Complete the initial risk assessment", "description": "Confirm risk criteria, identify priority risks and assign treatment owners."},
+      "evidence": [{"reference_id": "compplus-core-risk-evidence", "type": "FILE", "name": "Completed risk assessment or risk register export"}]
+    },
+    {
+      "id": "objectives-and-kpis",
+      "control": "CORE-05",
+      "category": "Performance",
+      "document": {"title": "Objectives and KPI Register", "content_file": "documents/objectives-and-kpi-register.md", "type": "REGISTER", "classification": "INTERNAL"},
+      "measure": {"reference_id": "compplus-core-objectives", "name": "Objectives and performance indicators are monitored", "description": "Maintain measurable objectives, owners, deadlines, results and actions."},
+      "task": {"reference_id": "compplus-core-objectives-confirm", "name": "Confirm objectives, targets and owners", "description": "Review starter objectives, remove irrelevant entries and add business-specific objectives."},
+      "evidence": [{"reference_id": "compplus-core-objectives-evidence", "type": "FILE", "name": "Current objectives and KPI review record"}]
+    },
+    {
+      "id": "competence-and-training",
+      "control": "CORE-06",
+      "category": "People",
+      "document": {"title": "Competence, Awareness and Training Procedure", "content_file": "documents/competence-and-training-procedure.md", "type": "PROCEDURE", "classification": "INTERNAL"},
+      "measure": {"reference_id": "compplus-core-training", "name": "Required competence and awareness are maintained", "description": "Identify role-based competence, deliver induction and refresher training and retain records."},
+      "task": {"reference_id": "compplus-core-training-plan", "name": "Confirm the training plan and competence matrix", "description": "Identify required training by role and assign completion dates."},
+      "evidence": [{"reference_id": "compplus-core-training-register", "type": "FILE", "name": "Training and competence register"}, {"reference_id": "compplus-core-training-records", "type": "FILE", "name": "Recent training completion records"}]
+    },
+    {
+      "id": "supplier-management",
+      "control": "CORE-07",
+      "category": "Third Parties",
+      "document": {"title": "Supplier Management Procedure", "content_file": "documents/supplier-management-procedure.md", "type": "PROCEDURE", "classification": "INTERNAL"},
+      "measure": {"reference_id": "compplus-core-suppliers", "name": "Suppliers are assessed and monitored", "description": "Classify suppliers, perform due diligence, record obligations and review performance."},
+      "task": {"reference_id": "compplus-core-supplier-register", "name": "Complete the critical supplier register", "description": "Add suppliers that process data or support important services and assign review frequency."},
+      "evidence": [{"reference_id": "compplus-core-supplier-evidence", "type": "FILE", "name": "Supplier register and one completed supplier assessment"}]
+    },
+    {
+      "id": "incident-management",
+      "control": "CORE-08",
+      "category": "Operations",
+      "document": {"title": "Incident Management Plan", "content_file": "documents/incident-management-plan.md", "type": "PLAN", "classification": "INTERNAL"},
+      "measure": {"reference_id": "compplus-core-incidents", "name": "Incidents are reported, managed and reviewed", "description": "Maintain contacts, severity rules, response steps, communications and lessons learned."},
+      "task": {"reference_id": "compplus-core-incident-test", "name": "Confirm and test the incident-management plan", "description": "Confirm contacts and escalation rules, then record a tabletop or practical test."},
+      "evidence": [{"reference_id": "compplus-core-incident-plan", "type": "FILE", "name": "Approved incident-management plan"}, {"reference_id": "compplus-core-incident-test-evidence", "type": "FILE", "name": "Incident exercise or test record"}]
+    },
+    {
+      "id": "corrective-action",
+      "control": "CORE-09",
+      "category": "Improvement",
+      "document": {"title": "Nonconformity and Corrective Action Procedure", "content_file": "documents/corrective-action-procedure.md", "type": "PROCEDURE", "classification": "INTERNAL"},
+      "measure": {"reference_id": "compplus-core-corrective-action", "name": "Nonconformities receive effective corrective action", "description": "Contain issues, identify root cause, implement action and verify effectiveness."},
+      "task": {"reference_id": "compplus-core-corrective-action-confirm", "name": "Confirm the corrective-action workflow", "description": "Confirm reporting, root-cause, approval, deadline and effectiveness-review requirements."},
+      "evidence": [{"reference_id": "compplus-core-corrective-action-evidence", "type": "FILE", "name": "Example corrective-action record or blank approved form"}]
+    },
+    {
+      "id": "legal-requirements",
+      "control": "CORE-10",
+      "category": "Governance",
+      "document": {"title": "Legal, Regulatory and Contractual Requirements Register", "content_file": "documents/legal-requirements-register.md", "type": "REGISTER", "classification": "CONFIDENTIAL"},
+      "measure": {"reference_id": "compplus-core-obligations", "name": "Applicable obligations are identified and reviewed", "description": "Maintain legal, regulatory, contractual and standards requirements with owners and evidence."},
+      "task": {"reference_id": "compplus-core-obligations-review", "name": "Confirm applicable legal and contractual obligations", "description": "Review starter entries and add sector, licence, customer and contract-specific obligations."},
+      "evidence": [{"reference_id": "compplus-core-obligations-evidence", "type": "FILE", "name": "Reviewed legal and contractual requirements register"}]
+    },
+    {
+      "id": "internal-audit",
+      "control": "CORE-11",
+      "category": "Assurance",
+      "document": {"title": "Integrated Internal Audit Programme", "content_file": "documents/internal-audit-programme.md", "type": "PLAN", "classification": "INTERNAL"},
+      "measure": {"reference_id": "compplus-core-audit", "name": "Internal audits are planned and completed", "description": "Audit the management system according to risk, importance, change and previous results."},
+      "task": {"reference_id": "compplus-core-audit-plan", "name": "Confirm the internal audit programme", "description": "Set audit scope, dates and independent auditors for the current cycle."},
+      "evidence": [{"reference_id": "compplus-core-audit-evidence", "type": "FILE", "name": "Completed internal audit report"}]
+    },
+    {
+      "id": "management-review",
+      "control": "CORE-12",
+      "category": "Governance",
+      "document": {"title": "Integrated Management Review Minutes", "content_file": "documents/management-review-minutes.md", "type": "RECORD", "classification": "CONFIDENTIAL"},
+      "measure": {"reference_id": "compplus-core-management-review", "name": "Senior management reviews the management system", "description": "Review changes, objectives, risks, incidents, audits, suppliers, resources and improvement."},
+      "task": {"reference_id": "compplus-core-management-review-hold", "name": "Hold and approve the management review", "description": "Review the pre-filled agenda, record decisions and assign actions with deadlines."},
+      "evidence": [{"reference_id": "compplus-core-management-review-evidence", "type": "FILE", "name": "Approved management-review minutes"}]
+    }
+  ]
+}

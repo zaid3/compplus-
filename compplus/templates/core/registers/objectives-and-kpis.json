@@ -1,0 +1,11 @@
+{
+  "title": "Objectives and KPI Register",
+  "instructions": "CompPlus proposes objectives from the selected packs. Confirm the target, owner and due date; remove suggestions that are not relevant.",
+  "columns": ["objective", "metric", "baseline", "target", "owner", "due_date", "review_frequency", "status", "evidence"],
+  "suggested_rows": [
+    {"objective": "Complete all overdue compliance actions", "metric": "Number of overdue high-priority actions", "baseline": "{{ metrics.overdue_high_priority }}", "target": "0", "owner": "{{ roles.system_manager }}", "due_date": "{{ organization.certification_target | confirm }}", "review_frequency": "Monthly", "status": "Open", "evidence": "CompPlus task report"},
+    {"objective": "Maintain timely internal reviews", "metric": "Percentage of scheduled reviews completed on time", "baseline": "{{ metrics.review_completion_rate }}", "target": "95% or higher", "owner": "{{ roles.system_manager }}", "due_date": "{{ objective.year_end | confirm }}", "review_frequency": "Quarterly", "status": "Open", "evidence": "Review and audit records"},
+    {"objective": "Improve staff competence", "metric": "Required training completed", "baseline": "{{ metrics.training_completion_rate }}", "target": "100%", "owner": "{{ roles.system_manager }}", "due_date": "{{ objective.training_due_date | confirm }}", "review_frequency": "Monthly", "status": "Open", "evidence": "Training register and completion records"},
+    {"objective": "Close corrective actions effectively", "metric": "Corrective actions closed by due date and verified", "baseline": "{{ metrics.corrective_action_rate }}", "target": "90% or higher", "owner": "{{ roles.system_manager }}", "due_date": "{{ objective.year_end | confirm }}", "review_frequency": "Monthly", "status": "Open", "evidence": "Corrective-action register"}
+  ]
+}

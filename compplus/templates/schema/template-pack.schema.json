@@ -1,0 +1,120 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://compplus.example/schema/template-pack.schema.json",
+  "title": "CompPlus Template Pack",
+  "type": "object",
+  "required": ["id", "name", "version", "status", "sources", "questionnaire", "templates"],
+  "properties": {
+    "id": {"type": "string", "pattern": "^[a-z0-9-]+$"},
+    "name": {"type": "string", "minLength": 1},
+    "version": {"type": "string", "minLength": 1},
+    "status": {"enum": ["draft", "review", "published", "retired"]},
+    "effective_date": {"type": "string", "format": "date"},
+    "jurisdiction": {"type": ["string", "null"]},
+    "standards": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["reference", "edition"],
+        "properties": {
+          "reference": {"type": "string"},
+          "edition": {"type": "string"},
+          "status": {"type": "string"}
+        },
+        "additionalProperties": false
+      }
+    },
+    "sources": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["title", "url", "publisher", "checked_on"],
+        "properties": {
+          "title": {"type": "string"},
+          "url": {"type": "string", "format": "uri"},
+          "publisher": {"type": "string"},
+          "checked_on": {"type": "string", "format": "date"},
+          "licence": {"type": ["string", "null"]},
+          "notes": {"type": ["string", "null"]}
+        },
+        "additionalProperties": false
+      }
+    },
+    "questionnaire": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["key", "label", "type", "required"],
+        "properties": {
+          "key": {"type": "string"},
+          "label": {"type": "string"},
+          "help": {"type": ["string", "null"]},
+          "type": {"enum": ["text", "textarea", "boolean", "date", "number", "single_select", "multi_select"]},
+          "required": {"type": "boolean"},
+          "options": {"type": "array", "items": {"type": "string"}},
+          "default": {}
+        },
+        "additionalProperties": false
+      }
+    },
+    "templates": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "name", "kind", "purpose", "owner_role", "review_frequency_months", "user_effort", "fields", "mappings"],
+        "properties": {
+          "id": {"type": "string", "pattern": "^[a-z0-9-]+$"},
+          "name": {"type": "string"},
+          "kind": {"enum": ["policy", "procedure", "register", "assessment", "plan", "form", "checklist", "meeting", "task_bundle", "framework"]},
+          "purpose": {"type": "string"},
+          "owner_role": {"type": "string"},
+          "review_frequency_months": {"type": "integer", "minimum": 1},
+          "user_effort": {
+            "type": "object",
+            "required": ["estimated_minutes", "confirmations", "evidence_requests"],
+            "properties": {
+              "estimated_minutes": {"type": "integer", "minimum": 0},
+              "confirmations": {"type": "integer", "minimum": 0},
+              "evidence_requests": {"type": "integer", "minimum": 0}
+            },
+            "additionalProperties": false
+          },
+          "fields": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["key", "mode"],
+              "properties": {
+                "key": {"type": "string"},
+                "mode": {"enum": ["auto", "confirm", "evidence", "optional"]},
+                "source": {"type": ["string", "null"]},
+                "prompt": {"type": ["string", "null"]}
+              },
+              "additionalProperties": false
+            }
+          },
+          "mappings": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["framework", "reference"],
+              "properties": {
+                "framework": {"type": "string"},
+                "reference": {"type": "string"},
+                "mapping_type": {"enum": ["direct", "supporting", "evidence"]}
+              },
+              "additionalProperties": false
+            }
+          },
+          "content_file": {"type": ["string", "null"]},
+          "creates": {
+            "type": "array",
+            "items": {"enum": ["framework", "control", "measure", "document", "task", "evidence_request", "register", "meeting"]}
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

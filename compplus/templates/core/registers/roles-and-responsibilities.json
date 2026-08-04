@@ -1,0 +1,14 @@
+{
+  "title": "Roles and Responsibilities Matrix",
+  "instructions": "Confirm each proposed owner and add a deputy for critical roles. One person may hold more than one role in a small organisation.",
+  "columns": ["role", "primary_owner", "deputy", "responsibilities", "authority", "review_date"],
+  "rows": [
+    {"role": "Executive owner", "primary_owner": "{{ roles.executive_owner }}", "deputy": "{{ roles.executive_deputy | confirm }}", "responsibilities": "Provide direction, approve policy, resources, risk acceptance and management review decisions.", "authority": "Approve management-system decisions and major exceptions.", "review_date": "{{ document.next_review_date }}"},
+    {"role": "Management-system manager", "primary_owner": "{{ roles.system_manager }}", "deputy": "{{ roles.system_manager_deputy | confirm }}", "responsibilities": "Coordinate templates, actions, evidence, audits, reviews and improvements.", "authority": "Assign work and escalate overdue or high-risk issues.", "review_date": "{{ document.next_review_date }}"},
+    {"role": "Information-security owner", "primary_owner": "{{ roles.security_owner }}", "deputy": "{{ roles.security_deputy | confirm }}", "responsibilities": "Coordinate security risks, controls, incidents and awareness.", "authority": "Require security treatment and escalate unacceptable risk.", "review_date": "{{ document.next_review_date }}"},
+    {"role": "Privacy owner", "primary_owner": "{{ roles.privacy_owner }}", "deputy": "{{ roles.privacy_deputy | confirm }}", "responsibilities": "Coordinate processing records, rights requests, DPIAs, breaches and privacy advice.", "authority": "Stop or escalate processing that creates unmanaged privacy risk.", "review_date": "{{ document.next_review_date }}"},
+    {"role": "Quality owner", "primary_owner": "{{ roles.quality_owner }}", "deputy": "{{ roles.quality_deputy | confirm }}", "responsibilities": "Coordinate process performance, complaints, nonconformities and improvement.", "authority": "Require corrective action for quality failures.", "review_date": "{{ document.next_review_date }}"},
+    {"role": "Environmental owner", "primary_owner": "{{ roles.environment_owner }}", "deputy": "{{ roles.environment_deputy | confirm }}", "responsibilities": "Coordinate aspects, obligations, objectives, incidents and performance monitoring.", "authority": "Escalate significant environmental risk or non-compliance.", "review_date": "{{ document.next_review_date }}"},
+    {"role": "AI governance owner", "primary_owner": "{{ roles.ai_owner }}", "deputy": "{{ roles.ai_deputy | confirm }}", "responsibilities": "Coordinate AI inventory, impact assessment, risk, oversight and monitoring.", "authority": "Pause or escalate AI use that exceeds approved risk.", "review_date": "{{ document.next_review_date }}"}
+  ]
+}

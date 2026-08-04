@@ -1,0 +1,22 @@
+{
+  "title": "Integrated Internal Audit Programme",
+  "instructions": "CompPlus proposes audit areas from selected packs and risk data. Confirm independence, dates and scope. Findings are created directly from the audit report.",
+  "programme_columns": ["audit_area", "standards_or_obligations", "risk_basis", "scope", "auditor", "planned_date", "status", "report"],
+  "report_sections": [
+    "Audit objective and scope",
+    "Criteria and documents reviewed",
+    "People interviewed and samples tested",
+    "Evidence and observations",
+    "Conformities and effective practices",
+    "Major nonconformities",
+    "Minor nonconformities",
+    "Observations and improvement opportunities",
+    "Conclusion",
+    "Corrective actions and deadlines"
+  ],
+  "starter_audits": [
+    {"audit_area": "Management-system governance", "standards_or_obligations": "All selected packs", "risk_basis": "Annual mandatory system review", "scope": "Context, scope, leadership, roles, objectives, document control, audit, review and improvement", "auditor": "{{ audit.governance_auditor | confirm }}", "planned_date": "{{ audit.governance_date | confirm }}", "status": "Planned", "report": null},
+    {"audit_area": "Operational and technical controls", "standards_or_obligations": "Selected operational packs", "risk_basis": "Highest residual risks and changed processes", "scope": "{{ audit.operational_scope | confirm }}", "auditor": "{{ audit.operational_auditor | confirm }}", "planned_date": "{{ audit.operational_date | confirm }}", "status": "Planned", "report": null},
+    {"audit_area": "Legal, privacy and supplier obligations", "standards_or_obligations": "UK GDPR and applicable contracts", "risk_basis": "Personal data, critical suppliers and legal change", "scope": "ROPA, DPIA, rights, breaches, contracts, supplier monitoring and retention", "auditor": "{{ audit.privacy_auditor | confirm }}", "planned_date": "{{ audit.privacy_date | confirm }}", "status": "Planned", "report": null}
+  ]
+}

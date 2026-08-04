@@ -1,0 +1,58 @@
+name: "compplus-image-check"
+
+on:
+  pull_request:
+    branches:
+      - "main"
+    paths:
+      - "Dockerfile.compplus"
+      - "compose.compplus-staging.yaml"
+      - "compplus/templates/**"
+      - "pkg/probo/template_pack_service*.go"
+      - "pkg/server/api/console/v1/graphql/template_pack.graphql"
+      - "pkg/server/api/console/v1/template_pack_helpers.go"
+      - "pkg/server/api/console/v1/template_pack_resolvers.go"
+      - "pkg/server/api/console/v1/types/template_pack.go"
+      - "apps/console/src/hooks/graph/FrameworkGraph.ts"
+      - "apps/console/src/pages/organizations/frameworks/FrameworksPage.tsx"
+      - "apps/console/src/pages/organizations/frameworks/dialogs/CorePackSetupDialog.tsx"
+      - ".github/workflows/compplus-image-check.yaml"
+  workflow_dispatch:
+
+permissions:
+  contents: "read"
+
+jobs:
+  build:
+    name: "build-compplus-staging-image"
+    runs-on: "ubuntu-latest"
+    timeout-minutes: 45
+    steps:
+      - uses: "actions/checkout@v4"
+      - uses: "docker/setup-buildx-action@v3"
+      - name: "Build staging image with plain logs"
+        id: build
+        shell: bash
+        run: |
+          set -o pipefail
+          docker build \
+            --progress=plain \
+            --file Dockerfile.compplus \
+            --tag compplus:staging-check \
+            . 2>&1 | tee /tmp/compplus-image-build.log
+      - name: "Publish build log summary"
+        if: always()
+        shell: bash
+        run: |
+          echo "## CompPlus staging image build" >> "$GITHUB_STEP_SUMMARY"
+          echo '```text' >> "$GITHUB_STEP_SUMMARY"
+          tail -n 160 /tmp/compplus-image-build.log >> "$GITHUB_STEP_SUMMARY" 2>/dev/null || true
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+      - name: "Upload build log"
+        if: always()
+        uses: "actions/upload-artifact@v4"
+        with:
+          name: "compplus-image-build-log"
+          path: "/tmp/compplus-image-build.log"
+          if-no-files-found: "warn"
+          retention-days: 3

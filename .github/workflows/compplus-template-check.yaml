@@ -1,0 +1,84 @@
+name: "compplus-template-check"
+
+on:
+  pull_request:
+    branches:
+      - "main"
+    paths:
+      - "compplus/templates/**"
+      - "pkg/probo/template_pack_service*.go"
+      - "pkg/server/api/console/v1/graphql/template_pack.graphql"
+      - "pkg/server/api/console/v1/template_pack_helpers.go"
+      - "pkg/server/api/console/v1/template_pack_resolvers.go"
+      - "pkg/server/api/console/v1/types/template_pack.go"
+      - "apps/console/src/pages/organizations/frameworks/FrameworksPage.tsx"
+      - "apps/console/src/pages/organizations/frameworks/dialogs/CorePackSetupDialog.tsx"
+      - ".github/workflows/compplus-template-check.yaml"
+  workflow_dispatch:
+
+permissions:
+  contents: "read"
+
+jobs:
+  test:
+    name: "compile-and-test-template-installer"
+    runs-on: "ubuntu-latest"
+    timeout-minutes: 30
+    steps:
+      - uses: "actions/checkout@v4"
+      - uses: "actions/setup-go@v5"
+        with:
+          go-version-file: "go.mod"
+          cache: true
+      - uses: "actions/setup-node@v4"
+        with:
+          node-version: "24"
+          cache: "npm"
+      - name: "Show formatting differences"
+        continue-on-error: true
+        run: |
+          gofmt -d \
+            compplus/templates/*.go \
+            pkg/probo/template_pack_service*.go \
+            pkg/server/api/console/v1/template_pack_helpers.go \
+            pkg/server/api/console/v1/template_pack_resolvers.go \
+            pkg/server/api/console/v1/types/template_pack.go
+      - name: "Compile and test template compiler"
+        run: "go test ./compplus/templates"
+      - name: "Create placeholder embedded assets"
+        run: |
+          mkdir -p apps/console/dist apps/compliance-portal/dist packages/emails/dist
+          echo dev-server > apps/console/dist/index.html
+          echo dev-server > apps/compliance-portal/dist/index.html
+          for name in \
+            confirm-email \
+            password-reset \
+            invitation \
+            document-approval \
+            document-signing \
+            document-export \
+            framework-export \
+            compliance-portal-access \
+            compliance-portal-document-access-rejected \
+            magic-link \
+            electronic-signature-certificate \
+            mailing-list-subscription \
+            mailing-list-unsubscription \
+            mailing-list-updates \
+            log-export
+          do
+            echo '<html><body>Build placeholder</body></html>' > "packages/emails/dist/${name}.html.tmpl"
+            echo 'Build placeholder' > "packages/emails/dist/${name}.txt.tmpl"
+          done
+      - name: "Compile installer service"
+        run: "go test ./pkg/probo -run '^$'"
+      - name: "Generate console GraphQL code"
+        run: "go generate ./pkg/server/api/console/v1"
+      - name: "Compile template pack GraphQL API"
+        run: "go test ./pkg/server/api/console/v1 -run '^$'"
+      - name: "Install frontend dependencies"
+        run: "npm ci"
+      - name: "Generate Relay artifacts"
+        run: "make relay"
+      - name: "Type-check Fast Start wizard"
+        run: "npm -w @probo/console run check"

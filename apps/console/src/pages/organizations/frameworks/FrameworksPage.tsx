@@ -21,6 +21,7 @@
 import { usePageTitle } from "@probo/hooks";
 import {
   ActionDropdown,
+  Button,
   Card,
   DropdownItem,
   FileButton,
@@ -50,6 +51,7 @@ import {
 } from "#/hooks/graph/FrameworkGraph";
 import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
 
+import { CorePackSetupDialog } from "./dialogs/CorePackSetupDialog";
 import { FrameworkFormDialog } from "./dialogs/FrameworkFormDialog";
 
 type Props = {
@@ -88,6 +90,7 @@ export default function FrameworksPage(props: Props) {
   );
   const [isUploading, setUploading] = useState(false);
   const dialogRef = useDialogRef();
+  const corePackDialogRef = useDialogRef();
 
   const importNamedFramework = async (name: string) => {
     // For custom framework, open the form
@@ -151,12 +154,24 @@ export default function FrameworksPage(props: Props) {
         connectionId={connectionId}
         organizationId={data.organization.id!}
       />
+      <CorePackSetupDialog
+        ref={corePackDialogRef}
+        organizationId={data.organization.id!}
+        organizationName={data.organization.name ?? ""}
+      />
       <PageHeader
         title={t("frameworksPage.title")}
         description={t("frameworksPage.description")}
       >
         {data.organization.canCreateFramework && (
           <>
+            <Button
+              type="button"
+              onClick={() => corePackDialogRef.current?.open()}
+              disabled={isLoading}
+            >
+              CompPlus Fast Start
+            </Button>
             <FileButton
               variant="secondary"
               icon={IconFolderUpload}
