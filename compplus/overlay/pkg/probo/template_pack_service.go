@@ -58,9 +58,9 @@ func (s *TemplatePackService) Compile(_ context.Context, req CompileTemplatePack
 }
 
 // Install is resumable and idempotent. A previous attempt may have created the
-// framework before a later step failed. In that case Comp Plus+ reuses the
-// framework, upserts measures/tasks/evidence and reuses documents by title
-// instead of returning early or creating duplicates.
+// framework before a later step failed. ISOpilot reuses that framework,
+// upserts measures/tasks/evidence and reuses documents by title instead of
+// returning early or creating duplicates.
 func (s *TemplatePackService) Install(ctx context.Context, scope coredata.Scoper, req InstallTemplatePackRequest) (*InstallTemplatePackResult, error) {
   compiled, err := s.Compile(ctx, CompileTemplatePackRequest{PackID: req.PackID, Answers: req.Answers, Now: req.Now})
   if err != nil {
@@ -152,7 +152,7 @@ func (s *TemplatePackService) Install(ctx context.Context, scope coredata.Scoper
 }
 
 func (s *TemplatePackService) installISO27001SOA(ctx context.Context, scope coredata.Scoper, organizationID gid.GID, framework *coredata.Framework) (*coredata.StatementOfApplicability, error) {
-  const soaName = "Comp Plus+ ISO/IEC 27001 Statement of Applicability"
+  const soaName = "ISOpilot ISO/IEC 27001 Statement of Applicability"
 
   soa, err := s.findStatementOfApplicabilityByName(ctx, scope, organizationID, soaName)
   if err != nil {
