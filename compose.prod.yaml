@@ -9,7 +9,7 @@ services:
         apk add --no-cache openssl >/dev/null
         if [ ! -s /oauth2/private.pem ]; then
           openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out /oauth2/private.pem
-          chmod 644 /oauth2/private.pem
+          chmod 600 /oauth2/private.pem
         fi
     volumes:
       - "oauth2-key:/oauth2"
@@ -129,20 +129,36 @@ services:
         export PROBOD_OAUTH2_SERVER_SIGNING_KEY="$$(cat /oauth2/private.pem)"
         exec /usr/local/bin/entrypoint.sh
     environment:
+      # Persistent cryptographic secrets generated and stored by Coolify.
       PROBOD_ENCRYPTION_KEY: ${SERVICE_REALBASE64_32_ENCRYPTIONKEY}
       PROBOD_AUTH_COOKIE_SECRET: ${SERVICE_PASSWORD_64_COOKIESECRET}
       PROBOD_AUTH_PASSWORD_PEPPER: ${SERVICE_PASSWORD_64_PASSWORDPEPPER}
       PROBOD_TRUST_AUTH_TOKEN_SECRET: ${SERVICE_PASSWORD_64_TRUSTTOKEN}
 
-      PROBOD_BASE_URL: "http://72.61.16.251:8090"
+      # Current HTTP pilot URL. For production, set ISOPILOT_PUBLIC_URL to the
+      # final https:// domain and ISOPILOT_COOKIE_SECURE=true.
+      PROBOD_BASE_URL: "${ISOPILOT_PUBLIC_URL:-http://xcqx8pquoua5s54aey3plps1.72.61.16.251.sslip.io}"
       PROBOD_API_ADDR: ":8080"
-      PROBOD_API_CORS_ALLOWED_ORIGINS: "http://72.61.16.251:8090"
+      PROBOD_API_CORS_ALLOWED_ORIGINS: "${ISOPILOT_CORS_ORIGINS:-http://xcqx8pquoua5s54aey3plps1.72.61.16.251.sslip.io,http://72.61.16.251:8090}"
 
-      PROBOD_AUTH_COOKIE_NAME: "COMPPLUS_SSID"
-      PROBOD_AUTH_COOKIE_DOMAIN: "72.61.16.251"
-      PROBOD_AUTH_COOKIE_SECURE: "false"
+      # Authentication/session hardening. Host-only cookies are the default.
+      PROBOD_AUTH_COOKIE_NAME: "ISOPILOT_SSID"
+      PROBOD_AUTH_COOKIE_DOMAIN: "${ISOPILOT_COOKIE_DOMAIN:-}"
+      PROBOD_AUTH_COOKIE_SECURE: "${ISOPILOT_COOKIE_SECURE:-false}"
       PROBOD_AUTH_COOKIE_SAMESITE: "lax"
+      PROBOD_AUTH_COOKIE_DURATION: "12"
       PROBOD_AUTH_DISABLE_SIGNUP: "false"
+      PROBOD_AUTH_PASSWORD_ITERATIONS: "1000000"
+      PROBOD_AUTH_INVITATION_TOKEN_VALIDITY: "3600"
+      PROBOD_AUTH_EMAIL_CONFIRMATION_TOKEN_VALIDITY: "3600"
+      PROBOD_AUTH_PASSWORD_RESET_TOKEN_VALIDITY: "3600"
+      PROBOD_AUTH_MAGIC_LINK_TOKEN_VALIDITY: "900"
+
+      # Optional OIDC login. Empty values leave the providers disabled.
+      PROBOD_AUTH_GOOGLE_CLIENT_ID: "${ISOPILOT_GOOGLE_CLIENT_ID:-}"
+      PROBOD_AUTH_GOOGLE_CLIENT_SECRET: "${ISOPILOT_GOOGLE_CLIENT_SECRET:-}"
+      PROBOD_AUTH_MICROSOFT_CLIENT_ID: "${ISOPILOT_MICROSOFT_CLIENT_ID:-}"
+      PROBOD_AUTH_MICROSOFT_CLIENT_SECRET: "${ISOPILOT_MICROSOFT_CLIENT_SECRET:-}"
 
       PROBOD_PG_ADDR: "postgres:5432"
       PROBOD_PG_USERNAME: "probod"
@@ -161,15 +177,18 @@ services:
       PROBOD_METRICS_ADDR: ":8081"
       PROBOD_TRACING_ADDR: ""
 
-      PROBOD_SMTP_ADDR: ""
-      PROBOD_SMTP_TLS_REQUIRED: "false"
-      PROBOD_MAILER_SENDER_NAME: "Comp Plus+"
-      PROBOD_MAILER_SENDER_EMAIL: "no-reply@example.com"
+      # SMTP enables invitations, email confirmation, password reset and magic links.
+      PROBOD_SMTP_ADDR: "${ISOPILOT_SMTP_ADDR:-}"
+      PROBOD_SMTP_USER: "${ISOPILOT_SMTP_USER:-}"
+      PROBOD_SMTP_PASSWORD: "${ISOPILOT_SMTP_PASSWORD:-}"
+      PROBOD_SMTP_TLS_REQUIRED: "${ISOPILOT_SMTP_TLS_REQUIRED:-true}"
+      PROBOD_MAILER_SENDER_NAME: "ISOpilot"
+      PROBOD_MAILER_SENDER_EMAIL: "${ISOPILOT_MAILER_SENDER_EMAIL:-no-reply@isopilot.co.uk}"
 
       PROBOD_CHROME_DP_ADDR: "chrome:9222"
 
-      # Placeholder provider keeps the app bootable until a real AI key is configured.
-      PROBOD_OPENAI_API_KEY: "disabled-for-initial-hosting"
+      # Optional AI provider; compliance features work without a live key.
+      PROBOD_OPENAI_API_KEY: "${ISOPILOT_OPENAI_API_KEY:-disabled-for-initial-hosting}"
       PROBOD_AGENT_DEFAULT_PROVIDER: "openai"
       PROBOD_AGENT_DEFAULT_MODEL_NAME: "gpt-4o"
 

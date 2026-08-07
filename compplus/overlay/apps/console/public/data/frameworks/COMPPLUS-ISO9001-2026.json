@@ -1,0 +1,31 @@
+{
+  "id": "COMPPLUS-ISO9001-2026",
+  "name": "ISO 9001 (current 2015 + Amd 1:2024)",
+  "controls": [
+    {"id":"QMS-4.3","name":"Quality Management System Scope","description":"Define the boundaries, services, locations and applicability of the QMS."},
+    {"id":"QMS-5.2","name":"Quality Policy","description":"Set leadership commitments for quality, customer focus and continual improvement."},
+    {"id":"QMS-4.4","name":"QMS Process Map and Process Register","description":"Identify QMS processes, interactions, owners, inputs, outputs and performance criteria."},
+    {"id":"QMS-6.2","name":"Quality Objectives and KPI Plan","description":"Set measurable quality objectives, owners, resources, dates and evaluation methods."},
+    {"id":"QMS-6.1","name":"Quality Risks and Opportunities Register","description":"Identify and treat risks and opportunities that affect QMS results and customer satisfaction."},
+    {"id":"QMS-6.3","name":"QMS Change Planning and Approval Procedure","description":"Plan changes so responsibilities, resources and QMS integrity are maintained."},
+    {"id":"QMS-7.1","name":"Quality Resources and Infrastructure Plan","description":"Provide and maintain people, infrastructure, environment and resources needed for quality."},
+    {"id":"QMS-7.1.6","name":"Organisational Knowledge Register","description":"Identify, maintain and share knowledge required to operate processes effectively."},
+    {"id":"QMS-7.2","name":"Quality Competence and Training Matrix","description":"Define competence needs, close gaps and retain evidence of competence."},
+    {"id":"QMS-7.4","name":"QMS Communication Plan","description":"Define important internal and external quality communications and responsibilities."},
+    {"id":"QMS-8.2","name":"Customer Communication and Requirements Review Procedure","description":"Review, agree, control and communicate customer and applicable requirements."},
+    {"id":"QMS-8.3","name":"Design and Development Procedure","description":"Control design and development where applicable, including review, verification, validation and change."},
+    {"id":"QMS-8.4","name":"External Provider Approval and Performance Procedure","description":"Approve, control and monitor suppliers and external providers proportionate to risk."},
+    {"id":"QMS-8.5","name":"Service Delivery and Operational Control Procedure","description":"Deliver products and services under controlled conditions with suitable resources and information."},
+    {"id":"QMS-8.5.3","name":"Customer and External Provider Property Register","description":"Identify and protect property belonging to customers and external providers."},
+    {"id":"QMS-8.6","name":"Product and Service Release Checklist","description":"Confirm acceptance requirements before release and retain authorisation evidence."},
+    {"id":"QMS-8.7","name":"Nonconforming Output Procedure and Register","description":"Identify, control and resolve outputs that do not meet requirements."},
+    {"id":"QMS-9.1","name":"Quality Monitoring, Measurement and Analysis Plan","description":"Define what quality performance is measured, how, when and how results are evaluated."},
+    {"id":"QMS-9.1.2","name":"Customer Satisfaction and Feedback Procedure","description":"Monitor customer perceptions and convert feedback into action and improvement."},
+    {"id":"QMS-COMP","name":"Customer Complaint Handling Procedure and Register","description":"Acknowledge, investigate, resolve and learn from customer complaints."},
+    {"id":"QMS-7.1.5","name":"Monitoring and Measuring Resources Register","description":"Maintain suitable monitoring and measuring resources and traceability where required."},
+    {"id":"QMS-9.2","name":"QMS Internal Audit Checklist and Report","description":"Audit QMS conformity, implementation and process effectiveness using objective evidence."},
+    {"id":"QMS-9.3","name":"QMS Management Review Agenda and Minutes","description":"Provide management with the required QMS performance, change and improvement review."},
+    {"id":"QMS-10.2","name":"Root Cause and Corrective Action Form","description":"Record correction, cause analysis, corrective action, effectiveness and closure."},
+    {"id":"QMS-10.3","name":"Continual Improvement Register","description":"Capture, prioritise, implement and evaluate continual improvement opportunities."}
+  ]
+}

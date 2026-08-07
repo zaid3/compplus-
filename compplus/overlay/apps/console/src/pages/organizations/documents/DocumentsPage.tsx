@@ -46,7 +46,7 @@ export default function DocumentsPage(props: {
     throw new Error("invalid type for node");
   }
 
-  usePageTitle("Documents | Comp Plus+ Template Library");
+  usePageTitle("Documents | Template Library");
 
   const [tab, setTab] = useState<"ACTIVE" | "ARCHIVED">("ACTIVE");
   const [documentListConnectionId, setDocumentListConnectionId] = useState(
@@ -61,19 +61,19 @@ export default function DocumentsPage(props: {
     <div className="space-y-6">
       <PageHeader
         title={t("documentsPage.title")}
-        description="Create documents from scratch or install ready-made Comp Plus+ compliance packs."
+        description="Use ready-made ISOpilot policies, procedures, registers and forms, or create your own document."
       >
         <div className="flex gap-2">
           {organization.canCreateDocument && tab === "ACTIVE" && (
             <>
               <TemplateLibraryDialog
                 organizationName={organization.name ?? ""}
-                trigger={<Button variant="secondary">Template Library</Button>}
+                trigger={<Button>Template Library</Button>}
               />
               <CreateDocumentDialog
                 connection={documentListConnectionId}
                 trigger={(
-                  <Button icon={IconPlusLarge}>
+                  <Button variant="secondary" icon={IconPlusLarge}>
                     {t("documentsPage.actions.new")}
                   </Button>
                 )}

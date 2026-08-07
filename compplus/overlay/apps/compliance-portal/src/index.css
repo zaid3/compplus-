@@ -1,0 +1,79 @@
+@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&family=Inter+Tight:wght@500;600;700&display=swap");
+@import "tailwindcss";
+@import "@probo/ui/src/v2/theme.css";
+@source "../../../packages/ui/src/v2";
+
+/* ISOpilot v2 palette. Keep Radix token names for upstream compatibility. */
+:root {
+  --sand-1: #F6F8FB;
+  --sand-2: #F1F4F8;
+  --sand-3: #EBEFF5;
+  --sand-4: #E4E9F2;
+  --sand-5: #DCE3ED;
+  --sand-6: #CBD5E1;
+  --sand-7: #B8C4D3;
+  --sand-8: #94A3B8;
+  --sand-9: #64748B;
+  --sand-10: #475569;
+  --sand-11: #334155;
+  --sand-12: #0B1220;
+
+  --gold-1: #F7F9FF;
+  --gold-2: #EFF4FF;
+  --gold-3: #E7EEFF;
+  --gold-4: #D9E5FF;
+  --gold-5: #CBDCFF;
+  --gold-6: #B4CCFF;
+  --gold-7: #94B5FF;
+  --gold-8: #6F95FF;
+  --gold-9: #2F6BFF;
+  --gold-10: #1D4ED8;
+  --gold-11: #2448A8;
+  --gold-12: #172D68;
+
+  --sky-9: #2F6BFF;
+  --sky-10: #1D4ED8;
+  --green-9: #12B76A;
+  --amber-9: #F79009;
+  --red-9: #F04438;
+
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, monospace;
+}
+
+.dark {
+  --sand-1: #0B1220;
+  --sand-2: #0F172A;
+  --sand-3: #111C2F;
+  --sand-4: #172235;
+  --sand-5: #1E293B;
+  --sand-6: #27364B;
+  --sand-7: #334155;
+  --sand-8: #475569;
+  --sand-9: #64748B;
+  --sand-10: #94A3B8;
+  --sand-11: #CBD5E1;
+  --sand-12: #F8FAFC;
+  --gold-9: #2F6BFF;
+  --gold-10: #4D7FFF;
+  --sky-9: #2F6BFF;
+}
+
+html, body {
+  font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
+  background: #F6F8FB;
+  color: #0B1220;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: "Inter Tight", "Inter", ui-sans-serif, system-ui, sans-serif;
+  letter-spacing: -0.02em;
+}
+
+code, pre, kbd, samp {
+  font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, monospace;
+}
+
+:focus-visible {
+  outline-color: #2F6BFF;
+}

@@ -1,0 +1,25 @@
+{
+  "id": "COMPPLUS-ISO14001-2026",
+  "name": "ISO 14001 (2026)",
+  "controls": [
+    {"id":"EMS-4.3","name":"Environmental Management System Scope","description":"Define the activities, services, locations and boundaries covered by the EMS."},
+    {"id":"EMS-5.2","name":"Environmental Policy","description":"Set commitments for environmental protection, compliance, objectives and improvement."},
+    {"id":"EMS-6.1.2","name":"Environmental Aspects and Impacts Register","description":"Identify lifecycle-aware environmental aspects and impacts, including climate, resource use, pollution, biodiversity, ecosystems and land use where relevant, and evaluate significance."},
+    {"id":"EMS-6.1.3","name":"Environmental Compliance Obligations Register","description":"Maintain applicable environmental legal, permit, contractual and other obligations."},
+    {"id":"EMS-9.1.2","name":"Environmental Compliance Evaluation Procedure and Record","description":"Evaluate fulfilment of environmental compliance obligations and retain evidence."},
+    {"id":"EMS-6.2","name":"Environmental Objectives and Action Programme","description":"Set measurable environmental objectives, actions, owners, resources and evaluation methods."},
+    {"id":"EMS-8.1","name":"Environmental Operational Control Procedure","description":"Control significant aspects, obligations and environmental risks in operations and suppliers."},
+    {"id":"EMS-WASTE","name":"Waste and Resource Management Register","description":"Track material waste streams, handling, providers, obligations and reduction opportunities."},
+    {"id":"EMS-RESOURCE","name":"Energy, Water and Resource Monitoring Register","description":"Monitor material resource use, trends, abnormal consumption and improvement opportunities."},
+    {"id":"EMS-EMISSIONS","name":"Environmental Emissions and Discharges Register","description":"Record material emissions, discharges, monitoring, limits and evidence where relevant."},
+    {"id":"EMS-8.2","name":"Environmental Emergency Preparedness and Response Plan","description":"Prepare for, respond to and test foreseeable environmental emergency situations."},
+    {"id":"EMS-INCIDENT","name":"Environmental Incident and Near-Miss Register","description":"Record incidents, near misses, impacts, notifications, causes and corrective actions."},
+    {"id":"EMS-CONTRACTOR","name":"Supplier and Contractor Environmental Assessment","description":"Apply proportionate environmental requirements to relevant suppliers and contractors."},
+    {"id":"EMS-LIFECYCLE","name":"Lifecycle and Sustainable Procurement Assessment","description":"Consider material upstream and downstream environmental impacts and organisational influence."},
+    {"id":"EMS-9.1","name":"Environmental Monitoring and Measurement Plan","description":"Define environmental indicators, methods, frequency, criteria and evaluation responsibilities."},
+    {"id":"EMS-7.4","name":"Environmental Communication Plan","description":"Define reliable internal and external environmental communication responsibilities."},
+    {"id":"EMS-9.2","name":"EMS Internal Audit Checklist and Report","description":"Audit EMS implementation, operational controls, compliance evaluation and performance."},
+    {"id":"EMS-9.3","name":"EMS Management Review Agenda and Minutes","description":"Review environmental performance, context, compliance, resources and improvement decisions."},
+    {"id":"EMS-10","name":"Environmental Nonconformity and Corrective Action Form","description":"Record correction, cause analysis, corrective action and effectiveness for environmental issues."}
+  ]
+}

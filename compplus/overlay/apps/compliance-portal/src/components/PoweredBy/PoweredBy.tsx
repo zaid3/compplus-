@@ -11,7 +11,7 @@ export interface PoweredByProps {
   href?: string;
 }
 
-export function PoweredBy({ label = "Powered by", href = "/" }: PoweredByProps) {
+export function PoweredBy({ label = "Guided by", href = "https://isopilot.co.uk" }: PoweredByProps) {
   const slots = poweredBy();
 
   return (
@@ -20,7 +20,7 @@ export function PoweredBy({ label = "Powered by", href = "/" }: PoweredByProps) 
       <div className={slots.backdropFade()} />
       <div className={slots.content()}>
         <Text size={1} color="neutral">{label}</Text>
-        <a href={href} aria-label="Comp Plus+">
+        <a href={href} aria-label="ISOpilot">
           <ProboLogo className={slots.logo()} aria-hidden />
         </a>
       </div>
