@@ -66,6 +66,11 @@ func (s *TemplatePackService) Install(ctx context.Context, scope coredata.Scoper
     return nil, err
   }
 
+  // Upstream measure import resolves framework references within the tenant.
+  // Scope the Comp Plus+ framework reference to the organisation so two
+  // organisations in one tenant can never cross-link measures/controls.
+  scopeCompiledFrameworkReference(compiled, req.OrganizationID)
+
   existing, err := s.findInstalledFramework(ctx, scope, req.OrganizationID, compiled.Framework.ID)
   if err != nil {
     return nil, fmt.Errorf("cannot check template pack installation: %w", err)
@@ -142,6 +147,20 @@ func (s *TemplatePackService) Install(ctx context.Context, scope coredata.Scoper
     Documents: documents,
     StatementOfApplicability: soa,
   }, nil
+}
+
+func scopeCompiledFrameworkReference(compiled *compplustemplates.CompiledPack, organizationID gid.GID) {
+  baseReference := compiled.Framework.ID
+  scopedReference := fmt.Sprintf("%s-%s", baseReference, organizationID.String())
+  compiled.Framework.ID = scopedReference
+
+  for i := range compiled.Measures {
+    for j := range compiled.Measures[i].Standards {
+      if compiled.Measures[i].Standards[j].Framework == baseReference {
+        compiled.Measures[i].Standards[j].Framework = scopedReference
+      }
+    }
+  }
 }
 
 func (s *TemplatePackService) installISO27001SOA(ctx context.Context, scope coredata.Scoper, organizationID gid.GID, framework *coredata.Framework) (*coredata.StatementOfApplicability, error) {
