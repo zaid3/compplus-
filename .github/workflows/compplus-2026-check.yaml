@@ -9,6 +9,7 @@ on:
       - Dockerfile.compplus.source
       - compose.prod.yaml
       - compplus/overlay/**
+      - docs/**
       - .github/workflows/compplus-2026-check.yaml
   workflow_dispatch:
 
@@ -22,14 +23,25 @@ jobs:
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
-      - name: Build ISOpilot from stable Probo plus approved overlays
+
+      - name: Verify release guardrails
+        run: |
+          set -euxo pipefail
+          grep -q 'ARG PROBO_UPSTREAM_SHA=7d4b92c5ef1d77d0815f22749e01b8202d683d58' Dockerfile.compplus.source
+          grep -q 'ISO 9001 (current' compplus/overlay/packages/ui/src/Molecules/FrameworkSelector/FrameworkSelector.tsx
+          grep -q 'ISO 14001 (2026)' compplus/overlay/packages/ui/src/Molecules/FrameworkSelector/FrameworkSelector.tsx
+          grep -q 'DUAA changes in force in 2026' compplus/overlay/apps/console/src/pages/organizations/documents/_components/TemplateLibraryDialog.tsx
+          grep -q 'Start here — no compliance experience needed' compplus/overlay/apps/console/src/pages/organizations/context/ContextPage.tsx
+          ! grep -q 'POSTGRES_PASSWORD: "postgres"' compose.prod.yaml
+          ! grep -q 'PROBOD_AWS_SECRET_ACCESS_KEY: "thisisnotasecret"' compose.prod.yaml
+
+      - name: Build ISOpilot from reviewed Probo plus approved overlays
         run: |
           docker build \
             --file Dockerfile.compplus.source \
-            --build-arg PROBO_UPSTREAM_SHA=82221746eb9ca76942367e6c8a45013bb9895ec7 \
-            --build-arg PROBO_NPM_SECURITY_SHA=f6ca5a499b78e4cd8cfe97760f77b170a2889287 \
             --tag isopilot:check \
             .
+
       - name: Verify final runtime contains required binaries
         run: |
           set -euxo pipefail
