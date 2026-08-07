@@ -45,7 +45,6 @@ const packOptions = [
     name: "Core Compliance Pack",
     standard: "Shared foundation",
     description: "Context, scope, roles, risk, documents, suppliers, incidents, audit, management review and corrective action.",
-    required: true,
   },
   {
     id: "iso27001",
@@ -221,6 +220,7 @@ export function TemplateLibraryDialog({ trigger, organizationName }: Props) {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
               {packOptions.map(pack => {
                 const checked = selected.has(pack.id);
+                const required = pack.id === "core";
                 return (
                   <label
                     key={pack.id}
@@ -230,14 +230,14 @@ export function TemplateLibraryDialog({ trigger, organizationName }: Props) {
                       <input
                         type="checkbox"
                         checked={checked}
-                        disabled={pack.required}
+                        disabled={required}
                         onChange={() => togglePack(pack.id)}
                         className="mt-1 size-4"
                       />
                       <div className="min-w-0">
                         <div className="flex flex-wrap items-center gap-2">
                           <span className="font-medium text-txt-primary">{pack.name}</span>
-                          {pack.required && <Badge variant="neutral" size="sm">Included</Badge>}
+                          {required && <Badge variant="neutral" size="sm">Included</Badge>}
                         </div>
                         <div className="mt-0.5 text-xs font-medium text-txt-secondary">{pack.standard}</div>
                         <p className="mt-1.5 text-sm text-txt-secondary">{pack.description}</p>
