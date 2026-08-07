@@ -7,7 +7,7 @@ FROM ubuntu:24.04
 
 # Internal runtime asset names remain stable for deployment compatibility.
 ARG COMPPLUS_RUNTIME_URL=https://github.com/zaid3/compplus-/releases/download/runtime-latest/compplus-linux-amd64.tar.gz
-ARG COMPPLUS_RUNTIME_REVISION=2026-08-07-isopilot-v1
+ARG COMPPLUS_RUNTIME_REVISION=2026-08-07-isopilot-v2
 
 LABEL org.opencontainers.image.source="https://github.com/zaid3/compplus-"
 LABEL org.opencontainers.image.licenses="MIT"
