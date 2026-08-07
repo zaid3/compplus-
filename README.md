@@ -1,138 +1,69 @@
-# Probo
+# ISOpilot
 
-[![License](https://img.shields.io/github/license/getprobo/probo)](LICENSE)
-[![Build](https://img.shields.io/github/actions/workflow/status/getprobo/probo/make.yaml)](https://github.com/getprobo/probo/actions)
-[![Discord](https://img.shields.io/discord/1326589224811757568?color=7289da&label=Discord&logo=discord&logoColor=ffffff)](https://discord.gg/8qfdJYfvpY)
+**Your compliance co-pilot.**
 
-**Open-source GRC platform for engineers.**
+ISOpilot is a guided governance, risk and compliance platform that helps organisations turn compliance requirements into practical documents, controls, risks, tasks, evidence and audit work.
 
-Probo is a self-hostable governance, risk, and compliance (GRC) platform built for engineering and security teams. It covers the full GRC lifecycle: risk identification, control tracking, vendor risk, data privacy, access reviews, audit programs, and document approval workflows. Every entity is accessible through a web console, a CLI, a [Model Context Protocol (MCP)](https://modelcontextprotocol.io) API, and a GraphQL API, so you can automate compliance work from code, scripts, or any LLM agent.
+It keeps the proven Probo architecture and adds an ISOpilot experience for organisations that want one workspace for information security, quality, privacy, environmental and AI governance.
 
-## Why Probo?
+## Fast Start coverage
 
-- **AI-native by design.** 270+ MCP tools expose every entity and operation. Any MCP-compatible LLM agent can read and write your GRC data, draft policies, run risk assessments, and generate evidence packs.
-- **Full GRC coverage.** Risk management, controls, vendor risk, data privacy (DPIA/TIA), access reviews, audit programs.
-- **Multiple interfaces.** Web console, `prb` CLI (44+ command groups), MCP API, GraphQL, and an n8n community node for no-code automation.
-- **Open source and self-hostable.** MIT licensed. Run it on your own infrastructure with Docker.
-- **Audit-ready.** Policy-based RBAC, immutable audit logs, electronic document sign-off workflows, and evidence chains.
+ISOpilot includes guided working packs for:
 
-## Capabilities
+- ISO/IEC 27001:2022, including the 2024 climate-action amendment
+- ISO 9001:2015 + Amendment 1:2024, the currently published ISO 9001 requirements
+- ISO 14001:2026
+- ISO/IEC 42001:2023
+- UK GDPR and current UK data-protection changes, including the Data (Use and Access) Act 2025 provisions in force in 2026
+- a shared Core management-system pack used across standards so common work is completed once
 
-| Domain | Features |
-|--------|----------|
-| **Risk Management** | Risk register, inherent/residual scoring, treatment strategies (mitigate, accept, avoid, transfer), threat-based risk assessments |
-| **Controls & Frameworks** | Control library with maturity levels, custom framework import/export, Statement of Applicability (SoA) |
-| **Vendor / Third-Party Risk** | Vendor inventory, automated website risk assessment, DPA/BAA tracking, subprocessor discovery |
-| **Data Privacy** | DPIA, Transfer Impact Assessments, processing activity records, data inventory, rights requests (SAR/erasure) |
-| **Access Reviews** | Campaign management, per-entry access decisions, integration with SaaS, cloud infra, and source code sources |
-| **Audit Programs** | Audit scoping, control mapping, finding tracking, report generation |
-| **Evidence & Measures** | Evidence collection (files and URLs), implementation state tracking, task assignment |
-| **Document Management** | Versioned documents, approval quorums, electronic signatures, PDF export, bulk operations |
-| **Compliance Page** | Public compliance portal, NDA management, certification publishing, custom domain support |
-| **Cookie & Consent** | Cookie banner management, tracker detection, consent records |
+The underlying Probo framework engine also supports additional frameworks such as SOC 2, EU GDPR, ISO/IEC 27701, HIPAA, CCPA/CPRA, NIS2, DORA, FERPA, PCI DSS, HDS and 21 CFR Part 11.
 
-## Interfaces
+## What a new organisation does
 
-### Web console
+1. Create an account and organisation.
+2. Describe the organisation in plain English: services, systems, team, processes and customers.
+3. Choose the standards or regulations that apply.
+4. Install the relevant Fast Start packs.
+5. Review the prepared policies, procedures, registers, plans and forms. Confirm organisation-specific decisions instead of blindly accepting template text.
+6. Review risks, framework requirements and measures; assign accountable owners.
+7. Attach real evidence such as approvals, training records, supplier reviews, screenshots, logs and completed forms.
+8. Run internal audits, record findings and complete corrective actions.
+9. Hold management review, approve controlled documents and keep evidence current.
 
-The primary interface for day-to-day GRC work. Runs at `http://localhost:8080` in development.
+ISOpilot helps organise and demonstrate a management system. It does not automatically certify an organisation, replace competent legal or certification advice, or make a template true simply because it exists.
 
-### CLI (`prb`)
+## How the workspace fits together
 
-A fully-featured command-line client for scripting, automation, and CI/CD integration. Covers all 44+ resource types available in the web console.
+| Area | Plain-English meaning |
+| --- | --- |
+| Frameworks | The requirements you are working against. |
+| Documents | Policies, procedures, registers, plans, forms and records describing or recording how the organisation works. |
+| Risks | Things that could stop the organisation meeting its objectives or obligations, plus the actions used to reduce them. |
+| Measures | Practical controls or activities used to meet requirements and reduce risk. |
+| Tasks | Work that a named person needs to complete. |
+| Evidence | Proof that a policy, control or process actually operates in real life. |
+| Audits | Independent checks that requirements and the organisation's own arrangements are being followed and are effective. |
+| Management review | Senior-management review of performance, risks, changes, resources, findings and improvement decisions. |
 
-```sh
-# Authenticate
-prb auth login
+## Architecture
 
-# List open risks
-prb risk list
+ISOpilot deliberately preserves Probo's Go, PostgreSQL, GraphQL, React/Relay and GRC domain architecture. ISOpilot-specific changes are maintained as an overlay and build layer so upstream security and product improvements can continue to be reviewed and adopted without rebuilding the platform from scratch.
 
-# Create a measure and link evidence
-prb measure create --name "MFA enforced on all production systems"
-prb evidence create --measure <id> --file screenshot.png
+The production build is pinned to a reviewed Probo commit for reproducibility. GitHub Actions builds the complete source image, while Coolify downloads the prebuilt runtime to keep deployment resource usage predictable.
 
-# Manage vendor compliance
-prb thirdpartymgmt vendor list
-prb thirdpartymgmt risk-assessment create --vendor <id>
-```
+## Multi-company use
 
-Run `prb help` for the full command reference.
+The platform is designed for multiple independent organisations to create accounts and maintain separate workspaces. Organisation-scoped authorisation remains part of the Probo architecture, and ISOpilot's Fast Start framework installer resolves imported frameworks inside the selected organisation.
 
-### MCP API
+For a public SaaS deployment, use HTTPS, secure host-only cookies, exact CORS origins, SMTP for account recovery and invitations, generated persistent secrets, backups and restore testing. See `docs/ISOPILOT_PRODUCTION_RELEASE.md`.
 
-Probo exposes 270+ [MCP](https://modelcontextprotocol.io) tools covering every entity and operation in the platform. Any MCP-compatible LLM agent (Claude, Cursor, Continue, and others) can connect directly and interact with your compliance data.
+## Branding
 
-The full MCP specification is at [`pkg/server/api/mcp/v1/specification.yaml`](pkg/server/api/mcp/v1/specification.yaml).
+Customer-facing screens use the ISOpilot brand: Signal Blue actions, deep-ink typography, Inter/Inter Tight/IBM Plex Mono, consistent status semantics, keyboard focus states and the guiding co-pilot voice. Internal upstream package names and required MIT copyright notices are intentionally preserved for compatibility and attribution.
 
-### n8n node
+## Upstream and licence
 
-The [`@probo/n8n-nodes-probo`](packages/n8n-node/) community node brings Probo into n8n workflows for no-code automation of compliance tasks over the GraphQL API.
+ISOpilot is built on the open-source [Probo](https://github.com/getprobo/probo) project and retains the upstream MIT licence and copyright notices as required. Upstream source remains attributable to its original authors; ISOpilot-specific branding, templates, onboarding and deployment customisations live in this repository.
 
-## Quick Start
-
-**Prerequisites**
-
-| Tool | Version |
-|------|---------|
-| Go | 1.26+ |
-| Node.js | 22+ |
-| Docker | latest |
-| mkcert | latest |
-
-**Steps**
-
-```sh
-# 1. Clone with submodules
-git clone --recurse-submodules https://github.com/getprobo/probo.git
-cd probo
-
-# 2. Install dependencies
-go mod download
-npm ci
-
-# 3. Start infrastructure services (PostgreSQL, object storage, etc.)
-make stack-up
-
-# 4. Build
-make build
-
-# 5. Generate the local dev config
-make dev-config
-
-# 6. Run the server
-bin/probod -cfg-file cfg/dev.yaml
-```
-
-The web console is available at `http://localhost:8080`.
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for the full development environment walkthrough, including the frontend dev server and code generation steps.
-
-## Tech Stack
-
-| Layer | Technologies |
-|-------|-------------|
-| Backend | Go, PostgreSQL |
-| API | GraphQL, MCP |
-| Frontend | React, TypeScript, Relay, TailwindCSS |
-| Infrastructure | Docker, GitHub Actions |
-| Observability | OpenTelemetry, Grafana, Prometheus, Loki, Tempo |
-
-## Contributing
-
-Contributions are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md) before opening a pull request. All commits require a Developer Certificate of Origin (DCO) sign-off (`git commit -s`). No CLA required.
-
-To report a security vulnerability, email [security@probo.com](mailto:security@probo.com) rather than opening a public issue. See [SECURITY.md](SECURITY.md) for the full disclosure policy.
-
-## Community
-
-- [Discord](https://discord.gg/8qfdJYfvpY) - Get help, share feedback, and talk to the team
-- [Documentation](https://www.probo.com/docs)
-- [Blog](https://www.probo.com/blog)
-- [Twitter / X](https://twitter.com/getprobo)
-- [LinkedIn](https://www.linkedin.com/company/getprobo)
-- [Website](https://www.probo.com)
-
-## License
-
-Probo is [MIT licensed](LICENSE).
+See [LICENSE](LICENSE) for licence terms.
