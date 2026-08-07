@@ -25,6 +25,6 @@ jobs:
         run: |
           docker build \
             --file Dockerfile.compplus \
-            --build-arg PROBO_UPSTREAM_SHA=22ebf47732f8ae3161fbca7aabbe1d3a11ab9ef5 \
+            --build-arg PROBO_UPSTREAM_SHA=82221746eb9ca76942367e6c8a45013bb9895ec7 \
             --tag compplus:check \
             .
