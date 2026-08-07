@@ -37,6 +37,7 @@ services:
     command: >
       postgres -c "shared_buffers=256MB"
                -c "max_connections=200"
+               -c "shared_preload_libraries=pg_stat_statements"
     environment:
       POSTGRES_USER: "postgres"
       POSTGRES_PASSWORD: ${SERVICE_PASSWORD_64_POSTGRESADMIN}
@@ -81,7 +82,8 @@ services:
         if ! psql -h postgres -U postgres -tAc "SELECT 1 FROM pg_roles WHERE rolname='probod'" | grep -q 1; then
           psql -h postgres -U postgres -c "CREATE ROLE probod LOGIN PASSWORD '$${PROBOD_DB_PASSWORD}'"
         fi
-        # The application owns its database but does not need PostgreSQL superuser privileges.
+
+        # The application owns its database but must remain non-superuser.
         psql -h postgres -U postgres -c "ALTER ROLE probod LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION PASSWORD '$${PROBOD_DB_PASSWORD}'"
         if ! psql -h postgres -U postgres -tAc "SELECT 1 FROM pg_database WHERE datname='probod'" | grep -q 1; then
           createdb -h postgres -U postgres -O probod probod
@@ -89,6 +91,14 @@ services:
         psql -h postgres -U postgres -d postgres -c "ALTER DATABASE probod OWNER TO probod"
         psql -h postgres -U postgres -d probod -c "ALTER SCHEMA public OWNER TO probod"
         psql -h postgres -U postgres -d probod -c "GRANT ALL ON SCHEMA public TO probod"
+
+        # Probo migrations request these extensions. Install them once with the
+        # administrator account so the long-running application role never needs
+        # superuser privileges. IF NOT EXISTS keeps upgrades/redeploys idempotent.
+        psql -h postgres -U postgres -d probod -c "CREATE EXTENSION IF NOT EXISTS citext"
+        psql -h postgres -U postgres -d probod -c "CREATE EXTENSION IF NOT EXISTS pg_stat_statements"
+        psql -h postgres -U postgres -d probod -c "CREATE EXTENSION IF NOT EXISTS pgcrypto"
+        psql -h postgres -U postgres -d probod -c "CREATE EXTENSION IF NOT EXISTS unaccent"
 
   seaweed-config-init:
     image: "alpine:3.20"
@@ -117,18 +127,17 @@ services:
           ]
         }
         JSON
-        # SeaweedFS also runs non-root. Use the same isolated supplemental group
-        # rather than making the storage credential world-readable.
-        chown 0:65532 /config/s3.json
-        chmod 640 /config/s3.json
+        # The pinned SeaweedFS image defines its runtime seaweed user as
+        # UID/GID 1000 and its entrypoint drops privileges to that user.
+        # Give only that runtime user access to the credential file.
+        chown 1000:1000 /config/s3.json
+        chmod 600 /config/s3.json
     volumes:
       - "seaweedfs-config:/config"
 
   seaweedfs:
     image: "chrislusf/seaweedfs@sha256:cea8339d21dad1b200adce581dd7434d254b8f5975f142c3b4c930ba78647eef"
     restart: unless-stopped
-    group_add:
-      - "65532"
     depends_on:
       seaweed-config-init:
         condition: service_completed_successfully
