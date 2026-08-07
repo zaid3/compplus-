@@ -11,6 +11,10 @@ services:
         if [ ! -s /oauth2/private.pem ]; then
           openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:3072 -out /oauth2/private.pem
         fi
+        # Dockerfile.compplus creates `probo` as the first regular Linux user
+        # (UID/GID 1000). Keep the private key mode 0600 while making it readable
+        # by the non-root application process on both new and existing volumes.
+        chown 1000:1000 /oauth2/private.pem
         chmod 600 /oauth2/private.pem
     volumes:
       - "oauth2-key:/oauth2"
