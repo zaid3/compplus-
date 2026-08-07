@@ -6,11 +6,12 @@ services:
     entrypoint: ["/bin/sh", "-c"]
     command:
       - |
+        set -e
         apk add --no-cache openssl >/dev/null
         if [ ! -s /oauth2/private.pem ]; then
-          openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out /oauth2/private.pem
-          chmod 600 /oauth2/private.pem
+          openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:3072 -out /oauth2/private.pem
         fi
+        chmod 600 /oauth2/private.pem
     volumes:
       - "oauth2-key:/oauth2"
 
@@ -23,7 +24,7 @@ services:
                -c "max_connections=200"
     environment:
       POSTGRES_USER: "postgres"
-      POSTGRES_PASSWORD: "postgres"
+      POSTGRES_PASSWORD: ${SERVICE_PASSWORD_64_POSTGRESADMIN}
     volumes:
       - "postgres-data:/var/lib/postgresql/data:rw"
     healthcheck:
@@ -40,31 +41,52 @@ services:
       postgres:
         condition: service_healthy
     environment:
-      PGPASSWORD: "postgres"
+      POSTGRES_ADMIN_PASSWORD: ${SERVICE_PASSWORD_64_POSTGRESADMIN}
+      PROBOD_DB_PASSWORD: ${SERVICE_PASSWORD_64_PROBODDB}
     entrypoint: ["/bin/sh", "-c"]
     command:
       - |
-        set -e
+        set -eu
         until pg_isready -h postgres -U postgres; do sleep 1; done
-        if ! psql -h postgres -U postgres -tAc "SELECT 1 FROM pg_roles WHERE rolname='probod'" | grep -q 1; then
-          psql -h postgres -U postgres -c "CREATE ROLE probod LOGIN SUPERUSER PASSWORD 'probod'"
+
+        # New installations already use the generated administrator password.
+        # Existing ISOpilot pilot installations used the legacy local password
+        # "postgres". Detect that once, rotate it, then continue securely.
+        if PGPASSWORD="$${POSTGRES_ADMIN_PASSWORD}" psql -h postgres -U postgres -d postgres -tAc "SELECT 1" >/dev/null 2>&1; then
+          export PGPASSWORD="$${POSTGRES_ADMIN_PASSWORD}"
+        elif PGPASSWORD="postgres" psql -h postgres -U postgres -d postgres -tAc "SELECT 1" >/dev/null 2>&1; then
+          export PGPASSWORD="postgres"
+          psql -h postgres -U postgres -d postgres -c "ALTER ROLE postgres PASSWORD '$${POSTGRES_ADMIN_PASSWORD}'"
+          export PGPASSWORD="$${POSTGRES_ADMIN_PASSWORD}"
+        else
+          echo "Cannot authenticate to PostgreSQL with generated or legacy administrator credentials" >&2
+          exit 1
         fi
+
+        if ! psql -h postgres -U postgres -tAc "SELECT 1 FROM pg_roles WHERE rolname='probod'" | grep -q 1; then
+          psql -h postgres -U postgres -c "CREATE ROLE probod LOGIN PASSWORD '$${PROBOD_DB_PASSWORD}'"
+        fi
+        # The application owns its database but does not need PostgreSQL superuser privileges.
+        psql -h postgres -U postgres -c "ALTER ROLE probod LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION PASSWORD '$${PROBOD_DB_PASSWORD}'"
         if ! psql -h postgres -U postgres -tAc "SELECT 1 FROM pg_database WHERE datname='probod'" | grep -q 1; then
           createdb -h postgres -U postgres -O probod probod
         fi
+        psql -h postgres -U postgres -d postgres -c "ALTER DATABASE probod OWNER TO probod"
         psql -h postgres -U postgres -d probod -c "ALTER SCHEMA public OWNER TO probod"
         psql -h postgres -U postgres -d probod -c "GRANT ALL ON SCHEMA public TO probod"
-        psql -h postgres -U postgres -d postgres -c "ALTER DATABASE probod SET probo.trust_center_base_domain TO '72.61.16.251'"
 
   seaweed-config-init:
     image: "alpine:3.20"
     restart: "no"
     exclude_from_hc: true
+    environment:
+      S3_SECRET_KEY: ${SERVICE_PASSWORD_64_OBJECTSTORE}
     entrypoint: ["/bin/sh", "-c"]
     command:
       - |
+        set -eu
         mkdir -p /config
-        cat > /config/s3.json <<'JSON'
+        cat > /config/s3.json <<JSON
         {
           "identities": [
             {
@@ -72,7 +94,7 @@ services:
               "credentials": [
                 {
                   "accessKey": "probod",
-                  "secretKey": "thisisnotasecret"
+                  "secretKey": "$${S3_SECRET_KEY}"
                 }
               ],
               "actions": ["Admin", "Read", "Write", "List", "Tagging", "Lock"]
@@ -80,6 +102,7 @@ services:
           ]
         }
         JSON
+        chmod 600 /config/s3.json
     volumes:
       - "seaweedfs-config:/config"
 
@@ -120,62 +143,68 @@ services:
     build:
       context: "."
       dockerfile: "Dockerfile.compplus"
-      args:
-        PROBO_UPSTREAM_SHA: "82221746eb9ca76942367e6c8a45013bb9895ec7"
     restart: unless-stopped
     entrypoint: ["/bin/sh", "-c"]
     command:
       - |
+        set -eu
         export PROBOD_OAUTH2_SERVER_SIGNING_KEY="$$(cat /oauth2/private.pem)"
         exec /usr/local/bin/entrypoint.sh
     environment:
-      # Persistent cryptographic secrets generated and stored by Coolify.
+      # Persistent cryptographic secrets generated once by Coolify and reused.
       PROBOD_ENCRYPTION_KEY: ${SERVICE_REALBASE64_32_ENCRYPTIONKEY}
       PROBOD_AUTH_COOKIE_SECRET: ${SERVICE_PASSWORD_64_COOKIESECRET}
       PROBOD_AUTH_PASSWORD_PEPPER: ${SERVICE_PASSWORD_64_PASSWORDPEPPER}
       PROBOD_TRUST_AUTH_TOKEN_SECRET: ${SERVICE_PASSWORD_64_TRUSTTOKEN}
 
-      # Current HTTP pilot URL. For production, set ISOPILOT_PUBLIC_URL to the
-      # final https:// domain and ISOPILOT_COOKIE_SECURE=true.
+      # Set these to the final HTTPS domain before public launch. Host-only
+      # cookies are used unless ISOPILOT_COOKIE_DOMAIN is intentionally set.
       PROBOD_BASE_URL: "${ISOPILOT_PUBLIC_URL:-http://xcqx8pquoua5s54aey3plps1.72.61.16.251.sslip.io}"
       PROBOD_API_ADDR: ":8080"
       PROBOD_API_CORS_ALLOWED_ORIGINS: "${ISOPILOT_CORS_ORIGINS:-http://xcqx8pquoua5s54aey3plps1.72.61.16.251.sslip.io,http://72.61.16.251:8090}"
+      PROBOD_API_GRAPHQL_DISABLE_SUGGESTION: "true"
 
-      # Authentication/session hardening. Host-only cookies are the default.
+      # Authentication/session configuration. Self-signup remains enabled by
+      # default because ISOpilot is intended for multiple independent companies.
       PROBOD_AUTH_COOKIE_NAME: "ISOPILOT_SSID"
       PROBOD_AUTH_COOKIE_DOMAIN: "${ISOPILOT_COOKIE_DOMAIN:-}"
       PROBOD_AUTH_COOKIE_SECURE: "${ISOPILOT_COOKIE_SECURE:-false}"
       PROBOD_AUTH_COOKIE_SAMESITE: "lax"
       PROBOD_AUTH_COOKIE_DURATION: "12"
-      PROBOD_AUTH_DISABLE_SIGNUP: "false"
+      PROBOD_AUTH_DISABLE_SIGNUP: "${ISOPILOT_DISABLE_SIGNUP:-false}"
       PROBOD_AUTH_PASSWORD_ITERATIONS: "1000000"
       PROBOD_AUTH_INVITATION_TOKEN_VALIDITY: "3600"
       PROBOD_AUTH_EMAIL_CONFIRMATION_TOKEN_VALIDITY: "3600"
       PROBOD_AUTH_PASSWORD_RESET_TOKEN_VALIDITY: "3600"
       PROBOD_AUTH_MAGIC_LINK_TOKEN_VALIDITY: "900"
 
-      # Optional OIDC login. Empty values leave the providers disabled.
+      # Optional enterprise OIDC. Empty values leave each provider disabled.
       PROBOD_AUTH_GOOGLE_CLIENT_ID: "${ISOPILOT_GOOGLE_CLIENT_ID:-}"
       PROBOD_AUTH_GOOGLE_CLIENT_SECRET: "${ISOPILOT_GOOGLE_CLIENT_SECRET:-}"
       PROBOD_AUTH_MICROSOFT_CLIENT_ID: "${ISOPILOT_MICROSOFT_CLIENT_ID:-}"
       PROBOD_AUTH_MICROSOFT_CLIENT_SECRET: "${ISOPILOT_MICROSOFT_CLIENT_SECRET:-}"
 
+      # Dedicated non-superuser application role.
       PROBOD_PG_ADDR: "postgres:5432"
       PROBOD_PG_USERNAME: "probod"
-      PROBOD_PG_PASSWORD: "probod"
+      PROBOD_PG_PASSWORD: ${SERVICE_PASSWORD_64_PROBODDB}
       PROBOD_PG_DATABASE: "probod"
       PROBOD_PG_POOL_SIZE: "100"
       PROBOD_PG_MIN_POOL_SIZE: "10"
+      PROBOD_PG_DEBUG: "false"
 
+      # S3-compatible storage is internal to the isolated Compose network and
+      # uses a generated credential rather than a repository-known password.
       PROBOD_AWS_REGION: "us-east-1"
       PROBOD_AWS_BUCKET: "probod"
       PROBOD_AWS_ACCESS_KEY_ID: "probod"
-      PROBOD_AWS_SECRET_ACCESS_KEY: "thisisnotasecret"
+      PROBOD_AWS_SECRET_ACCESS_KEY: ${SERVICE_PASSWORD_64_OBJECTSTORE}
       PROBOD_AWS_ENDPOINT: "http://seaweedfs:8333"
       PROBOD_AWS_USE_PATH_STYLE: "true"
 
       PROBOD_METRICS_ADDR: ":8081"
       PROBOD_TRACING_ADDR: ""
+      PROBOD_TRUST_CENTER_BASE_DOMAIN: "${ISOPILOT_TRUST_CENTER_DOMAIN:-}"
 
       # SMTP enables invitations, email confirmation, password reset and magic links.
       PROBOD_SMTP_ADDR: "${ISOPILOT_SMTP_ADDR:-}"
@@ -187,7 +216,7 @@ services:
 
       PROBOD_CHROME_DP_ADDR: "chrome:9222"
 
-      # Optional AI provider; compliance features work without a live key.
+      # Optional AI provider; compliance workflows work without a live key.
       PROBOD_OPENAI_API_KEY: "${ISOPILOT_OPENAI_API_KEY:-disabled-for-initial-hosting}"
       PROBOD_AGENT_DEFAULT_PROVIDER: "openai"
       PROBOD_AGENT_DEFAULT_MODEL_NAME: "gpt-4o"

@@ -1,6 +1,6 @@
 {
   "id": "COMPPLUS-ISO9001-2026",
-  "name": "ISO 9001 (current 2015 + Amd 1:2024)",
+  "name": "ISO 9001:2015 + Amendment 1:2024 (current)",
   "controls": [
     {"id":"QMS-4.3","name":"Quality Management System Scope","description":"Define the boundaries, services, locations and applicability of the QMS."},
     {"id":"QMS-5.2","name":"Quality Policy","description":"Set leadership commitments for quality, customer focus and continual improvement."},

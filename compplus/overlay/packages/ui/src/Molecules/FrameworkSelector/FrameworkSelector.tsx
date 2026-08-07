@@ -17,7 +17,7 @@ import { PCIDSS } from "../../Atoms/Frameworks/PCIDSS";
 import { SOC2 } from "../../Atoms/Frameworks/SOC2";
 import { IconChevronDown, IconPlusLarge } from "../../Atoms/Icons";
 
-function CompPlusFrameworkMark({ label }: { label: string }) {
+function ISOpilotFrameworkMark({ label }: { label: string }) {
   return (
     <div className="size-8 rounded-full border border-border-strong bg-subtle text-txt-primary flex items-center justify-center text-[11px] font-semibold">
       {label}
@@ -28,21 +28,22 @@ function CompPlusFrameworkMark({ label }: { label: string }) {
 const availableFrameworks = [
   {
     id: "ISO27001-2022",
-    name: "ISO 27001 (2022)",
+    name: "ISO/IEC 27001:2022",
     logo: <ISO27001 className="size-8" />,
-    description: "Information security management systems",
+    description: "Information security — includes Amendment 1:2024 context update",
   },
   {
+    // Legacy internal ID retained so existing data and imports remain compatible.
     id: "COMPPLUS-ISO9001-2026",
-    name: "ISO 9001 (current)",
-    logo: <CompPlusFrameworkMark label="QMS" />,
-    description: "Quality management — 2015 + Amendment 1:2024",
+    name: "ISO 9001:2015 + Amd 1:2024",
+    logo: <ISOpilotFrameworkMark label="QMS" />,
+    description: "Current published quality management requirements; 2026 revision is not published yet",
   },
   {
     id: "COMPPLUS-ISO14001-2026",
-    name: "ISO 14001 (2026)",
-    logo: <CompPlusFrameworkMark label="EMS" />,
-    description: "Environmental management systems — 2026 edition",
+    name: "ISO 14001:2026",
+    logo: <ISOpilotFrameworkMark label="EMS" />,
+    description: "Current environmental management systems edition",
   },
   {
     id: "SOC2",
@@ -60,43 +61,43 @@ const availableFrameworks = [
     id: "CCPA",
     name: "CCPA",
     logo: <CCPA className="size-8" />,
-    description: "California Consumer Privacy Act",
+    description: "California Consumer Privacy Act / CPRA privacy framework",
   },
   {
     id: "NIS2",
     name: "NIS 2",
     logo: <NIS2 className="size-8" />,
-    description: "Network and Information Systems Directive 2",
+    description: "EU Network and Information Systems Directive 2",
   },
   {
     id: "GDPR",
-    name: "GDPR",
+    name: "EU GDPR",
     logo: <GDPR className="size-8" />,
-    description: "General Data Protection Regulation",
+    description: "EU General Data Protection Regulation",
   },
   {
     id: "DORA",
     name: "DORA",
     logo: <DORA className="size-8" />,
-    description: "Digital Operational Readiness Assessment",
+    description: "EU Digital Operational Resilience Act",
   },
   {
     id: "ISO27701-2025",
-    name: "ISO 27701 (2025)",
+    name: "ISO/IEC 27701:2025",
     logo: <ISO27701 className="size-8" />,
-    description: "Information security, cybersecurity and privacy protection",
+    description: "Privacy information management system",
   },
   {
     id: "ISO42001-2023",
-    name: "ISO 42001 (2023)",
+    name: "ISO/IEC 42001:2023",
     logo: <ISO42001 className="size-8" />,
-    description: "Information technology, artificial intelligence, management system",
+    description: "Artificial intelligence management system",
   },
   {
     id: "21CFR-part11",
     name: "21 CFR Part 11",
     logo: <TwentyOneCFRPart11 className="size-8" />,
-    description: "21 CFR Part 11",
+    description: "FDA electronic records and electronic signatures",
   },
   {
     id: "HDS",
