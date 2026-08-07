@@ -1,4 +1,4 @@
-name: compplus-runtime-release
+name: isopilot-runtime-release
 
 on:
   push:
@@ -21,14 +21,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Build full Comp Plus+ image
-        run: docker build --file Dockerfile.compplus.source --tag compplus:runtime .
+      - name: Build full ISOpilot image
+        run: docker build --file Dockerfile.compplus.source --tag isopilot:runtime .
 
       - name: Extract runtime files
         run: |
           set -euxo pipefail
           mkdir -p runtime
-          cid="$(docker create compplus:runtime)"
+          cid="$(docker create isopilot:runtime)"
           docker cp "$cid:/usr/local/bin/probod" runtime/probod
           docker cp "$cid:/usr/local/bin/probod-bootstrap" runtime/probod-bootstrap
           docker cp "$cid:/usr/local/bin/entrypoint.sh" runtime/entrypoint.sh
@@ -43,7 +43,7 @@ jobs:
         run: |
           set -euxo pipefail
           if ! gh release view runtime-latest >/dev/null 2>&1; then
-            gh release create runtime-latest --target main --title "Comp Plus+ Runtime" --notes "Prebuilt Comp Plus+ runtime for Coolify deployment."
+            gh release create runtime-latest --target main --title "ISOpilot Runtime" --notes "Prebuilt ISOpilot runtime for Coolify deployment."
           fi
           gh release upload runtime-latest \
             compplus-linux-amd64.tar.gz \
