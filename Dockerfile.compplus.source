@@ -27,9 +27,11 @@ RUN sed -i '/ID:[[:space:]]*evidenceID,/a\                                Measur
     && grep -q 'MeasureID:[[:space:]]*measure.ID' pkg/probo/measure_service.go \
     && grep -q 'LoadByOrganizationIDAndReferenceID' pkg/probo/measure_service.go
 
-# Rebrand translated customer-facing strings while preserving upstream package,
-# API, database and licence identifiers for compatibility.
-RUN find apps -type f -path '*/_locales/*.json' -exec sed -i 's/Probo/ISOpilot/g; s/Comp Plus+/ISOpilot/g' {} +
+# Rebrand customer-facing strings while preserving upstream package/API names,
+# database identifiers, original copyright notices and our legacy COMPPLUS- IDs.
+RUN find apps -type f -path '*/_locales/*.json' -exec sed -i 's/Probo/ISOpilot/g; s/Comp Plus+/ISOpilot/g' {} + \
+    && find compplus -type f \( -name '*.go' -o -name '*.ts' -o -name '*.tsx' -o -name '*.json' -o -name '*.md' \) -exec sed -i 's/Comp Plus+/ISOpilot/g' {} + \
+    && find pkg/probo pkg/server/api/console -type f \( -name '*.go' -o -name '*.graphql' \) -exec sed -i 's/Comp Plus+/ISOpilot/g' {} +
 
 FROM node:24-bookworm AS frontend
 WORKDIR /src
