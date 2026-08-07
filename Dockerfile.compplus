@@ -6,7 +6,7 @@
 FROM ubuntu:24.04
 
 ARG COMPPLUS_RUNTIME_URL=https://github.com/zaid3/compplus-/releases/download/runtime-latest/compplus-linux-amd64.tar.gz
-ARG COMPPLUS_RUNTIME_REVISION=2026-08-07-v1
+ARG COMPPLUS_RUNTIME_REVISION=2026-08-07-v2
 
 LABEL org.opencontainers.image.source="https://github.com/zaid3/compplus-"
 LABEL org.opencontainers.image.licenses="MIT"
@@ -23,14 +23,27 @@ RUN useradd -m probo \
 COPY Dockerfile.compplus.source /tmp/Dockerfile.compplus.source
 COPY compplus/overlay/ /tmp/compplus-overlay-fingerprint/
 
-RUN echo "Installing Comp Plus+ runtime ${COMPPLUS_RUNTIME_REVISION}" \
-    && curl -fL --retry 5 --retry-delay 2 "${COMPPLUS_RUNTIME_URL}" -o /tmp/compplus-runtime.tar.gz \
-    && tar -xzf /tmp/compplus-runtime.tar.gz -C /usr/local/bin \
-    && rm -rf /tmp/compplus-runtime.tar.gz /tmp/Dockerfile.compplus.source /tmp/compplus-overlay-fingerprint \
-    && chmod +x /usr/local/bin/probod /usr/local/bin/probod-bootstrap /usr/local/bin/entrypoint.sh \
-    && setcap CAP_NET_BIND_SERVICE=+eip /usr/local/bin/probod \
-    && mkdir -p /etc/probod \
-    && chown probo:probo /etc/probod
+# The runtime release can take a few minutes to finish after a main-branch push.
+# Wait for it instead of failing Coolify immediately on a temporary GitHub 404.
+RUN set -eux; \
+    echo "Installing Comp Plus+ runtime ${COMPPLUS_RUNTIME_REVISION}"; \
+    downloaded=0; \
+    for attempt in $(seq 1 60); do \
+      if curl -fL --connect-timeout 15 --max-time 180 "${COMPPLUS_RUNTIME_URL}" -o /tmp/compplus-runtime.tar.gz; then \
+        downloaded=1; \
+        break; \
+      fi; \
+      echo "Runtime not published yet (attempt ${attempt}/60); waiting 10 seconds..."; \
+      rm -f /tmp/compplus-runtime.tar.gz; \
+      sleep 10; \
+    done; \
+    test "$downloaded" = "1"; \
+    tar -xzf /tmp/compplus-runtime.tar.gz -C /usr/local/bin; \
+    rm -rf /tmp/compplus-runtime.tar.gz /tmp/Dockerfile.compplus.source /tmp/compplus-overlay-fingerprint; \
+    chmod +x /usr/local/bin/probod /usr/local/bin/probod-bootstrap /usr/local/bin/entrypoint.sh; \
+    setcap CAP_NET_BIND_SERVICE=+eip /usr/local/bin/probod; \
+    mkdir -p /etc/probod; \
+    chown probo:probo /etc/probod
 
 USER probo
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
