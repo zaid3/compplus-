@@ -20,7 +20,7 @@ export const EmailLayout = ({
   subject,
   children,
 }: EmailLayoutProps) => {
-  const brandedSubject = subject.replace(/^Probo\b/, 'Comp Plus+');
+  const brandedSubject = subject.replace(/^Probo\b/, 'ISOpilot').replace(/^Comp Plus\+\b/, 'ISOpilot');
 
   return (
     <Html lang="en">
@@ -48,7 +48,7 @@ export const EmailLayout = ({
               {"{{.SenderCompanyHeadquarterAddress}}"}
             </Text>
             <Text style={footerAddress}>
-              <span style={{verticalAlign: "middle"}}>Powered by </span>
+              <span style={{verticalAlign: "middle"}}>Your compliance co-pilot · </span>
               <Link style={{display: "inline-block", height: "16px", verticalAlign: "middle"}} href="{{.SenderCompanyWebsiteURL}}">
                 <ProboLogo />
               </Link>
@@ -65,33 +65,33 @@ export default EmailLayout;
 const main: React.CSSProperties = {
   margin: '0',
   padding: '0',
-  fontFamily:
-    "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
-  backgroundColor: '#fffffb',
+  fontFamily: "Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif",
+  backgroundColor: '#F6F8FB',
   WebkitTextSizeAdjust: '100%',
 };
 
 const container: React.CSSProperties = {
   maxWidth: '600px',
   width: '100%',
-  backgroundColor: '#ffffff',
-  borderRadius: '8px',
-  boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+  backgroundColor: '#FFFFFF',
+  borderRadius: '12px',
+  boxShadow: '0 1px 2px rgba(11,18,32,.06)',
   margin: '40px auto',
+  border: '1px solid #E4E9F2',
 };
 
 export const headerSection: React.CSSProperties = {
   padding: '40px 40px 30px 40px',
   textAlign: 'center',
-  backgroundColor: '#101e1c',
-  borderRadius: '8px 8px 0 0',
+  backgroundColor: '#0B1220',
+  borderRadius: '12px 12px 0 0',
 };
 
 export const h1: React.CSSProperties = {
   margin: '0',
-  color: '#e6ff03',
+  color: '#FFFFFF',
   fontSize: '24px',
-  fontWeight: '600',
+  fontWeight: '700',
   lineHeight: '1.3',
 };
 
@@ -101,7 +101,7 @@ const content: React.CSSProperties = {
 
 const text: React.CSSProperties = {
   margin: '0 0 20px 0',
-  color: '#141e12',
+  color: '#0B1220',
   fontSize: '16px',
   lineHeight: '24px',
 };
@@ -113,8 +113,8 @@ export const buttonContainer: React.CSSProperties = {
 export const button: React.CSSProperties = {
   display: 'inline-block',
   padding: '14px 28px',
-  backgroundColor: '#101e1c',
-  color: '#ffffff',
+  backgroundColor: '#2F6BFF',
+  color: '#FFFFFF',
   textDecoration: 'none',
   borderRadius: '8px',
   fontWeight: '600',
@@ -124,19 +124,19 @@ export const button: React.CSSProperties = {
 
 export const footerText: React.CSSProperties = {
   margin: '0',
-  color: '#6b716a',
+  color: '#64748B',
   fontSize: '14px',
   lineHeight: '20px',
 };
 
 const footerSection: React.CSSProperties = {
   padding: '30px 40px',
-  borderTop: '1px solid #ecefec',
+  borderTop: '1px solid #E4E9F2',
 };
 
 const footerAddress: React.CSSProperties = {
   margin: '10px 0 0 0',
-  color: '#6b716a',
+  color: '#64748B',
   fontSize: '12px',
   lineHeight: '18px',
 };
@@ -147,7 +147,7 @@ const logoSection: React.CSSProperties = {
 
 export const bodyText: React.CSSProperties = {
   margin: '0 0 30px 0',
-  color: '#141e12',
+  color: '#0B1220',
   fontSize: '16px',
   lineHeight: '24px',
 };
