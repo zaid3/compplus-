@@ -1,0 +1,65 @@
+extend type Mutation {
+  previewTemplatePack(input: PreviewTemplatePackInput!): PreviewTemplatePackPayload!
+  installTemplatePack(input: InstallTemplatePackInput!): InstallTemplatePackPayload!
+}
+
+input TemplatePackAnswersInput
+  @goModel(model: "go.probo.inc/probo/pkg/server/api/console/v1/types.TemplatePackAnswersInput") {
+  legalName: String!
+  services: String!
+  locations: String!
+  executiveOwner: String!
+  systemManager: String!
+  securityOwner: String
+  privacyOwner: String
+  qualityOwner: String
+  environmentalOwner: String
+  aiOwner: String @goField(name: "AIOwner")
+}
+
+input PreviewTemplatePackInput
+  @goModel(model: "go.probo.inc/probo/pkg/server/api/console/v1/types.PreviewTemplatePackInput") {
+  organizationId: ID! @goField(name: "OrganizationID")
+  packId: String! @goField(name: "PackID")
+  answers: TemplatePackAnswersInput!
+}
+
+input InstallTemplatePackInput
+  @goModel(model: "go.probo.inc/probo/pkg/server/api/console/v1/types.InstallTemplatePackInput") {
+  organizationId: ID! @goField(name: "OrganizationID")
+  packId: String! @goField(name: "PackID")
+  answers: TemplatePackAnswersInput!
+}
+
+type TemplatePackPreview
+  @goModel(model: "go.probo.inc/probo/pkg/server/api/console/v1/types.TemplatePackPreview") {
+  packId: String! @goField(name: "PackID")
+  version: String!
+  standard: String!
+  frameworkName: String!
+  controlsCount: Int!
+  measuresCount: Int!
+  documentsCount: Int!
+  tasksCount: Int!
+  evidenceRequestsCount: Int!
+  confirmationFieldsCount: Int!
+  createsStatementOfApplicability: Boolean!
+}
+
+type PreviewTemplatePackPayload
+  @goModel(model: "go.probo.inc/probo/pkg/server/api/console/v1/types.PreviewTemplatePackPayload") {
+  preview: TemplatePackPreview!
+}
+
+type InstallTemplatePackPayload
+  @goModel(model: "go.probo.inc/probo/pkg/server/api/console/v1/types.InstallTemplatePackPayload") {
+  packId: String! @goField(name: "PackID")
+  version: String!
+  framework: Framework!
+  measuresCreated: Int!
+  documentsCreated: Int!
+  tasksCreated: Int!
+  evidenceRequestsCreated: Int!
+  statementOfApplicabilityCreated: Boolean!
+  alreadyInstalled: Boolean!
+}
