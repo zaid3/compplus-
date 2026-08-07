@@ -13,8 +13,9 @@ function PilotMark({ size = 28 }: { size?: number }) {
       width={size}
       height={size}
       role="img"
-      aria-label="ISOpilot"
+      aria-label="ISOPilot"
       fill="none"
+      className="shrink-0"
     >
       <rect width="32" height="32" rx="8" fill="#2F6BFF" />
       <path
@@ -29,13 +30,13 @@ function PilotMark({ size = 28 }: { size?: number }) {
 export function Logo({ className, withPicto }: Props) {
   if (withPicto) {
     return (
-      <span className={clsx("inline-flex items-center gap-2.5 text-[#0B1220]", className)} aria-label="ISOpilot">
+      <span className={clsx("inline-flex items-center gap-2.5 text-txt-primary", className)} aria-label="ISOPilot">
         <PilotMark />
         <span
-          className="text-[19px] leading-none font-bold tracking-[-0.55px]"
+          className="whitespace-nowrap text-[19px] font-bold leading-none tracking-[-0.55px]"
           style={{ fontFamily: '"Inter Tight", "Inter", ui-sans-serif, system-ui, sans-serif' }}
         >
-          ISOpilot
+          ISOPilot
         </span>
       </span>
     );
@@ -43,11 +44,11 @@ export function Logo({ className, withPicto }: Props) {
 
   return (
     <span
-      className={clsx("inline-flex text-[#0B1220] text-[17px] leading-none font-bold tracking-[-0.45px]", className)}
+      className={clsx("inline-flex whitespace-nowrap text-[17px] font-bold leading-none tracking-[-0.45px] text-txt-primary", className)}
       style={{ fontFamily: '"Inter Tight", "Inter", ui-sans-serif, system-ui, sans-serif' }}
-      aria-label="ISOpilot"
+      aria-label="ISOPilot"
     >
-      ISOpilot
+      ISOPilot
     </span>
   );
 }
