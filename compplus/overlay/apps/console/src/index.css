@@ -1,0 +1,142 @@
+@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&family=Inter+Tight:wght@500;600;700&display=swap");
+@import "tailwindcss";
+@import "@probo/ui/src/theme.css";
+@import "tw-animate-css";
+@source "../../../packages/ui/src";
+@source "../../../packages/helpers/src";
+
+/* ISOpilot brand tokens — source of truth from Brand Guidelines v1.0. */
+:root {
+  --ip-ink: #0B1220;
+  --ip-blue: #2F6BFF;
+  --ip-blue-hover: #1D4ED8;
+  --ip-blue-tint: #E7EEFF;
+  --ip-900: #0F172A;
+  --ip-700: #334155;
+  --ip-500: #64748B;
+  --ip-200: #E4E9F2;
+  --ip-50: #F6F8FB;
+  --ip-white: #FFFFFF;
+  --ip-success: #12B76A;
+  --ip-warning: #F79009;
+  --ip-danger: #F04438;
+  --ip-radius: 12px;
+  --ip-radius-sm: 8px;
+  --ip-shadow: 0 1px 2px rgba(11,18,32,.06);
+
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, monospace;
+
+  --color-level-0: #F6F8FB;
+  --color-level-1: #FFFFFF;
+  --color-level-2: #FFFFFF;
+  --color-level-3: #0B1220;
+
+  --color-txt-primary: #0B1220;
+  --color-txt-secondary: #64748B;
+  --color-txt-tertiary: #64748B;
+  --color-txt-quaternary: #94A3B8;
+  --color-txt-accent: #2F6BFF;
+  --color-txt-danger: #F04438;
+  --color-txt-success: #12B76A;
+  --color-txt-info: #2F6BFF;
+  --color-txt-warning: #F79009;
+
+  --color-primary: #2F6BFF;
+  --color-primary-hover: #1D4ED8;
+  --color-primary-pressed: #1E40AF;
+  --color-accent: #2F6BFF;
+  --color-accent-hover: #1D4ED8;
+  --color-accent-pressed: #1E40AF;
+  --color-active: #E7EEFF;
+  --color-active-hover: #D9E5FF;
+  --color-active-pressed: #CBDCFF;
+  --color-subtle: #F6F8FB;
+  --color-subtle-hover: #EEF2F7;
+  --color-subtle-pressed: #E8EDF4;
+  --color-highlight: #E7EEFF;
+  --color-highlight-hover: #D9E5FF;
+  --color-highlight-pressed: #CBDCFF;
+  --color-danger: #FFF1F0;
+  --color-danger-plain: #F04438;
+  --color-danger-dark: #D92D20;
+  --color-success: #ECFDF3;
+  --color-info: #EFF4FF;
+  --color-warning: #FFFAEB;
+  --color-dialog: #0B1220;
+
+  --color-border-solid: #E4E9F2;
+  --color-border-low: #E4E9F2;
+  --color-border-mid: #CBD5E1;
+  --color-border-strong: #94A3B8;
+  --color-border-active: #2F6BFF;
+  --color-border-accent: #2F6BFF;
+  --color-border-danger: #F04438;
+  --color-border-success: #12B76A;
+  --color-border-warning: #F79009;
+  --color-border-info: #2F6BFF;
+
+  --shadow-focus: 0 0 0 3px rgba(47,107,255,.28);
+  --shadow-base: 0 1px 2px rgba(11,18,32,.06);
+  --shadow-hover: 0 2px 6px rgba(11,18,32,.08);
+  --shadow-mid: 0 4px 14px rgba(11,18,32,.08);
+}
+
+.dark {
+  --color-level-0: #0B1220;
+  --color-level-1: #0F172A;
+  --color-level-2: #111C2F;
+  --color-level-3: #F8FAFC;
+  --color-txt-primary: #F8FAFC;
+  --color-txt-secondary: #CBD5E1;
+  --color-txt-tertiary: #94A3B8;
+  --color-txt-accent: #7DA2FF;
+  --color-primary: #2F6BFF;
+  --color-primary-hover: #4D7FFF;
+  --color-primary-pressed: #1D4ED8;
+  --color-accent: #2F6BFF;
+  --color-active: rgba(47,107,255,.18);
+  --color-highlight: rgba(47,107,255,.12);
+  --color-subtle: rgba(255,255,255,.04);
+  --color-border-solid: #1E293B;
+  --color-border-low: #1E293B;
+  --color-border-mid: #334155;
+  --color-border-strong: #475569;
+  --color-border-active: #7DA2FF;
+  --color-dialog: #0B1220;
+}
+
+html, body {
+  background: var(--color-level-0);
+  color: var(--color-txt-primary);
+  font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
+}
+
+h1, h2, h3, h4, h5, h6,
+[data-page-title],
+.font-display {
+  font-family: "Inter Tight", "Inter", ui-sans-serif, system-ui, sans-serif;
+  letter-spacing: -0.02em;
+}
+
+code, pre, kbd, samp, .font-mono {
+  font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, monospace;
+}
+
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: 2px solid #2F6BFF;
+  outline-offset: 2px;
+}
+
+/* Hide scrollbar utility */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
