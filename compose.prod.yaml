@@ -14,16 +14,10 @@ services:
           openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:3072 -out /oauth2/private.pem
         fi
 
-        # Current Probo initializes its custom-domain ACME service during normal
-        # startup. Persist the ACME account key so restarts reuse one account.
         if [ ! -s /acme/account.pem ]; then
           openssl genpkey -algorithm EC -pkeyopt ec_paramgen_curve:P-256 -out /acme/account.pem
         fi
 
-        # Do not depend on the image's primary UID/GID: Ubuntu 24.04 already
-        # owns UID 1000, so `useradd probo` is not guaranteed to receive it.
-        # A dedicated supplemental group lets the non-root app read only these
-        # secrets while keeping them unavailable to other users (0640).
         chown 0:65532 /oauth2/private.pem /acme/account.pem
         chmod 640 /oauth2/private.pem /acme/account.pem
     volumes:
@@ -65,9 +59,6 @@ services:
         set -eu
         until pg_isready -h postgres -U postgres; do sleep 1; done
 
-        # New installations already use the generated administrator password.
-        # Existing ISOpilot pilot installations used the legacy local password
-        # "postgres". Detect that once, rotate it, then continue securely.
         if PGPASSWORD="$${POSTGRES_ADMIN_PASSWORD}" psql -h postgres -U postgres -d postgres -tAc "SELECT 1" >/dev/null 2>&1; then
           export PGPASSWORD="$${POSTGRES_ADMIN_PASSWORD}"
         elif PGPASSWORD="postgres" psql -h postgres -U postgres -d postgres -tAc "SELECT 1" >/dev/null 2>&1; then
@@ -83,7 +74,6 @@ services:
           psql -h postgres -U postgres -c "CREATE ROLE probod LOGIN PASSWORD '$${PROBOD_DB_PASSWORD}'"
         fi
 
-        # The application owns its database but must remain non-superuser.
         psql -h postgres -U postgres -c "ALTER ROLE probod LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION PASSWORD '$${PROBOD_DB_PASSWORD}'"
         if ! psql -h postgres -U postgres -tAc "SELECT 1 FROM pg_database WHERE datname='probod'" | grep -q 1; then
           createdb -h postgres -U postgres -O probod probod
@@ -92,13 +82,12 @@ services:
         psql -h postgres -U postgres -d probod -c "ALTER SCHEMA public OWNER TO probod"
         psql -h postgres -U postgres -d probod -c "GRANT ALL ON SCHEMA public TO probod"
 
-        # Probo migrations request these extensions. Install them once with the
-        # administrator account so the long-running application role never needs
-        # superuser privileges. IF NOT EXISTS keeps upgrades/redeploys idempotent.
-        psql -h postgres -U postgres -d probod -c "CREATE EXTENSION IF NOT EXISTS citext"
+        # pg_stat_statements is the one Probo extension migration that requires
+        # elevated installation privileges. Its migration already uses
+        # IF NOT EXISTS, so installing it here is safe and lets the long-running
+        # application remain a non-superuser. Other extensions are deliberately
+        # left to Probo's own migration sequence.
         psql -h postgres -U postgres -d probod -c "CREATE EXTENSION IF NOT EXISTS pg_stat_statements"
-        psql -h postgres -U postgres -d probod -c "CREATE EXTENSION IF NOT EXISTS pgcrypto"
-        psql -h postgres -U postgres -d probod -c "CREATE EXTENSION IF NOT EXISTS unaccent"
 
   seaweed-config-init:
     image: "alpine:3.20"
@@ -127,9 +116,6 @@ services:
           ]
         }
         JSON
-        # The pinned SeaweedFS image defines its runtime seaweed user as
-        # UID/GID 1000 and its entrypoint drops privileges to that user.
-        # Give only that runtime user access to the credential file.
         chown 1000:1000 /config/s3.json
         chmod 600 /config/s3.json
     volumes:
@@ -183,21 +169,16 @@ services:
         export PROBOD_ACME_ACCOUNT_KEY="$$(cat /acme/account.pem)"
         exec /usr/local/bin/entrypoint.sh
     environment:
-      # Persistent cryptographic secrets generated once by Coolify and reused.
       PROBOD_ENCRYPTION_KEY: ${SERVICE_REALBASE64_32_ENCRYPTIONKEY}
       PROBOD_AUTH_COOKIE_SECRET: ${SERVICE_PASSWORD_64_COOKIESECRET}
       PROBOD_AUTH_PASSWORD_PEPPER: ${SERVICE_PASSWORD_64_PASSWORDPEPPER}
       PROBOD_TRUST_AUTH_TOKEN_SECRET: ${SERVICE_PASSWORD_64_TRUSTTOKEN}
 
-      # Set these to the final HTTPS domain before public launch. Host-only
-      # cookies are used unless ISOPILOT_COOKIE_DOMAIN is intentionally set.
       PROBOD_BASE_URL: "${ISOPILOT_PUBLIC_URL:-http://xcqx8pquoua5s54aey3plps1.72.61.16.251.sslip.io}"
       PROBOD_API_ADDR: ":8080"
       PROBOD_API_CORS_ALLOWED_ORIGINS: "${ISOPILOT_CORS_ORIGINS:-http://xcqx8pquoua5s54aey3plps1.72.61.16.251.sslip.io,http://72.61.16.251:8090}"
       PROBOD_API_GRAPHQL_DISABLE_SUGGESTION: "true"
 
-      # Authentication/session configuration. Self-signup remains enabled by
-      # default because ISOpilot is intended for multiple independent companies.
       PROBOD_AUTH_COOKIE_NAME: "ISOPILOT_SSID"
       PROBOD_AUTH_COOKIE_DOMAIN: "${ISOPILOT_COOKIE_DOMAIN:-}"
       PROBOD_AUTH_COOKIE_SECURE: "${ISOPILOT_COOKIE_SECURE:-false}"
@@ -210,13 +191,11 @@ services:
       PROBOD_AUTH_PASSWORD_RESET_TOKEN_VALIDITY: "3600"
       PROBOD_AUTH_MAGIC_LINK_TOKEN_VALIDITY: "900"
 
-      # Optional enterprise OIDC. Empty values leave each provider disabled.
       PROBOD_AUTH_GOOGLE_CLIENT_ID: "${ISOPILOT_GOOGLE_CLIENT_ID:-}"
       PROBOD_AUTH_GOOGLE_CLIENT_SECRET: "${ISOPILOT_GOOGLE_CLIENT_SECRET:-}"
       PROBOD_AUTH_MICROSOFT_CLIENT_ID: "${ISOPILOT_MICROSOFT_CLIENT_ID:-}"
       PROBOD_AUTH_MICROSOFT_CLIENT_SECRET: "${ISOPILOT_MICROSOFT_CLIENT_SECRET:-}"
 
-      # Dedicated non-superuser application role.
       PROBOD_PG_ADDR: "postgres:5432"
       PROBOD_PG_USERNAME: "probod"
       PROBOD_PG_PASSWORD: ${SERVICE_PASSWORD_64_PROBODDB}
@@ -225,8 +204,6 @@ services:
       PROBOD_PG_MIN_POOL_SIZE: "10"
       PROBOD_PG_DEBUG: "false"
 
-      # S3-compatible storage is internal to the isolated Compose network and
-      # uses a generated credential rather than a repository-known password.
       PROBOD_AWS_REGION: "us-east-1"
       PROBOD_AWS_BUCKET: "probod"
       PROBOD_AWS_ACCESS_KEY_ID: "probod"
@@ -238,8 +215,6 @@ services:
       PROBOD_TRACING_ADDR: ""
       PROBOD_TRUST_CENTER_BASE_DOMAIN: "${ISOPILOT_TRUST_CENTER_DOMAIN:-}"
 
-      # Current Probo initializes ACME during startup even before a custom domain
-      # is used. Supply a valid persistent account identity so startup is stable.
       PROBOD_ACME_DIRECTORY: "${ISOPILOT_ACME_DIRECTORY:-https://acme-v02.api.letsencrypt.org/directory}"
       PROBOD_ACME_EMAIL: "${ISOPILOT_ACME_EMAIL:-no-reply@isopilot.co.uk}"
       PROBOD_ACME_KEY_TYPE: "EC256"
@@ -247,7 +222,6 @@ services:
       PROBOD_CUSTOM_DOMAINS_RESOLVER_ADDR: "${ISOPILOT_DNS_RESOLVER_ADDR:-1.1.1.1:53}"
       PROBOD_CUSTOM_DOMAINS_CNAME_TARGET: "${ISOPILOT_CUSTOM_DOMAINS_CNAME_TARGET:-}"
 
-      # SMTP enables invitations, email confirmation, password reset and magic links.
       PROBOD_SMTP_ADDR: "${ISOPILOT_SMTP_ADDR:-}"
       PROBOD_SMTP_USER: "${ISOPILOT_SMTP_USER:-}"
       PROBOD_SMTP_PASSWORD: "${ISOPILOT_SMTP_PASSWORD:-}"
@@ -257,7 +231,6 @@ services:
 
       PROBOD_CHROME_DP_ADDR: "chrome:9222"
 
-      # Optional AI provider; compliance workflows work without a live key.
       PROBOD_OPENAI_API_KEY: "${ISOPILOT_OPENAI_API_KEY:-disabled-for-initial-hosting}"
       PROBOD_AGENT_DEFAULT_PROVIDER: "openai"
       PROBOD_AGENT_DEFAULT_MODEL_NAME: "gpt-4o"
