@@ -17,6 +17,16 @@ RUN git clone --filter=blob:none https://github.com/getprobo/probo.git . \
     && rm -rf .git
 
 COPY compplus/overlay/ /src/
+
+# Comp Plus+ fixes two upstream v0.253.0 import edge cases used by Fast Start:
+# 1) requested evidence created by MeasureService.Import must carry its measure_id;
+# 2) framework references must resolve inside the selected organization, not just
+#    the tenant, so multiple charities can install the same framework safely.
+RUN sed -i '/ID:[[:space:]]*evidenceID,/a\                                MeasureID:          measure.ID,' pkg/probo/measure_service.go \
+    && sed -i 's/framework.LoadByReferenceID(ctx, tx, scope, standard.Framework)/framework.LoadByOrganizationIDAndReferenceID(ctx, tx, scope, organization.ID, standard.Framework)/' pkg/probo/measure_service.go \
+    && grep -q 'MeasureID:[[:space:]]*measure.ID' pkg/probo/measure_service.go \
+    && grep -q 'LoadByOrganizationIDAndReferenceID' pkg/probo/measure_service.go
+
 RUN find apps -type f -path '*/_locales/*.json' -exec sed -i 's/Probo/Comp Plus+/g' {} +
 
 FROM node:24-bookworm AS frontend
@@ -47,11 +57,11 @@ RUN go mod download
 RUN make generate
 RUN CGO_ENABLED=0 GOOS=linux go build \
       -trimpath \
-      -ldflags="-s -w -X main.env=prod -X main.version=comp-plus-2026.08" \
+      -ldflags="-s -w -X main.env=prod -X main.version=comp-plus-2026.08-final" \
       -o /out/probod ./cmd/probod
 RUN CGO_ENABLED=0 GOOS=linux go build \
       -trimpath \
-      -ldflags="-s -w -X main.version=comp-plus-2026.08" \
+      -ldflags="-s -w -X main.version=comp-plus-2026.08-final" \
       -o /out/probod-bootstrap ./cmd/probod-bootstrap
 
 FROM ubuntu:24.04
