@@ -20,7 +20,7 @@ export const EmailLayout = ({
   subject,
   children,
 }: EmailLayoutProps) => {
-  const brandedSubject = subject.replace(/^Probo\b/, 'ISOpilot').replace(/^Comp Plus\+\b/, 'ISOpilot');
+  const brandedSubject = subject.replace(/^Probo\b/, 'ISOPilot').replace(/^Comp Plus\+\b/, 'ISOPilot').replace(/^ISOpilot\b/, 'ISOPilot');
 
   return (
     <Html lang="en">
