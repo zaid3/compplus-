@@ -5,6 +5,7 @@ on:
     branches:
       - main
     paths:
+      - Dockerfile.compplus
       - Dockerfile.compplus.source
       - compplus/overlay/**
       - .github/workflows/compplus-runtime-release.yml
@@ -42,7 +43,7 @@ jobs:
         run: |
           set -euxo pipefail
           if ! gh release view runtime-latest >/dev/null 2>&1; then
-            gh release create runtime-latest --target "$GITHUB_SHA" --title "Comp Plus+ Runtime" --notes "Prebuilt Comp Plus+ runtime for Coolify deployment."
+            gh release create runtime-latest --target main --title "Comp Plus+ Runtime" --notes "Prebuilt Comp Plus+ runtime for Coolify deployment."
           fi
           gh release upload runtime-latest \
             compplus-linux-amd64.tar.gz \
