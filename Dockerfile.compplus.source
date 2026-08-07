@@ -4,9 +4,11 @@
 # not by the production VPS. Production downloads the prebuilt runtime produced
 # from this exact source build.
 ARG PROBO_UPSTREAM_SHA=82221746eb9ca76942367e6c8a45013bb9895ec7
+ARG PROBO_NPM_SECURITY_SHA=f6ca5a499b78e4cd8cfe97760f77b170a2889287
 
 FROM debian:bookworm-slim AS source
 ARG PROBO_UPSTREAM_SHA
+ARG PROBO_NPM_SECURITY_SHA
 RUN apt-get update \
     && apt-get install -y --no-install-recommends ca-certificates git \
     && rm -rf /var/lib/apt/lists/*
@@ -14,6 +16,11 @@ WORKDIR /src
 RUN git clone --filter=blob:none https://github.com/getprobo/probo.git . \
     && git checkout --detach "${PROBO_UPSTREAM_SHA}" \
     && test "$(git rev-parse HEAD)" = "${PROBO_UPSTREAM_SHA}" \
+    && git fetch --depth=1 origin "${PROBO_NPM_SECURITY_SHA}" \
+    && git show FETCH_HEAD -- package-lock.json package.json packages/prosemirror/package.json packages/ui/package.json | git apply - \
+    && grep -q '"dompurify": "\^3.4.13"' packages/prosemirror/package.json \
+    && grep -q '"mermaid": "\^11.16.1"' packages/ui/package.json \
+    && grep -q '"js-yaml": "\^4.3.1"' package.json \
     && rm -rf .git
 
 COPY compplus/overlay/ /src/
