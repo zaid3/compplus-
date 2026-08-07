@@ -33,6 +33,8 @@ The underlying Probo framework engine also supports additional frameworks such a
 
 ISOpilot helps organise and demonstrate a management system. It does not automatically certify an organisation, replace competent legal or certification advice, or make a template true simply because it exists.
 
+For a full plain-English walkthrough, see [ISOpilot Beginner Guide](docs/ISOPILOT_BEGINNER_GUIDE.md).
+
 ## How the workspace fits together
 
 | Area | Plain-English meaning |
@@ -56,7 +58,7 @@ The production build is pinned to a reviewed Probo commit for reproducibility. G
 
 The platform is designed for multiple independent organisations to create accounts and maintain separate workspaces. Organisation-scoped authorisation remains part of the Probo architecture, and ISOpilot's Fast Start framework installer resolves imported frameworks inside the selected organisation.
 
-For a public SaaS deployment, use HTTPS, secure host-only cookies, exact CORS origins, SMTP for account recovery and invitations, generated persistent secrets, backups and restore testing. See `docs/ISOPILOT_PRODUCTION_RELEASE.md`.
+For a public SaaS deployment, use HTTPS, secure host-only cookies, exact CORS origins, SMTP for account recovery and invitations, generated persistent secrets, backups and restore testing. See [ISOpilot Production Release Checklist](docs/ISOPILOT_PRODUCTION_RELEASE.md).
 
 ## Branding
 
