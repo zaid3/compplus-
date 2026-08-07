@@ -37,6 +37,30 @@ jobs:
           ! grep -q 'PROBOD_AWS_SECRET_ACCESS_KEY: "thisisnotasecret"' compose.prod.yaml
           ! grep -q 'CREATE ROLE probod LOGIN SUPERUSER' compose.prod.yaml
 
+          # Latest reviewed Probo initializes its certificate manager at startup.
+          # Missing ACME identity/config makes probod exit before binding port 8080.
+          grep -q 'PROBOD_ACME_DIRECTORY:' compose.prod.yaml
+          grep -q 'PROBOD_ACME_EMAIL:' compose.prod.yaml
+          grep -q 'PROBOD_ACME_KEY_TYPE: "EC256"' compose.prod.yaml
+          grep -q 'PROBOD_ACME_ACCOUNT_KEY=' compose.prod.yaml
+          grep -q 'acme-account-key:/acme:ro' compose.prod.yaml
+
+      - name: Validate production Compose interpolation
+        env:
+          SERVICE_PASSWORD_64_POSTGRESADMIN: ci-postgres-admin-secret-000000000000000000000000000000000000000000000000
+          SERVICE_PASSWORD_64_PROBODDB: ci-probod-db-secret-0000000000000000000000000000000000000000000000000000
+          SERVICE_PASSWORD_64_OBJECTSTORE: ci-object-store-secret-000000000000000000000000000000000000000000000000000
+          SERVICE_REALBASE64_32_ENCRYPTIONKEY: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
+          SERVICE_PASSWORD_64_COOKIESECRET: ci-cookie-secret-000000000000000000000000000000000000000000000000000000
+          SERVICE_PASSWORD_64_PASSWORDPEPPER: ci-password-pepper-0000000000000000000000000000000000000000000000000000
+          SERVICE_PASSWORD_64_TRUSTTOKEN: ci-trust-token-000000000000000000000000000000000000000000000000000000
+        run: |
+          # `exclude_from_hc` is a Coolify-only extension. Keep it in the real
+          # production file, but remove it from the temporary standard-Compose
+          # copy used solely for syntax/interpolation validation.
+          sed '/^[[:space:]]*exclude_from_hc:/d' compose.prod.yaml > /tmp/compose-ci.yaml
+          docker compose -f /tmp/compose-ci.yaml config >/dev/null
+
       - name: Build ISOpilot from reviewed Probo plus approved overlays
         run: |
           docker build \

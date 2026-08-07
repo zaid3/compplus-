@@ -8,16 +8,27 @@ services:
       - |
         set -e
         apk add --no-cache openssl >/dev/null
+        mkdir -p /oauth2 /acme
+
         if [ ! -s /oauth2/private.pem ]; then
           openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:3072 -out /oauth2/private.pem
         fi
+
+        # Current Probo initializes its custom-domain ACME service during normal
+        # startup. Persist the ACME account key so restarts reuse one account
+        # instead of generating a new account each time.
+        if [ ! -s /acme/account.pem ]; then
+          openssl genpkey -algorithm EC -pkeyopt ec_paramgen_curve:P-256 -out /acme/account.pem
+        fi
+
         # Dockerfile.compplus creates `probo` as the first regular Linux user
-        # (UID/GID 1000). Keep the private key mode 0600 while making it readable
+        # (UID/GID 1000). Keep private keys mode 0600 while making them readable
         # by the non-root application process on both new and existing volumes.
-        chown 1000:1000 /oauth2/private.pem
-        chmod 600 /oauth2/private.pem
+        chown 1000:1000 /oauth2/private.pem /acme/account.pem
+        chmod 600 /oauth2/private.pem /acme/account.pem
     volumes:
       - "oauth2-key:/oauth2"
+      - "acme-account-key:/acme"
 
   postgres:
     image: "postgres@sha256:7ad98329d513dd497293b951c195ca354274a77f12ddbbbbf85e68a811823d72"
@@ -153,6 +164,7 @@ services:
       - |
         set -eu
         export PROBOD_OAUTH2_SERVER_SIGNING_KEY="$$(cat /oauth2/private.pem)"
+        export PROBOD_ACME_ACCOUNT_KEY="$$(cat /acme/account.pem)"
         exec /usr/local/bin/entrypoint.sh
     environment:
       # Persistent cryptographic secrets generated once by Coolify and reused.
@@ -210,6 +222,15 @@ services:
       PROBOD_TRACING_ADDR: ""
       PROBOD_TRUST_CENTER_BASE_DOMAIN: "${ISOPILOT_TRUST_CENTER_DOMAIN:-}"
 
+      # Current Probo initializes ACME during startup even before a custom domain
+      # is used. Supply a valid persistent account identity so startup is stable.
+      PROBOD_ACME_DIRECTORY: "${ISOPILOT_ACME_DIRECTORY:-https://acme-v02.api.letsencrypt.org/directory}"
+      PROBOD_ACME_EMAIL: "${ISOPILOT_ACME_EMAIL:-no-reply@isopilot.co.uk}"
+      PROBOD_ACME_KEY_TYPE: "EC256"
+      PROBOD_CUSTOM_DOMAINS_CAA_ISSUER_DOMAIN: "letsencrypt.org"
+      PROBOD_CUSTOM_DOMAINS_RESOLVER_ADDR: "${ISOPILOT_DNS_RESOLVER_ADDR:-1.1.1.1:53}"
+      PROBOD_CUSTOM_DOMAINS_CNAME_TARGET: "${ISOPILOT_CUSTOM_DOMAINS_CNAME_TARGET:-}"
+
       # SMTP enables invitations, email confirmation, password reset and magic links.
       PROBOD_SMTP_ADDR: "${ISOPILOT_SMTP_ADDR:-}"
       PROBOD_SMTP_USER: "${ISOPILOT_SMTP_USER:-}"
@@ -230,6 +251,7 @@ services:
     volumes:
       - "probo-data:/data"
       - "oauth2-key:/oauth2:ro"
+      - "acme-account-key:/acme:ro"
     depends_on:
       oauth-keygen:
         condition: service_completed_successfully
@@ -246,3 +268,4 @@ volumes:
   seaweedfs-data:
   seaweedfs-config:
   oauth2-key:
+  acme-account-key:
