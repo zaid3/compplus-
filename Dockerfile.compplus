@@ -19,6 +19,10 @@ RUN git clone --filter=blob:none https://github.com/getprobo/probo.git . \
 # Only files under compplus/overlay replace or extend upstream source.
 COPY compplus/overlay/ /src/
 
+# Rebrand customer-facing translated copy while deliberately keeping internal
+# package/API identifiers unchanged for upstream compatibility.
+RUN find apps -type f -path '*/_locales/*.json' -exec sed -i 's/Probo/Comp Plus+/g' {} +
+
 FROM node:24-bookworm AS frontend
 WORKDIR /src
 COPY --from=source /src/ ./
