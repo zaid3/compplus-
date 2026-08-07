@@ -3,7 +3,6 @@ package probo
 import (
   "context"
   "encoding/json"
-  "errors"
   "fmt"
   "strings"
   "time"
@@ -57,9 +56,10 @@ func (s *TemplatePackService) Compile(_ context.Context, req CompileTemplatePack
   return compiled, nil
 }
 
-// Install is intentionally idempotent at pack level: a framework reference ID
-// uniquely identifies the installed Comp Plus+ pack in an organisation. Repeated
-// clicks return the existing framework rather than creating duplicate documents.
+// Install is intentionally idempotent at pack level inside the selected
+// organisation. Repeated clicks return that organisation's existing framework
+// rather than creating duplicate documents, while another organisation can
+// independently install the same pack.
 func (s *TemplatePackService) Install(ctx context.Context, scope coredata.Scoper, req InstallTemplatePackRequest) (*InstallTemplatePackResult, error) {
   compiled, err := s.Compile(ctx, CompileTemplatePackRequest{PackID: req.PackID, Answers: req.Answers, Now: req.Now})
   if err != nil {
@@ -193,20 +193,34 @@ func (s *TemplatePackService) installISO27001SOA(ctx context.Context, scope core
 }
 
 func (s *TemplatePackService) findInstalledFramework(ctx context.Context, scope coredata.Scoper, organizationID gid.GID, referenceID string) (*coredata.Framework, error) {
-  framework := &coredata.Framework{}
+  frameworks := coredata.Frameworks{}
   err := s.svc.pg.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
-    return framework.LoadByReferenceID(ctx, conn, scope, referenceID)
+    return frameworks.LoadByOrganizationID(
+      ctx,
+      conn,
+      scope,
+      organizationID,
+      page.NewCursor(
+        1_000,
+        nil,
+        page.Head,
+        page.OrderBy[coredata.FrameworkOrderField]{
+          Field: coredata.FrameworkOrderFieldCreatedAt,
+          Direction: page.OrderDirectionAsc,
+        },
+      ),
+    )
   })
-  if errors.Is(err, coredata.ErrResourceNotFound) {
-    return nil, nil
-  }
   if err != nil {
     return nil, err
   }
-  if framework.OrganizationID != organizationID {
-    return nil, nil
+
+  for _, framework := range frameworks {
+    if framework.ReferenceID == referenceID {
+      return framework, nil
+    }
   }
-  return framework, nil
+  return nil, nil
 }
 
 func frameworkImportRequest(definition compplustemplates.FrameworkDefinition) (ImportFrameworkRequest, error) {
