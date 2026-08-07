@@ -64,50 +64,50 @@ type Props = {
 const startSteps = [
   {
     number: "1",
-    title: "Describe your organisation",
-    text: "Complete the Context sections below. Keep it simple: what you do, your systems, team, processes and customers.",
+    title: "Tell us what your organisation does",
+    text: "Complete the Context sections below. Plain English is enough: what you provide, the systems you use, your team, main processes and customers.",
     to: null,
     action: "You are here",
   },
   {
     number: "2",
     title: "Choose the standards you need",
-    text: "Open Template Library and select ISO 27001, ISO 9001, UK GDPR, ISO 14001 or ISO 42001. Core is included automatically.",
+    text: "Open Documents → Template Library. Select ISO 27001, ISO 9001, UK GDPR, ISO 14001 or ISO 42001. The shared Core pack is included automatically.",
     to: "../documents",
     action: "Open Documents",
   },
   {
     number: "3",
-    title: "Review ready-made policies",
-    text: "Comp Plus+ prepares policies, procedures, registers and forms. Change only the [CONFIRM] points so the documents match real practice.",
+    title: "Review the ready-made paperwork",
+    text: "ISOpilot prepares the policies, procedures, registers and forms. Read them and change only the [CONFIRM] points so the wording matches what your organisation really does.",
     to: "../documents",
     action: "Review documents",
   },
   {
     number: "4",
-    title: "Work through risks and controls",
-    text: "Review the framework, record real risks, assign owners and complete the measures/tasks created by the Fast Start packs.",
+    title: "Review risks and controls",
+    text: "Open the framework and risks. Confirm which requirements apply, record real risks, assign owners and work through the measures and tasks ISOpilot created.",
     to: "../risks",
     action: "Review risks",
   },
   {
     number: "5",
-    title: "Attach real evidence",
-    text: "Use the Tasks and Measures pages to upload proof such as approvals, training records, supplier reviews, screenshots, logs and completed forms.",
+    title: "Attach proof",
+    text: "Policies describe what should happen. Evidence proves it actually happens. Upload approvals, training records, supplier reviews, screenshots, logs, completed forms and other real records.",
     to: "../tasks",
     action: "Open tasks",
   },
   {
     number: "6",
-    title: "Audit and fix gaps",
-    text: "Run an internal audit, record findings and corrective actions, then verify that actions actually worked.",
+    title: "Audit and close gaps",
+    text: "Run an internal audit, record findings and corrective actions, then verify that each action fixed the underlying problem.",
     to: "../audits",
     action: "Open audits",
   },
   {
     number: "7",
     title: "Management review and maintain",
-    text: "Approve the final documents, complete management review, keep evidence current and repeat reviews when things change. Certification remains an independent external decision.",
+    text: "Approve the final documents, complete management review and keep evidence current. ISOpilot helps you stay audit-ready; certification is still awarded by an independent certification body.",
     to: "../documents",
     action: "Continue",
   },
@@ -167,22 +167,22 @@ export default function ContextPage(props: Props) {
         <div className="space-y-5">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
-              <div className="text-xs font-semibold uppercase tracking-wide text-txt-secondary">Comp Plus+ guided setup</div>
+              <div className="text-xs font-semibold uppercase tracking-wide text-txt-accent">ISOpilot guided setup</div>
               <h2 className="mt-1 text-xl font-semibold text-txt-primary">Start here — no compliance experience needed</h2>
               <p className="mt-1 max-w-3xl text-sm text-txt-secondary">
-                Follow these steps in order. Comp Plus+ prepares the paperwork; your job is to confirm what is true for your organisation and attach evidence that shows it is really being done.
+                Your compliance co-pilot shows the next move. Follow these steps in order; you confirm what is true, ISOpilot organises the paperwork, tasks and evidence around it.
               </p>
             </div>
-            <div className="rounded-full bg-subtle px-3 py-1.5 text-xs font-medium text-txt-secondary">
+            <div className="rounded-full border border-border-low bg-subtle px-3 py-1.5 text-xs font-medium text-txt-secondary">
               Context {contextCompleted}/5 completed
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
             {startSteps.map(step => (
-              <div key={step.number} className="rounded-lg border border-border-low p-4">
+              <div key={step.number} className="rounded-xl border border-border-low bg-level-1 p-4">
                 <div className="flex items-start gap-3">
-                  <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-highlight text-xs font-semibold text-txt-primary">
+                  <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-active text-xs font-semibold text-txt-accent">
                     {step.number}
                   </div>
                   <div className="min-w-0">
@@ -190,7 +190,7 @@ export default function ContextPage(props: Props) {
                     <p className="mt-1 text-xs leading-5 text-txt-secondary">{step.text}</p>
                     {step.to
                       ? (
-                          <Link to={step.to} className="mt-2 inline-block text-xs font-medium underline underline-offset-2">
+                          <Link to={step.to} className="mt-2 inline-block text-xs font-medium text-txt-accent underline underline-offset-2">
                             {step.action} →
                           </Link>
                         )
@@ -203,8 +203,13 @@ export default function ContextPage(props: Props) {
             ))}
           </div>
 
-          <div className="rounded-lg border border-border-low bg-subtle p-3 text-xs text-txt-secondary">
-            <strong className="text-txt-primary">What counts as evidence?</strong> A policy alone is not enough. Evidence is proof of real operation—for example a completed access review, training record, supplier assessment, risk decision, audit record, management-review minutes or incident record.
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+            <div className="rounded-xl border border-border-low bg-subtle p-3 text-xs text-txt-secondary">
+              <strong className="text-txt-primary">Policy vs evidence</strong><span className="block mt-1">A policy says what the organisation intends to do. Evidence shows it actually happened—for example a completed access review, training record, supplier assessment or audit record.</span>
+            </div>
+            <div className="rounded-xl border border-border-low bg-subtle p-3 text-xs text-txt-secondary">
+              <strong className="text-txt-primary">What “audit-ready” means here</strong><span className="block mt-1">Requirements are mapped, documents reflect real practice, tasks have owners, evidence is current, gaps are tracked and management has reviewed the system.</span>
+            </div>
           </div>
         </div>
       </Card>
