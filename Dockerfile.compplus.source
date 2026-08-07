@@ -34,6 +34,11 @@ RUN sed -i '/ID:[[:space:]]*evidenceID,/a\                                Measur
     && grep -q 'MeasureID:[[:space:]]*measure.ID' pkg/probo/measure_service.go \
     && grep -q 'LoadByOrganizationIDAndReferenceID' pkg/probo/measure_service.go
 
+# ISO 14001:2026 explicitly elevates biodiversity alongside climate and resource
+# efficiency. Make it a visible starter prompt in the existing aspects register.
+RUN sed -i 's/"Water use where relevant", /"Water use where relevant", "Biodiversity, ecosystems, habitats and land-use impacts where relevant", /' compplus/templates/pack_iso14001.go \
+    && grep -q 'Biodiversity, ecosystems, habitats and land-use impacts' compplus/templates/pack_iso14001.go
+
 # Rebrand customer-facing strings while preserving upstream package/API names,
 # database identifiers, original copyright notices and our legacy COMPPLUS- IDs.
 RUN find apps -type f -path '*/_locales/*.json' -exec sed -i 's/Probo/ISOpilot/g; s/Comp Plus+/ISOpilot/g' {} + \
