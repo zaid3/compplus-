@@ -2,9 +2,9 @@ import { useEffect } from "react";
 
 export function usePageTitle(title: string) {
   useEffect(() => {
-    document.title = title ? `${title} - ISOpilot` : "ISOpilot";
+    document.title = title ? `${title} - ISOPilot` : "ISOPilot";
     return () => {
-      document.title = "ISOpilot";
+      document.title = "ISOPilot";
     };
   }, [title]);
 }
