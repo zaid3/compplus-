@@ -16,8 +16,8 @@ WORKDIR /src
 RUN git clone --filter=blob:none https://github.com/getprobo/probo.git . \
     && git checkout --detach "${PROBO_UPSTREAM_SHA}" \
     && test "$(git rev-parse HEAD)" = "${PROBO_UPSTREAM_SHA}" \
-    && git cat-file -e "${PROBO_NPM_SECURITY_SHA}^{commit}" \
-    && git show "${PROBO_NPM_SECURITY_SHA}" -- package-lock.json package.json packages/prosemirror/package.json packages/ui/package.json | git apply - \
+    && git fetch --depth=2 origin "${PROBO_NPM_SECURITY_SHA}" \
+    && git diff FETCH_HEAD^ FETCH_HEAD -- package-lock.json package.json packages/prosemirror/package.json packages/ui/package.json | git apply - \
     && grep -q '"dompurify": "\^3.4.13"' packages/prosemirror/package.json \
     && grep -q '"mermaid": "\^11.16.1"' packages/ui/package.json \
     && grep -q '"js-yaml": "\^4.3.1"' package.json \
