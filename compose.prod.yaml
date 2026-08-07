@@ -15,17 +15,17 @@ services:
         fi
 
         # Current Probo initializes its custom-domain ACME service during normal
-        # startup. Persist the ACME account key so restarts reuse one account
-        # instead of generating a new account each time.
+        # startup. Persist the ACME account key so restarts reuse one account.
         if [ ! -s /acme/account.pem ]; then
           openssl genpkey -algorithm EC -pkeyopt ec_paramgen_curve:P-256 -out /acme/account.pem
         fi
 
-        # Dockerfile.compplus creates `probo` as the first regular Linux user
-        # (UID/GID 1000). Keep private keys mode 0600 while making them readable
-        # by the non-root application process on both new and existing volumes.
-        chown 1000:1000 /oauth2/private.pem /acme/account.pem
-        chmod 600 /oauth2/private.pem /acme/account.pem
+        # Do not depend on the image's primary UID/GID: Ubuntu 24.04 already
+        # owns UID 1000, so `useradd probo` is not guaranteed to receive it.
+        # A dedicated supplemental group lets the non-root app read only these
+        # secrets while keeping them unavailable to other users (0640).
+        chown 0:65532 /oauth2/private.pem /acme/account.pem
+        chmod 640 /oauth2/private.pem /acme/account.pem
     volumes:
       - "oauth2-key:/oauth2"
       - "acme-account-key:/acme"
@@ -117,13 +117,18 @@ services:
           ]
         }
         JSON
-        chmod 600 /config/s3.json
+        # SeaweedFS also runs non-root. Use the same isolated supplemental group
+        # rather than making the storage credential world-readable.
+        chown 0:65532 /config/s3.json
+        chmod 640 /config/s3.json
     volumes:
       - "seaweedfs-config:/config"
 
   seaweedfs:
     image: "chrislusf/seaweedfs@sha256:cea8339d21dad1b200adce581dd7434d254b8f5975f142c3b4c930ba78647eef"
     restart: unless-stopped
+    group_add:
+      - "65532"
     depends_on:
       seaweed-config-init:
         condition: service_completed_successfully
@@ -159,6 +164,8 @@ services:
       context: "."
       dockerfile: "Dockerfile.compplus"
     restart: unless-stopped
+    group_add:
+      - "65532"
     entrypoint: ["/bin/sh", "-c"]
     command:
       - |
