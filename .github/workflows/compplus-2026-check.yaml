@@ -37,12 +37,10 @@ jobs:
       - name: Start exact production stack
         run: |
           set -euxo pipefail
-          # Coolify understands exclude_from_hc; standard Docker Compose does not.
-          # Remove only that Coolify metadata for this runner-side smoke test.
           sed '/^[[:space:]]*exclude_from_hc:/d' compose.prod.yaml > compose.ci-smoke.yaml
           docker compose -f compose.ci-smoke.yaml up -d --build
 
-      - name: Wait for ISOpilot HTTP and print crash logs on failure
+      - name: Wait for ISOPilot HTTP and print crash logs on failure
         run: |
           set -uo pipefail
           ok=0
@@ -51,7 +49,7 @@ jobs:
             docker compose -f compose.ci-smoke.yaml ps -a || true
             code="$(curl -sS -o /tmp/isopilot-body -w '%{http_code}' --max-time 5 http://127.0.0.1:8090/ || true)"
             if [ "$code" -ge 200 ] 2>/dev/null && [ "$code" -lt 400 ] 2>/dev/null; then
-              echo "ISOpilot responded with HTTP ${code}"
+              echo "ISOPilot responded with HTTP ${code}"
               ok=1
               break
             fi
@@ -61,7 +59,7 @@ jobs:
           if [ "$ok" != "1" ]; then
             echo '=== FINAL CONTAINER STATE ==='
             docker compose -f compose.ci-smoke.yaml ps -a || true
-            echo '=== PROBO / ISOPILOT LOGS ==='
+            echo '=== APPLICATION LOGS ==='
             docker compose -f compose.ci-smoke.yaml logs --no-color --tail=300 probo || true
             echo '=== POSTGRES INIT LOGS ==='
             docker compose -f compose.ci-smoke.yaml logs --no-color --tail=120 postgres-init || true
@@ -77,7 +75,17 @@ jobs:
   build:
     name: build-full-isopilot-source
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 55
+    env:
+      SERVICE_PASSWORD_64_POSTGRESADMIN: ci-source-postgres-admin-secret-00000000000000000000000000000000000000000000
+      SERVICE_PASSWORD_64_PROBODDB: ci-source-probod-db-secret-000000000000000000000000000000000000000000000000
+      SERVICE_PASSWORD_64_OBJECTSTORE: ci-source-object-store-secret-00000000000000000000000000000000000000000000000
+      SERVICE_REALBASE64_32_ENCRYPTIONKEY: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
+      SERVICE_PASSWORD_64_COOKIESECRET: ci-source-cookie-secret-00000000000000000000000000000000000000000000000000
+      SERVICE_PASSWORD_64_PASSWORDPEPPER: ci-source-password-pepper-0000000000000000000000000000000000000000000000
+      SERVICE_PASSWORD_64_TRUSTTOKEN: ci-source-trust-token-00000000000000000000000000000000000000000000000000
+      ISOPILOT_PUBLIC_URL: http://127.0.0.1:8090
+      ISOPILOT_CORS_ORIGINS: http://127.0.0.1:8090
     steps:
       - uses: actions/checkout@v4
 
@@ -85,16 +93,21 @@ jobs:
         run: |
           set -euxo pipefail
           grep -q 'ARG PROBO_UPSTREAM_SHA=7d4b92c5ef1d77d0815f22749e01b8202d683d58' Dockerfile.compplus.source
+          grep -q "MeasureID:.*measure.ID" Dockerfile.compplus.source
+          grep -q 'LoadByOrganizationIDAndReferenceID' Dockerfile.compplus.source
           grep -q 'ISO 9001:2015 + Amd 1:2024' compplus/overlay/packages/ui/src/Molecules/FrameworkSelector/FrameworkSelector.tsx
           grep -q 'ISO 14001:2026' compplus/overlay/packages/ui/src/Molecules/FrameworkSelector/FrameworkSelector.tsx
           grep -q 'EU Digital Operational Resilience Act' compplus/overlay/packages/ui/src/Molecules/FrameworkSelector/FrameworkSelector.tsx
           grep -q 'DUAA changes in force in 2026' compplus/overlay/apps/console/src/pages/organizations/documents/_components/TemplateLibraryDialog.tsx
           grep -q 'Start here — no compliance experience needed' compplus/overlay/apps/console/src/pages/organizations/context/ContextPage.tsx
+          grep -q 'ISOPilot' compplus/overlay/packages/ui/src/Atoms/Logo/Logo.tsx
+          grep -q 'ThemeToggle' compplus/overlay/apps/console/src/components/ThemeManager.tsx
+          grep -q 'classList.toggle("dark"' compplus/overlay/apps/console/src/components/ThemeManager.tsx
+          grep -q 'Logo withPicto' compplus/overlay/packages/ui/src/Layouts/Layout.tsx
           ! grep -q 'POSTGRES_PASSWORD: "postgres"' compose.prod.yaml
           ! grep -q 'PROBOD_AWS_SECRET_ACCESS_KEY: "thisisnotasecret"' compose.prod.yaml
           ! grep -q 'CREATE ROLE probod LOGIN SUPERUSER' compose.prod.yaml
 
-          # Latest reviewed Probo initializes its certificate manager at startup.
           grep -q 'PROBOD_ACME_DIRECTORY:' compose.prod.yaml
           grep -q 'PROBOD_ACME_EMAIL:' compose.prod.yaml
           grep -q 'PROBOD_ACME_KEY_TYPE: "EC256"' compose.prod.yaml
@@ -102,22 +115,11 @@ jobs:
           grep -q 'acme-account-key:/acme:ro' compose.prod.yaml
 
       - name: Validate production Compose interpolation
-        env:
-          SERVICE_PASSWORD_64_POSTGRESADMIN: ci-postgres-admin-secret-000000000000000000000000000000000000000000000000
-          SERVICE_PASSWORD_64_PROBODDB: ci-probod-db-secret-0000000000000000000000000000000000000000000000000000
-          SERVICE_PASSWORD_64_OBJECTSTORE: ci-object-store-secret-000000000000000000000000000000000000000000000000000
-          SERVICE_REALBASE64_32_ENCRYPTIONKEY: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
-          SERVICE_PASSWORD_64_COOKIESECRET: ci-cookie-secret-000000000000000000000000000000000000000000000000000000
-          SERVICE_PASSWORD_64_PASSWORDPEPPER: ci-password-pepper-0000000000000000000000000000000000000000000000000000
-          SERVICE_PASSWORD_64_TRUSTTOKEN: ci-trust-token-000000000000000000000000000000000000000000000000000000
         run: |
-          # `exclude_from_hc` is a Coolify-only extension. Keep it in the real
-          # production file, but remove it from the temporary standard-Compose
-          # copy used solely for syntax/interpolation validation.
           sed '/^[[:space:]]*exclude_from_hc:/d' compose.prod.yaml > /tmp/compose-ci.yaml
           docker compose -f /tmp/compose-ci.yaml config >/dev/null
 
-      - name: Build ISOpilot from reviewed Probo plus approved overlays
+      - name: Build ISOPilot from reviewed Probo plus approved overlays
         run: |
           docker build \
             --file Dockerfile.compplus.source \
@@ -135,3 +137,64 @@ jobs:
           test -s /tmp/probod
           test -s /tmp/probod-bootstrap
           test -s /tmp/entrypoint.sh
+
+      - name: Start production stack from this exact source build
+        run: |
+          set -euxo pipefail
+          sed '/^[[:space:]]*exclude_from_hc:/d; s/dockerfile: "Dockerfile.compplus"/dockerfile: "Dockerfile.compplus.source"/' compose.prod.yaml > compose.source-smoke.yaml
+          docker compose -f compose.source-smoke.yaml up -d --build
+
+      - name: Verify source-built app and Fast Start installer
+        run: |
+          set -euo pipefail
+
+          for attempt in $(seq 1 30); do
+            code="$(curl -sS -o /tmp/isopilot-source-body -w '%{http_code}' --max-time 5 http://127.0.0.1:8090/ || true)"
+            if [ "$code" -ge 200 ] 2>/dev/null && [ "$code" -lt 400 ] 2>/dev/null; then
+              break
+            fi
+            if [ "$attempt" = "30" ]; then
+              docker compose -f compose.source-smoke.yaml ps -a || true
+              docker compose -f compose.source-smoke.yaml logs --no-color --tail=300 probo || true
+              exit 1
+            fi
+            sleep 5
+          done
+
+          email="ci-$(date +%s)-${RANDOM}@example.com"
+          password='ISOPilot-CI-Test-123!'
+          cookie=/tmp/isopilot-ci-cookie
+
+          signup_query='mutation SignUpPageMutation($input: SignUpInput!) { signUp(input: $input) { identity { id } } }'
+          signup_payload="$(jq -nc --arg q "$signup_query" --arg email "$email" --arg password "$password" '{operationName:"SignUpPageMutation",query:$q,variables:{input:{email:$email,password:$password,fullName:"ISOPilot CI"}}}')"
+          signup="$(curl -fsS -c "$cookie" -b "$cookie" -H 'Content-Type: application/json' --data "$signup_payload" http://127.0.0.1:8090/api/connect/v1/graphql)"
+          echo "$signup" | jq -e '.errors == null and .data.signUp.identity.id != null' >/dev/null
+
+          create_query='mutation NewOrganizationPageMutation($input: CreateOrganizationInput!) { createOrganization(input: $input) { organization { id name } } }'
+          create_payload="$(jq -nc --arg q "$create_query" '{operationName:"NewOrganizationPageMutation",query:$q,variables:{input:{name:"ISOPilot CI Organisation"}}}')"
+          created="$(curl -fsS -c "$cookie" -b "$cookie" -H 'Content-Type: application/json' --data "$create_payload" http://127.0.0.1:8090/api/connect/v1/graphql)"
+          echo "$created" | jq .
+          organization_id="$(echo "$created" | jq -er '.data.createOrganization.organization.id')"
+
+          install_query='mutation TemplateLibraryDialogInstallMutation($input: InstallTemplatePackInput!) { installTemplatePack(input: $input) { packId version documentsCreated measuresCreated tasksCreated evidenceRequestsCreated statementOfApplicabilityCreated alreadyInstalled framework { id name } } }'
+          install_payload="$(jq -nc --arg q "$install_query" --arg oid "$organization_id" '{operationName:"TemplateLibraryDialogInstallMutation",query:$q,variables:{input:{organizationId:$oid,packId:"core",answers:{legalName:"ISOPilot CI Organisation",services:"Compliance testing",locations:"United Kingdom",executiveOwner:"CI Executive",systemManager:"CI Compliance",securityOwner:null,privacyOwner:null,qualityOwner:null,environmentalOwner:null,aiOwner:null}}}}')"
+
+          first="$(curl -fsS -c "$cookie" -b "$cookie" -H 'Content-Type: application/json' --data "$install_payload" http://127.0.0.1:8090/api/console/v1/graphql)"
+          echo "$first" | jq .
+          echo "$first" | jq -e '.errors == null and .data.installTemplatePack.framework.id != null and .data.installTemplatePack.documentsCreated > 0 and .data.installTemplatePack.measuresCreated > 0' >/dev/null
+
+          second="$(curl -fsS -c "$cookie" -b "$cookie" -H 'Content-Type: application/json' --data "$install_payload" http://127.0.0.1:8090/api/console/v1/graphql)"
+          echo "$second" | jq .
+          echo "$second" | jq -e '.errors == null and .data.installTemplatePack.framework.id != null and .data.installTemplatePack.alreadyInstalled == true' >/dev/null
+
+      - name: Print source-stack logs on failure
+        if: failure()
+        run: |
+          docker compose -f compose.source-smoke.yaml ps -a || true
+          docker compose -f compose.source-smoke.yaml logs --no-color --tail=400 probo || true
+          docker compose -f compose.source-smoke.yaml logs --no-color --tail=160 postgres-init || true
+          docker compose -f compose.source-smoke.yaml logs --no-color --tail=160 seaweedfs || true
+
+      - name: Cleanup source stack
+        if: always()
+        run: docker compose -f compose.source-smoke.yaml down -v || true
