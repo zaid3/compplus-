@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1.7
 
-# Comp Plus+ full source build. This file is intentionally used by GitHub Actions,
+# ISOpilot full source build. This file is intentionally used by GitHub Actions,
 # not by the production VPS. Production downloads the prebuilt runtime produced
 # from this exact source build.
 ARG PROBO_UPSTREAM_SHA=82221746eb9ca76942367e6c8a45013bb9895ec7
@@ -18,16 +18,18 @@ RUN git clone --filter=blob:none https://github.com/getprobo/probo.git . \
 
 COPY compplus/overlay/ /src/
 
-# Comp Plus+ fixes two upstream v0.253.0 import edge cases used by Fast Start:
+# ISOpilot fixes two upstream v0.253.0 import edge cases used by Fast Start:
 # 1) requested evidence created by MeasureService.Import must carry its measure_id;
 # 2) framework references must resolve inside the selected organization, not just
-#    the tenant, so multiple charities can install the same framework safely.
+#    the tenant, so multiple organisations can install the same framework safely.
 RUN sed -i '/ID:[[:space:]]*evidenceID,/a\                                MeasureID:          measure.ID,' pkg/probo/measure_service.go \
     && sed -i 's/framework.LoadByReferenceID(ctx, tx, scope, standard.Framework)/framework.LoadByOrganizationIDAndReferenceID(ctx, tx, scope, organization.ID, standard.Framework)/' pkg/probo/measure_service.go \
     && grep -q 'MeasureID:[[:space:]]*measure.ID' pkg/probo/measure_service.go \
     && grep -q 'LoadByOrganizationIDAndReferenceID' pkg/probo/measure_service.go
 
-RUN find apps -type f -path '*/_locales/*.json' -exec sed -i 's/Probo/Comp Plus+/g' {} +
+# Rebrand translated customer-facing strings while preserving upstream package,
+# API, database and licence identifiers for compatibility.
+RUN find apps -type f -path '*/_locales/*.json' -exec sed -i 's/Probo/ISOpilot/g; s/Comp Plus+/ISOpilot/g' {} +
 
 FROM node:24-bookworm AS frontend
 WORKDIR /src
@@ -57,18 +59,18 @@ RUN go mod download
 RUN make generate
 RUN CGO_ENABLED=0 GOOS=linux go build \
       -trimpath \
-      -ldflags="-s -w -X main.env=prod -X main.version=comp-plus-2026.08-final" \
+      -ldflags="-s -w -X main.env=prod -X main.version=isopilot-2026.08-final" \
       -o /out/probod ./cmd/probod
 RUN CGO_ENABLED=0 GOOS=linux go build \
       -trimpath \
-      -ldflags="-s -w -X main.version=comp-plus-2026.08-final" \
+      -ldflags="-s -w -X main.version=isopilot-2026.08-final" \
       -o /out/probod-bootstrap ./cmd/probod-bootstrap
 
 FROM ubuntu:24.04
 LABEL org.opencontainers.image.source="https://github.com/zaid3/compplus-"
 LABEL org.opencontainers.image.licenses="MIT"
-LABEL org.opencontainers.image.vendor="Comp Plus+"
-LABEL org.opencontainers.image.description="Comp Plus+ governance, risk and compliance platform"
+LABEL org.opencontainers.image.vendor="ISOpilot"
+LABEL org.opencontainers.image.description="ISOpilot governance, risk and compliance platform"
 RUN useradd -m probo \
     && apt-get update \
     && apt-get upgrade -y \
