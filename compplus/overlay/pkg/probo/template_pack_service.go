@@ -3,6 +3,7 @@ package probo
 import (
   "context"
   "encoding/json"
+  "errors"
   "fmt"
   "strings"
   "time"
@@ -56,41 +57,31 @@ func (s *TemplatePackService) Compile(_ context.Context, req CompileTemplatePack
   return compiled, nil
 }
 
-// Install is intentionally idempotent at pack level inside the selected
-// organisation. Repeated clicks return that organisation's existing framework
-// rather than creating duplicate documents, while another organisation can
-// independently install the same pack.
+// Install is resumable and idempotent. A previous attempt may have created the
+// framework before a later step failed. In that case Comp Plus+ reuses the
+// framework, upserts measures/tasks/evidence and reuses documents by title
+// instead of returning early or creating duplicates.
 func (s *TemplatePackService) Install(ctx context.Context, scope coredata.Scoper, req InstallTemplatePackRequest) (*InstallTemplatePackResult, error) {
   compiled, err := s.Compile(ctx, CompileTemplatePackRequest{PackID: req.PackID, Answers: req.Answers, Now: req.Now})
   if err != nil {
     return nil, err
   }
 
-  // Upstream measure import resolves framework references within the tenant.
-  // Scope the Comp Plus+ framework reference to the organisation so two
-  // organisations in one tenant can never cross-link measures/controls.
-  scopeCompiledFrameworkReference(compiled, req.OrganizationID)
+  framework, err := s.findInstalledFramework(ctx, scope, req.OrganizationID, compiled.Framework.ID)
+  if err != nil {
+    return nil, fmt.Errorf("cannot check template pack framework: %w", err)
+  }
+  frameworkAlreadyExisted := framework != nil
 
-  existing, err := s.findInstalledFramework(ctx, scope, req.OrganizationID, compiled.Framework.ID)
-  if err != nil {
-    return nil, fmt.Errorf("cannot check template pack installation: %w", err)
-  }
-  if existing != nil {
-    return &InstallTemplatePackResult{
-      PackID: compiled.PackID,
-      Version: compiled.Version,
-      Framework: existing,
-      AlreadyInstalled: true,
-    }, nil
-  }
-
-  frameworkRequest, err := frameworkImportRequest(compiled.Framework)
-  if err != nil {
-    return nil, fmt.Errorf("cannot prepare framework import: %w", err)
-  }
-  framework, err := s.svc.Frameworks.Import(ctx, scope, req.OrganizationID, frameworkRequest)
-  if err != nil {
-    return nil, fmt.Errorf("cannot install template pack framework: %w", err)
+  if framework == nil {
+    frameworkRequest, err := frameworkImportRequest(compiled.Framework)
+    if err != nil {
+      return nil, fmt.Errorf("cannot prepare framework import: %w", err)
+    }
+    framework, err = s.svc.Frameworks.Import(ctx, scope, req.OrganizationID, frameworkRequest)
+    if err != nil {
+      return nil, fmt.Errorf("cannot install template pack framework: %w", err)
+    }
   }
 
   measureRequest, err := measureImportRequest(compiled.Measures)
@@ -108,24 +99,34 @@ func (s *TemplatePackService) Install(ctx context.Context, scope coredata.Scoper
   }
 
   documents := make(coredata.Documents, 0, len(compiled.Documents))
+  allDocumentsAlreadyExisted := frameworkAlreadyExisted
+
   for _, compiledDocument := range compiled.Documents {
     measure, ok := measureByReference[compiledDocument.MeasureReferenceID]
     if !ok {
       return nil, fmt.Errorf("cannot install document %q: measure %q was not imported", compiledDocument.Title, compiledDocument.MeasureReferenceID)
     }
 
-    document, _, err := s.svc.Documents.Create(ctx, scope, CreateDocumentRequest{
-      OrganizationID: req.OrganizationID,
-      Title: compiledDocument.Title,
-      Content: compiledDocument.Content,
-      Classification: coredata.DocumentClassification(compiledDocument.Classification),
-      DocumentType: coredata.DocumentType(compiledDocument.DocumentType),
-    })
+    document, err := s.findDocumentByTitle(ctx, scope, req.OrganizationID, compiledDocument.Title)
     if err != nil {
-      return nil, fmt.Errorf("cannot create template document %q: %w", compiledDocument.Title, err)
+      return nil, fmt.Errorf("cannot check existing template document %q: %w", compiledDocument.Title, err)
     }
 
-    if _, _, err := s.svc.Measures.CreateDocumentMapping(ctx, scope, measure.ID, document.ID); err != nil {
+    if document == nil {
+      allDocumentsAlreadyExisted = false
+      document, _, err = s.svc.Documents.Create(ctx, scope, CreateDocumentRequest{
+        OrganizationID: req.OrganizationID,
+        Title: compiledDocument.Title,
+        Content: compiledDocument.Content,
+        Classification: coredata.DocumentClassification(compiledDocument.Classification),
+        DocumentType: coredata.DocumentType(compiledDocument.DocumentType),
+      })
+      if err != nil {
+        return nil, fmt.Errorf("cannot create template document %q: %w", compiledDocument.Title, err)
+      }
+    }
+
+    if _, _, err := s.svc.Measures.CreateDocumentMapping(ctx, scope, measure.ID, document.ID); err != nil && !errors.Is(err, coredata.ErrResourceAlreadyExists) {
       return nil, fmt.Errorf("cannot link template document %q to measure %q: %w", compiledDocument.Title, measure.Name, err)
     }
     documents = append(documents, document)
@@ -146,27 +147,24 @@ func (s *TemplatePackService) Install(ctx context.Context, scope coredata.Scoper
     Measures: measurePage.Data,
     Documents: documents,
     StatementOfApplicability: soa,
+    AlreadyInstalled: allDocumentsAlreadyExisted,
   }, nil
 }
 
-func scopeCompiledFrameworkReference(compiled *compplustemplates.CompiledPack, organizationID gid.GID) {
-  baseReference := compiled.Framework.ID
-  scopedReference := fmt.Sprintf("%s-%s", baseReference, organizationID.String())
-  compiled.Framework.ID = scopedReference
-
-  for i := range compiled.Measures {
-    for j := range compiled.Measures[i].Standards {
-      if compiled.Measures[i].Standards[j].Framework == baseReference {
-        compiled.Measures[i].Standards[j].Framework = scopedReference
-      }
-    }
-  }
-}
-
 func (s *TemplatePackService) installISO27001SOA(ctx context.Context, scope coredata.Scoper, organizationID gid.GID, framework *coredata.Framework) (*coredata.StatementOfApplicability, error) {
-  soa, err := s.svc.StatementsOfApplicability.Create(ctx, scope, CreateStatementOfApplicabilityRequest{
+  const soaName = "Comp Plus+ ISO/IEC 27001 Statement of Applicability"
+
+  soa, err := s.findStatementOfApplicabilityByName(ctx, scope, organizationID, soaName)
+  if err != nil {
+    return nil, err
+  }
+  if soa != nil {
+    return soa, nil
+  }
+
+  soa, err = s.svc.StatementsOfApplicability.Create(ctx, scope, CreateStatementOfApplicabilityRequest{
     OrganizationID: organizationID,
-    Name: "Comp Plus+ ISO/IEC 27001 Statement of Applicability",
+    Name: soaName,
   })
   if err != nil {
     return nil, err
@@ -212,34 +210,45 @@ func (s *TemplatePackService) installISO27001SOA(ctx context.Context, scope core
 }
 
 func (s *TemplatePackService) findInstalledFramework(ctx context.Context, scope coredata.Scoper, organizationID gid.GID, referenceID string) (*coredata.Framework, error) {
-  frameworks := coredata.Frameworks{}
+  framework := &coredata.Framework{}
   err := s.svc.pg.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
-    return frameworks.LoadByOrganizationID(
-      ctx,
-      conn,
-      scope,
-      organizationID,
-      page.NewCursor(
-        1_000,
-        nil,
-        page.Head,
-        page.OrderBy[coredata.FrameworkOrderField]{
-          Field: coredata.FrameworkOrderFieldCreatedAt,
-          Direction: page.OrderDirectionAsc,
-        },
-      ),
-    )
+    return framework.LoadByOrganizationIDAndReferenceID(ctx, conn, scope, organizationID, referenceID)
   })
+  if errors.Is(err, coredata.ErrResourceNotFound) {
+    return nil, nil
+  }
   if err != nil {
     return nil, err
   }
+  return framework, nil
+}
 
-  for _, framework := range frameworks {
-    if framework.ReferenceID == referenceID {
-      return framework, nil
-    }
+func (s *TemplatePackService) findDocumentByTitle(ctx context.Context, scope coredata.Scoper, organizationID gid.GID, title string) (*coredata.Document, error) {
+  document := &coredata.Document{}
+  err := s.svc.pg.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
+    return document.LoadByOrganizationIDAndTitle(ctx, conn, scope, organizationID, title)
+  })
+  if errors.Is(err, coredata.ErrResourceNotFound) {
+    return nil, nil
   }
-  return nil, nil
+  if err != nil {
+    return nil, err
+  }
+  return document, nil
+}
+
+func (s *TemplatePackService) findStatementOfApplicabilityByName(ctx context.Context, scope coredata.Scoper, organizationID gid.GID, name string) (*coredata.StatementOfApplicability, error) {
+  soa := &coredata.StatementOfApplicability{}
+  err := s.svc.pg.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
+    return soa.LoadByOrganizationIDAndName(ctx, conn, scope, organizationID, name)
+  })
+  if errors.Is(err, coredata.ErrResourceNotFound) {
+    return nil, nil
+  }
+  if err != nil {
+    return nil, err
+  }
+  return soa, nil
 }
 
 func frameworkImportRequest(definition compplustemplates.FrameworkDefinition) (ImportFrameworkRequest, error) {
