@@ -1,0 +1,30 @@
+name: compplus-2026-check
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - Dockerfile.compplus
+      - compose.prod.yaml
+      - compplus/overlay/**
+      - .github/workflows/compplus-2026-check.yaml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: build-current-comp-plus
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build Comp Plus+ from pinned current Probo
+        run: |
+          docker build \
+            --file Dockerfile.compplus \
+            --build-arg PROBO_UPSTREAM_SHA=22ebf47732f8ae3161fbca7aabbe1d3a11ab9ef5 \
+            --tag compplus:check \
+            .
