@@ -54,7 +54,12 @@ jobs:
           SERVICE_PASSWORD_64_COOKIESECRET: ci-cookie-secret-000000000000000000000000000000000000000000000000000000
           SERVICE_PASSWORD_64_PASSWORDPEPPER: ci-password-pepper-0000000000000000000000000000000000000000000000000000
           SERVICE_PASSWORD_64_TRUSTTOKEN: ci-trust-token-000000000000000000000000000000000000000000000000000000
-        run: docker compose -f compose.prod.yaml config >/dev/null
+        run: |
+          # `exclude_from_hc` is a Coolify-only extension. Keep it in the real
+          # production file, but remove it from the temporary standard-Compose
+          # copy used solely for syntax/interpolation validation.
+          sed '/^[[:space:]]*exclude_from_hc:/d' compose.prod.yaml > /tmp/compose-ci.yaml
+          docker compose -f /tmp/compose-ci.yaml config >/dev/null
 
       - name: Build ISOpilot from reviewed Probo plus approved overlays
         run: |
