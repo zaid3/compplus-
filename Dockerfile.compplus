@@ -1,0 +1,81 @@
+# syntax=docker/dockerfile:1.7
+
+# Comp Plus+ is maintained as a thin, reviewable overlay on top of a pinned
+# upstream Probo revision. This keeps the GRC engine current without forking
+# hundreds of upstream implementation files.
+ARG PROBO_UPSTREAM_SHA=82221746eb9ca76942367e6c8a45013bb9895ec7
+
+FROM debian:bookworm-slim AS source
+ARG PROBO_UPSTREAM_SHA
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends ca-certificates git \
+    && rm -rf /var/lib/apt/lists/*
+WORKDIR /src
+RUN git clone --filter=blob:none https://github.com/getprobo/probo.git . \
+    && git checkout --detach "${PROBO_UPSTREAM_SHA}" \
+    && test "$(git rev-parse HEAD)" = "${PROBO_UPSTREAM_SHA}" \
+    && rm -rf .git
+
+# Only files under compplus/overlay replace or extend upstream source.
+COPY compplus/overlay/ /src/
+
+# Rebrand customer-facing translated copy while deliberately keeping internal
+# package/API identifiers unchanged for upstream compatibility.
+RUN find apps -type f -path '*/_locales/*.json' -exec sed -i 's/Probo/Comp Plus+/g' {} +
+
+FROM node:24-bookworm AS frontend
+WORKDIR /src
+COPY --from=source /src/ ./
+RUN npm ci
+RUN contrib/merge-graphql-schema.sh \
+      pkg/server/api/connect/v1/schema.graphql \
+      pkg/server/api/connect/v1/graphql \
+    && contrib/merge-graphql-schema.sh \
+      pkg/server/api/console/v1/schema.graphql \
+      pkg/server/api/console/v1/graphql \
+    && contrib/merge-graphql-schema.sh \
+      pkg/server/api/complianceportal/v1/schema.graphql \
+      pkg/server/api/complianceportal/v1/graphql \
+    && npm run relay
+RUN npm -w @probo/emails run build \
+    && npm -w @probo/console run build \
+    && npm -w @probo/compliance-portal run build
+
+FROM golang:1.26.5-bookworm AS backend
+WORKDIR /src
+COPY --from=source /src/ ./
+COPY --from=frontend /src/apps/console/dist ./apps/console/dist
+COPY --from=frontend /src/apps/compliance-portal/dist ./apps/compliance-portal/dist
+COPY --from=frontend /src/packages/emails/dist ./packages/emails/dist
+RUN go mod download
+# Use the repository dependency-aware generation order.
+RUN make generate
+RUN CGO_ENABLED=0 GOOS=linux go build \
+      -trimpath \
+      -ldflags="-s -w -X main.env=prod -X main.version=comp-plus-2026.08" \
+      -o /out/probod ./cmd/probod
+RUN CGO_ENABLED=0 GOOS=linux go build \
+      -trimpath \
+      -ldflags="-s -w -X main.version=comp-plus-2026.08" \
+      -o /out/probod-bootstrap ./cmd/probod-bootstrap
+
+FROM ubuntu:24.04
+LABEL org.opencontainers.image.source="https://github.com/zaid3/compplus-"
+LABEL org.opencontainers.image.licenses="MIT"
+LABEL org.opencontainers.image.vendor="Comp Plus+"
+LABEL org.opencontainers.image.description="Comp Plus+ governance, risk and compliance platform"
+
+RUN useradd -m probo \
+    && apt-get update \
+    && apt-get upgrade -y \
+    && apt-get install -y --no-install-recommends ca-certificates libcap2-bin \
+    && rm -rf /var/lib/apt/lists/*
+COPY --from=backend /out/probod /usr/local/bin/probod
+COPY --from=backend /out/probod-bootstrap /usr/local/bin/probod-bootstrap
+COPY --from=source /src/entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/probod /usr/local/bin/probod-bootstrap /usr/local/bin/entrypoint.sh \
+    && setcap CAP_NET_BIND_SERVICE=+eip /usr/local/bin/probod \
+    && mkdir -p /etc/probod \
+    && chown probo:probo /etc/probod
+USER probo
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]

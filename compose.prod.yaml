@@ -117,7 +117,11 @@ services:
       - "--disable-extensions"
 
   probo:
-    image: "artifact.probo.inc/probo/probo:latest"
+    build:
+      context: "."
+      dockerfile: "Dockerfile.compplus"
+      args:
+        PROBO_UPSTREAM_SHA: "82221746eb9ca76942367e6c8a45013bb9895ec7"
     restart: unless-stopped
     entrypoint: ["/bin/sh", "-c"]
     command:
@@ -159,13 +163,12 @@ services:
 
       PROBOD_SMTP_ADDR: ""
       PROBOD_SMTP_TLS_REQUIRED: "false"
-      PROBOD_MAILER_SENDER_NAME: "CompPlus"
+      PROBOD_MAILER_SENDER_NAME: "Comp Plus+"
       PROBOD_MAILER_SENDER_EMAIL: "no-reply@example.com"
 
       PROBOD_CHROME_DP_ADDR: "chrome:9222"
 
-      # Register the default provider so the app can start without a paid API key.
-      # Replace this placeholder later to enable AI features.
+      # Placeholder provider keeps the app bootable until a real AI key is configured.
       PROBOD_OPENAI_API_KEY: "disabled-for-initial-hosting"
       PROBOD_AGENT_DEFAULT_PROVIDER: "openai"
       PROBOD_AGENT_DEFAULT_MODEL_NAME: "gpt-4o"
