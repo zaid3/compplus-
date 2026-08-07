@@ -1,4 +1,4 @@
-name: compplus-2026-check
+name: isopilot-2026-check
 
 on:
   pull_request:
@@ -6,6 +6,7 @@ on:
       - main
     paths:
       - Dockerfile.compplus
+      - Dockerfile.compplus.source
       - compose.prod.yaml
       - compplus/overlay/**
       - .github/workflows/compplus-2026-check.yaml
@@ -16,15 +17,27 @@ permissions:
 
 jobs:
   build:
-    name: build-current-comp-plus
+    name: build-full-isopilot-source
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
-      - name: Build Comp Plus+ from pinned current Probo
+      - name: Build ISOpilot from stable Probo plus approved overlays
         run: |
           docker build \
-            --file Dockerfile.compplus \
+            --file Dockerfile.compplus.source \
             --build-arg PROBO_UPSTREAM_SHA=82221746eb9ca76942367e6c8a45013bb9895ec7 \
-            --tag compplus:check \
+            --build-arg PROBO_NPM_SECURITY_SHA=f6ca5a499b78e4cd8cfe97760f77b170a2889287 \
+            --tag isopilot:check \
             .
+      - name: Verify final runtime contains required binaries
+        run: |
+          set -euxo pipefail
+          cid="$(docker create isopilot:check)"
+          docker cp "$cid:/usr/local/bin/probod" /tmp/probod
+          docker cp "$cid:/usr/local/bin/probod-bootstrap" /tmp/probod-bootstrap
+          docker cp "$cid:/usr/local/bin/entrypoint.sh" /tmp/entrypoint.sh
+          docker rm "$cid"
+          test -s /tmp/probod
+          test -s /tmp/probod-bootstrap
+          test -s /tmp/entrypoint.sh
