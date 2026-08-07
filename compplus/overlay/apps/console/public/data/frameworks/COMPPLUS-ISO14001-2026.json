@@ -4,7 +4,7 @@
   "controls": [
     {"id":"EMS-4.3","name":"Environmental Management System Scope","description":"Define the activities, services, locations and boundaries covered by the EMS."},
     {"id":"EMS-5.2","name":"Environmental Policy","description":"Set commitments for environmental protection, compliance, objectives and improvement."},
-    {"id":"EMS-6.1.2","name":"Environmental Aspects and Impacts Register","description":"Identify environmental aspects, resulting impacts and significance using a lifecycle-aware method."},
+    {"id":"EMS-6.1.2","name":"Environmental Aspects and Impacts Register","description":"Identify lifecycle-aware environmental aspects and impacts, including climate, resource use, pollution, biodiversity, ecosystems and land use where relevant, and evaluate significance."},
     {"id":"EMS-6.1.3","name":"Environmental Compliance Obligations Register","description":"Maintain applicable environmental legal, permit, contractual and other obligations."},
     {"id":"EMS-9.1.2","name":"Environmental Compliance Evaluation Procedure and Record","description":"Evaluate fulfilment of environmental compliance obligations and retain evidence."},
     {"id":"EMS-6.2","name":"Environmental Objectives and Action Programme","description":"Set measurable environmental objectives, actions, owners, resources and evaluation methods."},
