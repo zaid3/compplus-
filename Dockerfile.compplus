@@ -3,7 +3,7 @@
 # Comp Plus+ is maintained as a thin, reviewable overlay on top of a pinned
 # upstream Probo revision. This keeps the GRC engine current without forking
 # hundreds of upstream implementation files.
-ARG PROBO_UPSTREAM_SHA=22ebf47732f8ae3161fbca7aabbe1d3a11ab9ef5
+ARG PROBO_UPSTREAM_SHA=82221746eb9ca76942367e6c8a45013bb9895ec7
 
 FROM debian:bookworm-slim AS source
 ARG PROBO_UPSTREAM_SHA
