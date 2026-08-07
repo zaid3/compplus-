@@ -2,7 +2,7 @@
 
 # Production runtime image for Coolify.
 # The CPU/RAM-heavy Node + Go compilation happens in GitHub Actions using
-# Dockerfile.compplus.source. Coolify only downloads the verified runtime bundle.
+# Dockerfile.compplus.source. Coolify only downloads the prebuilt runtime bundle.
 FROM ubuntu:24.04
 
 ARG COMPPLUS_RUNTIME_URL=https://github.com/zaid3/compplus-/releases/download/runtime-latest/compplus-linux-amd64.tar.gz
@@ -18,10 +18,15 @@ RUN useradd -m probo \
     && apt-get install -y --no-install-recommends ca-certificates curl libcap2-bin \
     && rm -rf /var/lib/apt/lists/*
 
+# These tiny source fingerprints intentionally bust the runtime-download cache
+# whenever the Comp Plus+ overlay or pinned upstream build definition changes.
+COPY Dockerfile.compplus.source /tmp/Dockerfile.compplus.source
+COPY compplus/overlay/ /tmp/compplus-overlay-fingerprint/
+
 RUN echo "Installing Comp Plus+ runtime ${COMPPLUS_RUNTIME_REVISION}" \
     && curl -fL --retry 5 --retry-delay 2 "${COMPPLUS_RUNTIME_URL}" -o /tmp/compplus-runtime.tar.gz \
     && tar -xzf /tmp/compplus-runtime.tar.gz -C /usr/local/bin \
-    && rm -f /tmp/compplus-runtime.tar.gz \
+    && rm -rf /tmp/compplus-runtime.tar.gz /tmp/Dockerfile.compplus.source /tmp/compplus-overlay-fingerprint \
     && chmod +x /usr/local/bin/probod /usr/local/bin/probod-bootstrap /usr/local/bin/entrypoint.sh \
     && setcap CAP_NET_BIND_SERVICE=+eip /usr/local/bin/probod \
     && mkdir -p /etc/probod \
