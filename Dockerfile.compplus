@@ -5,13 +5,14 @@
 # Dockerfile.compplus.source. Coolify only downloads the prebuilt runtime bundle.
 FROM ubuntu:24.04
 
+# Internal runtime asset names remain stable for deployment compatibility.
 ARG COMPPLUS_RUNTIME_URL=https://github.com/zaid3/compplus-/releases/download/runtime-latest/compplus-linux-amd64.tar.gz
-ARG COMPPLUS_RUNTIME_REVISION=2026-08-07-v2
+ARG COMPPLUS_RUNTIME_REVISION=2026-08-07-isopilot-v1
 
 LABEL org.opencontainers.image.source="https://github.com/zaid3/compplus-"
 LABEL org.opencontainers.image.licenses="MIT"
-LABEL org.opencontainers.image.vendor="Comp Plus+"
-LABEL org.opencontainers.image.description="Comp Plus+ governance, risk and compliance platform"
+LABEL org.opencontainers.image.vendor="ISOpilot"
+LABEL org.opencontainers.image.description="ISOpilot governance, risk and compliance platform"
 
 RUN useradd -m probo \
     && apt-get update \
@@ -19,14 +20,14 @@ RUN useradd -m probo \
     && rm -rf /var/lib/apt/lists/*
 
 # These tiny source fingerprints intentionally bust the runtime-download cache
-# whenever the Comp Plus+ overlay or pinned upstream build definition changes.
+# whenever the ISOpilot overlay or pinned upstream build definition changes.
 COPY Dockerfile.compplus.source /tmp/Dockerfile.compplus.source
 COPY compplus/overlay/ /tmp/compplus-overlay-fingerprint/
 
 # The runtime release can take a few minutes to finish after a main-branch push.
 # Wait for it instead of failing Coolify immediately on a temporary GitHub 404.
 RUN set -eux; \
-    echo "Installing Comp Plus+ runtime ${COMPPLUS_RUNTIME_REVISION}"; \
+    echo "Installing ISOpilot runtime ${COMPPLUS_RUNTIME_REVISION}"; \
     downloaded=0; \
     for attempt in $(seq 1 60); do \
       if curl -fL --connect-timeout 15 --max-time 180 "${COMPPLUS_RUNTIME_URL}" -o /tmp/compplus-runtime.tar.gz; then \
