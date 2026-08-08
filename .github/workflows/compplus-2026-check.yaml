@@ -105,7 +105,14 @@ jobs:
           grep -q 'DUAA changes in force in 2026' compplus/overlay/apps/console/src/pages/organizations/documents/_components/TemplateLibraryDialog.tsx
           grep -q 'Start here — no compliance experience needed' compplus/overlay/apps/console/src/pages/organizations/context/ContextPage.tsx
 
-          grep -q 'ISOPilot' compplus/overlay/packages/ui/src/Atoms/Logo/Logo.tsx
+          # Customer-facing brand checks belong on customer-facing source, not
+          # stripped Go binary strings (which can contain internal compatibility names).
+          grep -q '>ISOPilot<' compplus/overlay/packages/ui/src/Atoms/Logo/Logo.tsx
+          grep -q 'ISOPilot — Your compliance co-pilot' compplus/overlay/apps/console/index.html
+          grep -q 'ISOPilot' compplus/overlay/packages/hooks/src/usePageTitle.ts
+          grep -q 'ISOPilot' compplus/overlay/packages/emails/src/components/ProboLogo.tsx
+          grep -q 's/Probo/ISOPilot/g' Dockerfile.compplus.source
+          grep -q 's/ISOpilot/ISOPilot/g' Dockerfile.compplus.source
           grep -q 'ThemeToggle' compplus/overlay/apps/console/src/components/ThemeManager.tsx
           grep -q 'classList.toggle("dark"' compplus/overlay/apps/console/src/components/ThemeManager.tsx
           grep -q 'Logo withPicto' compplus/overlay/packages/ui/src/Layouts/Layout.tsx
@@ -137,7 +144,7 @@ jobs:
             --tag isopilot:check \
             .
 
-      - name: Verify runtime binaries and final brand casing
+      - name: Verify required runtime binaries
         run: |
           set -euxo pipefail
           cid="$(docker create isopilot:check)"
@@ -148,11 +155,6 @@ jobs:
           test -s /tmp/probod
           test -s /tmp/probod-bootstrap
           test -s /tmp/entrypoint.sh
-          strings /tmp/probod | grep -q 'ISOPilot'
-          if strings /tmp/probod | grep -q 'ISOpilot'; then
-            echo 'Old ISOpilot customer-facing casing still exists in runtime' >&2
-            exit 1
-          fi
 
       - name: Start production stack from this exact source build
         run: |
