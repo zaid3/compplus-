@@ -58,7 +58,7 @@ func (s *TemplatePackService) Compile(_ context.Context, req CompileTemplatePack
 }
 
 // Install is resumable and idempotent. A previous attempt may have created the
-// framework before a later step failed. ISOpilot reuses that framework,
+// framework before a later step failed. ISOPilot reuses that framework,
 // upserts measures/tasks/evidence and reuses documents by title instead of
 // returning early or creating duplicates.
 func (s *TemplatePackService) Install(ctx context.Context, scope coredata.Scoper, req InstallTemplatePackRequest) (*InstallTemplatePackResult, error) {
@@ -152,22 +152,20 @@ func (s *TemplatePackService) Install(ctx context.Context, scope coredata.Scoper
 }
 
 func (s *TemplatePackService) installISO27001SOA(ctx context.Context, scope coredata.Scoper, organizationID gid.GID, framework *coredata.Framework) (*coredata.StatementOfApplicability, error) {
-  const soaName = "ISOpilot ISO/IEC 27001 Statement of Applicability"
+  const soaName = "ISOPilot ISO/IEC 27001 Statement of Applicability"
 
   soa, err := s.findStatementOfApplicabilityByName(ctx, scope, organizationID, soaName)
   if err != nil {
     return nil, err
   }
-  if soa != nil {
-    return soa, nil
-  }
-
-  soa, err = s.svc.StatementsOfApplicability.Create(ctx, scope, CreateStatementOfApplicabilityRequest{
-    OrganizationID: organizationID,
-    Name: soaName,
-  })
-  if err != nil {
-    return nil, err
+  if soa == nil {
+    soa, err = s.svc.StatementsOfApplicability.Create(ctx, scope, CreateStatementOfApplicabilityRequest{
+      OrganizationID: organizationID,
+      Name: soaName,
+    })
+    if err != nil {
+      return nil, err
+    }
   }
 
   controlsPage, err := s.svc.Controls.ListForFrameworkID(
@@ -201,7 +199,7 @@ func (s *TemplatePackService) installISO27001SOA(ctx context.Context, scope core
       control.ID,
       true,
       &starterJustification,
-    ); err != nil {
+    ); err != nil && !errors.Is(err, coredata.ErrResourceAlreadyExists) {
       return nil, fmt.Errorf("cannot add SoA control %s: %w", control.SectionTitle, err)
     }
   }
