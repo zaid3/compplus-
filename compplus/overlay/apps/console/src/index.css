@@ -30,11 +30,15 @@
   --color-level-1: #FFFFFF;
   --color-level-2: #FBFCFE;
   --color-level-3: #0B1220;
+  --color-black: #000000;
 
+  --color-invert: #FFFFFF;
+  --color-txt-invert: #FFFFFF;
   --color-txt-primary: #0B1220;
   --color-txt-secondary: #475569;
   --color-txt-tertiary: #64748B;
   --color-txt-quaternary: #94A3B8;
+  --color-txt-disabled: #A8B2C1;
   --color-txt-accent: #2F6BFF;
   --color-txt-danger: #D92D20;
   --color-txt-success: #087A47;
@@ -44,6 +48,14 @@
   --color-primary: #2F6BFF;
   --color-primary-hover: #1D4ED8;
   --color-primary-pressed: #1E40AF;
+  --color-secondary: #FFFFFF;
+  --color-secondary-hover: #F8FAFC;
+  --color-secondary-pressed: #F1F5F9;
+  --color-tertiary: transparent;
+  --color-tertiary-hover: #F6F8FB;
+  --color-tertiary-pressed: #EEF2F7;
+  --color-invert-hover: #F8FAFC;
+  --color-invert-pressed: #F1F5F9;
   --color-accent: #2F6BFF;
   --color-accent-hover: #1D4ED8;
   --color-accent-pressed: #1E40AF;
@@ -59,6 +71,8 @@
   --color-danger: #FFF1F0;
   --color-danger-plain: #F04438;
   --color-danger-dark: #D92D20;
+  --color-danger-hover: #D92D20;
+  --color-danger-pressed: #B42318;
   --color-success: #ECFDF3;
   --color-info: #EFF4FF;
   --color-warning: #FFFAEB;
@@ -86,11 +100,15 @@
   --color-level-1: #0F172A;
   --color-level-2: #111C2F;
   --color-level-3: #F8FAFC;
+  --color-black: #FFFFFF;
 
+  --color-invert: #0B1220;
+  --color-txt-invert: #FFFFFF;
   --color-txt-primary: #F8FAFC;
   --color-txt-secondary: #CBD5E1;
   --color-txt-tertiary: #94A3B8;
   --color-txt-quaternary: #64748B;
+  --color-txt-disabled: #52627A;
   --color-txt-accent: #8BAAFF;
   --color-txt-danger: #FDA29B;
   --color-txt-success: #6CE9A6;
@@ -100,6 +118,14 @@
   --color-primary: #477BFF;
   --color-primary-hover: #6692FF;
   --color-primary-pressed: #2F6BFF;
+  --color-secondary: #111C2F;
+  --color-secondary-hover: #17243A;
+  --color-secondary-pressed: #1D2B43;
+  --color-tertiary: transparent;
+  --color-tertiary-hover: rgba(255,255,255,.045);
+  --color-tertiary-pressed: rgba(255,255,255,.075);
+  --color-invert-hover: #111C2F;
+  --color-invert-pressed: #17243A;
   --color-accent: #477BFF;
   --color-accent-hover: #6692FF;
   --color-accent-pressed: #2F6BFF;
@@ -115,6 +141,8 @@
   --color-danger: rgba(240,68,56,.14);
   --color-danger-plain: #F97066;
   --color-danger-dark: #FDA29B;
+  --color-danger-hover: rgba(240,68,56,.28);
+  --color-danger-pressed: rgba(240,68,56,.38);
   --color-success: rgba(18,183,106,.14);
   --color-info: rgba(47,107,255,.14);
   --color-warning: rgba(247,144,9,.14);
