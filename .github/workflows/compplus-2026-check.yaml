@@ -185,15 +185,22 @@ jobs:
 
           signup_query='mutation SignUpPageMutation($input: SignUpInput!) { signUp(input: $input) { identity { id } } }'
           signup_payload="$(jq -nc --arg q "$signup_query" --arg email "$email" --arg password "$password" '{operationName:"SignUpPageMutation",query:$q,variables:{input:{email:$email,password:$password,fullName:"ISOPilot CI"}}}')"
-          signup="$(curl -fsS -c "$cookie" -b "$cookie" -H 'Content-Type: application/json' --data "$signup_payload" http://127.0.0.1:8090/api/connect/v1/graphql)"
+          signup="$(curl -fsS --retry 5 --retry-all-errors --retry-delay 2 -c "$cookie" -b "$cookie" -H 'Content-Type: application/json' --data "$signup_payload" http://127.0.0.1:8090/api/connect/v1/graphql)"
           echo "$signup" | jq .
           echo "$signup" | jq -e '.errors == null and .data.signUp.identity.id != null' >/dev/null
 
           create_query='mutation NewOrganizationPageMutation($input: CreateOrganizationInput!) { createOrganization(input: $input) { organization { id name } } }'
           create_payload="$(jq -nc --arg q "$create_query" '{operationName:"NewOrganizationPageMutation",query:$q,variables:{input:{name:"ISOPilot CI Organisation"}}}')"
-          created="$(curl -fsS -c "$cookie" -b "$cookie" -H 'Content-Type: application/json' --data "$create_payload" http://127.0.0.1:8090/api/connect/v1/graphql)"
+          created="$(curl -fsS --retry 5 --retry-all-errors --retry-delay 2 -c "$cookie" -b "$cookie" -H 'Content-Type: application/json' --data "$create_payload" http://127.0.0.1:8090/api/connect/v1/graphql)"
           echo "$created" | jq .
           organization_id="$(echo "$created" | jq -er '.data.createOrganization.organization.id')"
+
+          assume_query='mutation AssumePageMutation($input: AssumeOrganizationSessionInput!) { assumeOrganizationSession(input: $input) { result { __typename ... on OrganizationSessionCreated { session { id } membership { id } } ... on PasswordRequired { reason } ... on SAMLAuthenticationRequired { reason } } } }'
+          assume_continue="/organizations/${organization_id}"
+          assume_payload="$(jq -nc --arg q "$assume_query" --arg oid "$organization_id" --arg continue_url "$assume_continue" '{operationName:"AssumePageMutation",query:$q,variables:{input:{organizationId:$oid,"continue":$continue_url}}}')"
+          assumed="$(curl -fsS --retry 5 --retry-all-errors --retry-delay 2 -c "$cookie" -b "$cookie" -H 'Content-Type: application/json' --data "$assume_payload" http://127.0.0.1:8090/api/connect/v1/graphql)"
+          echo "$assumed" | jq .
+          echo "$assumed" | jq -e '.errors == null and .data.assumeOrganizationSession.result.__typename == "OrganizationSessionCreated"' >/dev/null
 
           install_query='mutation TemplateLibraryDialogInstallMutation($input: InstallTemplatePackInput!) { installTemplatePack(input: $input) { packId version documentsCreated measuresCreated tasksCreated evidenceRequestsCreated statementOfApplicabilityCreated alreadyInstalled framework { id name } } }'
           packs=(core iso27001 iso9001 uk-gdpr iso14001 iso42001)
@@ -201,7 +208,7 @@ jobs:
           for pack in "${packs[@]}"; do
             echo "=== installing ${pack} ==="
             payload="$(jq -nc --arg q "$install_query" --arg oid "$organization_id" --arg pack "$pack" '{operationName:"TemplateLibraryDialogInstallMutation",query:$q,variables:{input:{organizationId:$oid,packId:$pack,answers:{legalName:"ISOPilot CI Organisation",services:"Compliance testing",locations:"United Kingdom",executiveOwner:"CI Executive",systemManager:"CI Compliance",securityOwner:null,privacyOwner:null,qualityOwner:null,environmentalOwner:null,aiOwner:null}}}}')"
-            response="$(curl -fsS -c "$cookie" -b "$cookie" -H 'Content-Type: application/json' --data "$payload" http://127.0.0.1:8090/api/console/v1/graphql)"
+            response="$(curl -fsS --retry 5 --retry-all-errors --retry-delay 2 -c "$cookie" -b "$cookie" -H 'Content-Type: application/json' --data "$payload" http://127.0.0.1:8090/api/console/v1/graphql)"
             echo "$response" | jq .
             echo "$response" | jq -e '.errors == null and .data.installTemplatePack.framework.id != null and .data.installTemplatePack.documentsCreated > 0 and .data.installTemplatePack.measuresCreated > 0 and .data.installTemplatePack.alreadyInstalled == false' >/dev/null
             if [ "$pack" = "iso27001" ]; then
@@ -212,7 +219,7 @@ jobs:
           for pack in "${packs[@]}"; do
             echo "=== retrying ${pack} to verify idempotency ==="
             payload="$(jq -nc --arg q "$install_query" --arg oid "$organization_id" --arg pack "$pack" '{operationName:"TemplateLibraryDialogInstallMutation",query:$q,variables:{input:{organizationId:$oid,packId:$pack,answers:{legalName:"ISOPilot CI Organisation",services:"Compliance testing",locations:"United Kingdom",executiveOwner:"CI Executive",systemManager:"CI Compliance",securityOwner:null,privacyOwner:null,qualityOwner:null,environmentalOwner:null,aiOwner:null}}}}')"
-            response="$(curl -fsS -c "$cookie" -b "$cookie" -H 'Content-Type: application/json' --data "$payload" http://127.0.0.1:8090/api/console/v1/graphql)"
+            response="$(curl -fsS --retry 5 --retry-all-errors --retry-delay 2 -c "$cookie" -b "$cookie" -H 'Content-Type: application/json' --data "$payload" http://127.0.0.1:8090/api/console/v1/graphql)"
             echo "$response" | jq .
             echo "$response" | jq -e '.errors == null and .data.installTemplatePack.framework.id != null and .data.installTemplatePack.alreadyInstalled == true' >/dev/null
           done
