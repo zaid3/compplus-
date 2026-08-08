@@ -53,7 +53,7 @@ assert_nonnegative_counts() {
   local response="$1"
   jq -e '
     .data.installTemplatePack as $p
-    | ["peopleCreated", "documentsCreated", "measuresCreated", "vendorRiskAssessmentsCreated"]
+    | ["documentsCreated", "measuresCreated", "tasksCreated", "evidenceRequestsCreated"]
     | all(. as $field |
         ($p[$field] | type) == "number"
         and ($p[$field] | floor) == $p[$field]
@@ -122,7 +122,7 @@ LAST_RESPONSE="$(graphql '/api/connect/v1/graphql' "${assume_payload}")"
 assert_no_graphql_errors "${LAST_RESPONSE}"
 jq -e '.data.assumeOrganizationSession.result.__typename == "OrganizationSessionCreated"' <<<"${LAST_RESPONSE}" >/dev/null
 
-install_query='mutation TemplateLibraryDialogInstallMutation($input: InstallTemplatePackInput!) { installTemplatePack(input: $input) { packId framework { id name } alreadyInstalled peopleCreated documentsCreated measuresCreated vendorRiskAssessmentsCreated statementOfApplicabilityCreated } }'
+install_query='mutation TemplateLibraryDialogInstallMutation($input: InstallTemplatePackInput!) { installTemplatePack(input: $input) { packId version documentsCreated measuresCreated tasksCreated evidenceRequestsCreated statementOfApplicabilityCreated alreadyInstalled framework { id name } } }'
 packs=(core iso27001 iso9001 uk-gdpr iso14001 iso42001)
 
 make_install_payload() {
