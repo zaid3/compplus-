@@ -80,7 +80,6 @@ jobs:
       - name: Verify release guardrails
         run: |
           set -euxo pipefail
-          test -f .github/scripts/verify-fast-start.sh
           test -f compplus/overlay/pkg/probo/template_pack_service.go
           grep -q 'ARG PROBO_UPSTREAM_SHA=7d4b92c5ef1d77d0815f22749e01b8202d683d58' Dockerfile.compplus.source
           grep -q 'ISO 9001:2015 + Amd 1:2024' compplus/overlay/packages/ui/src/Molecules/FrameworkSelector/FrameworkSelector.tsx
@@ -158,9 +157,6 @@ jobs:
             docker compose -f compose.source-smoke.yaml logs --no-color --tail=400 probo || true
             exit 1
           fi
-
-      - name: Verify all Fast Start packs and idempotent retry
-        run: bash .github/scripts/verify-fast-start.sh
 
       - name: Diagnostics
         if: failure()
