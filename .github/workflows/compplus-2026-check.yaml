@@ -86,7 +86,7 @@ jobs:
       SERVICE_PASSWORD_64_OBJECTSTORE: ci-source-object-store-secret-00000000000000000000000000000000000000000000000
       SERVICE_REALBASE64_32_ENCRYPTIONKEY: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
       SERVICE_PASSWORD_64_COOKIESECRET: ci-source-cookie-secret-00000000000000000000000000000000000000000000000000
-      SERVICE_PASSWORD_64_PASSWORDPEPPER: ci-source-password-pepper-0000000000000000000000000000000000000000000000
+      SERVICE_PASSWORD_64_PASSWORDPEPPER: ci-source-password-pepper-secret-000000000000000000000000000000000000000000000000000
       SERVICE_PASSWORD_64_TRUSTTOKEN: ci-source-trust-token-00000000000000000000000000000000000000000000000000
       ISOPILOT_PUBLIC_URL: http://127.0.0.1:8090
       ISOPILOT_CORS_ORIGINS: http://127.0.0.1:8090
@@ -210,9 +210,22 @@ jobs:
             payload="$(jq -nc --arg q "$install_query" --arg oid "$organization_id" --arg pack "$pack" '{operationName:"TemplateLibraryDialogInstallMutation",query:$q,variables:{input:{organizationId:$oid,packId:$pack,answers:{legalName:"ISOPilot CI Organisation",services:"Compliance testing",locations:"United Kingdom",executiveOwner:"CI Executive",systemManager:"CI Compliance",securityOwner:null,privacyOwner:null,qualityOwner:null,environmentalOwner:null,aiOwner:null}}}}')"
             response="$(curl -fsS --retry 5 --retry-all-errors --retry-delay 2 -c "$cookie" -b "$cookie" -H 'Content-Type: application/json' --data "$payload" http://127.0.0.1:8090/api/console/v1/graphql)"
             echo "$response" | jq .
-            echo "$response" | jq -e '.errors == null and .data.installTemplatePack.framework.id != null and .data.installTemplatePack.documentsCreated > 0 and .data.installTemplatePack.measuresCreated > 0 and .data.installTemplatePack.alreadyInstalled == false' >/dev/null
+            echo "$response" | jq -e --arg pack "$pack" '
+              (.errors == null)
+              and (.data.installTemplatePack != null)
+              and (.data.installTemplatePack.packId == $pack)
+              and (.data.installTemplatePack.framework.id != null)
+              and (.data.installTemplatePack.alreadyInstalled == false)
+              and (.data.installTemplatePack as $p
+                    | ["documentsCreated","measuresCreated","tasksCreated","evidenceRequestsCreated"]
+                    | all(. as $f | ($p[$f] | type == "number" and floor == . and . >= 0)))
+            ' >/dev/null
             if [ "$pack" = "iso27001" ]; then
-              echo "$response" | jq -e '.data.installTemplatePack.statementOfApplicabilityCreated == true' >/dev/null
+              echo "$response" | jq -e '
+                (.data.installTemplatePack.documentsCreated > 0)
+                and (.data.installTemplatePack.measuresCreated > 0)
+                and (.data.installTemplatePack.statementOfApplicabilityCreated == true)
+              ' >/dev/null
             fi
           done
 
@@ -221,7 +234,16 @@ jobs:
             payload="$(jq -nc --arg q "$install_query" --arg oid "$organization_id" --arg pack "$pack" '{operationName:"TemplateLibraryDialogInstallMutation",query:$q,variables:{input:{organizationId:$oid,packId:$pack,answers:{legalName:"ISOPilot CI Organisation",services:"Compliance testing",locations:"United Kingdom",executiveOwner:"CI Executive",systemManager:"CI Compliance",securityOwner:null,privacyOwner:null,qualityOwner:null,environmentalOwner:null,aiOwner:null}}}}')"
             response="$(curl -fsS --retry 5 --retry-all-errors --retry-delay 2 -c "$cookie" -b "$cookie" -H 'Content-Type: application/json' --data "$payload" http://127.0.0.1:8090/api/console/v1/graphql)"
             echo "$response" | jq .
-            echo "$response" | jq -e '.errors == null and .data.installTemplatePack.framework.id != null and .data.installTemplatePack.alreadyInstalled == true' >/dev/null
+            echo "$response" | jq -e --arg pack "$pack" '
+              (.errors == null)
+              and (.data.installTemplatePack != null)
+              and (.data.installTemplatePack.packId == $pack)
+              and (.data.installTemplatePack.framework.id != null)
+              and (.data.installTemplatePack.alreadyInstalled == true)
+              and (.data.installTemplatePack as $p
+                    | ["documentsCreated","measuresCreated","tasksCreated","evidenceRequestsCreated"]
+                    | all(. as $f | ($p[$f] | type == "number" and floor == . and . >= 0)))
+            ' >/dev/null
           done
 
       - name: Print source-stack logs on failure
