@@ -5,7 +5,7 @@
 @source "../../../packages/ui/src";
 @source "../../../packages/helpers/src";
 
-/* ISOpilot brand tokens — source of truth from Brand Guidelines v1.0. */
+/* ISOPilot brand tokens — source of truth from Brand Guidelines v1.0. */
 :root {
   --ip-ink: #0B1220;
   --ip-blue: #2F6BFF;
@@ -22,29 +22,40 @@
   --ip-danger: #F04438;
   --ip-radius: 12px;
   --ip-radius-sm: 8px;
-  --ip-shadow: 0 1px 2px rgba(11,18,32,.06);
 
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, monospace;
 
   --color-level-0: #F6F8FB;
   --color-level-1: #FFFFFF;
-  --color-level-2: #FFFFFF;
+  --color-level-2: #FBFCFE;
   --color-level-3: #0B1220;
+  --color-black: #000000;
 
+  --color-invert: #FFFFFF;
+  --color-txt-invert: #FFFFFF;
   --color-txt-primary: #0B1220;
-  --color-txt-secondary: #64748B;
+  --color-txt-secondary: #475569;
   --color-txt-tertiary: #64748B;
   --color-txt-quaternary: #94A3B8;
+  --color-txt-disabled: #A8B2C1;
   --color-txt-accent: #2F6BFF;
-  --color-txt-danger: #F04438;
-  --color-txt-success: #12B76A;
-  --color-txt-info: #2F6BFF;
-  --color-txt-warning: #F79009;
+  --color-txt-danger: #D92D20;
+  --color-txt-success: #087A47;
+  --color-txt-info: #2457D6;
+  --color-txt-warning: #B54708;
 
   --color-primary: #2F6BFF;
   --color-primary-hover: #1D4ED8;
   --color-primary-pressed: #1E40AF;
+  --color-secondary: #FFFFFF;
+  --color-secondary-hover: #F8FAFC;
+  --color-secondary-pressed: #F1F5F9;
+  --color-tertiary: transparent;
+  --color-tertiary-hover: #F6F8FB;
+  --color-tertiary-pressed: #EEF2F7;
+  --color-invert-hover: #F8FAFC;
+  --color-invert-pressed: #F1F5F9;
   --color-accent: #2F6BFF;
   --color-accent-hover: #1D4ED8;
   --color-accent-pressed: #1E40AF;
@@ -60,14 +71,16 @@
   --color-danger: #FFF1F0;
   --color-danger-plain: #F04438;
   --color-danger-dark: #D92D20;
+  --color-danger-hover: #D92D20;
+  --color-danger-pressed: #B42318;
   --color-success: #ECFDF3;
   --color-info: #EFF4FF;
   --color-warning: #FFFAEB;
   --color-dialog: #0B1220;
 
-  --color-border-solid: #E4E9F2;
-  --color-border-low: #E4E9F2;
-  --color-border-mid: #CBD5E1;
+  --color-border-solid: #DCE3ED;
+  --color-border-low: #DCE3ED;
+  --color-border-mid: #C7D2E0;
   --color-border-strong: #94A3B8;
   --color-border-active: #2F6BFF;
   --color-border-accent: #2F6BFF;
@@ -77,39 +90,91 @@
   --color-border-info: #2F6BFF;
 
   --shadow-focus: 0 0 0 3px rgba(47,107,255,.28);
-  --shadow-base: 0 1px 2px rgba(11,18,32,.06);
-  --shadow-hover: 0 2px 6px rgba(11,18,32,.08);
-  --shadow-mid: 0 4px 14px rgba(11,18,32,.08);
+  --shadow-base: 0 1px 2px rgba(11,18,32,.08), 0 1px 1px rgba(11,18,32,.03);
+  --shadow-hover: 0 3px 8px rgba(11,18,32,.09);
+  --shadow-mid: 0 8px 24px rgba(11,18,32,.09);
 }
 
 .dark {
-  --color-level-0: #0B1220;
+  --color-level-0: #080E19;
   --color-level-1: #0F172A;
   --color-level-2: #111C2F;
   --color-level-3: #F8FAFC;
+  --color-black: #FFFFFF;
+
+  --color-invert: #0B1220;
+  --color-txt-invert: #FFFFFF;
   --color-txt-primary: #F8FAFC;
   --color-txt-secondary: #CBD5E1;
   --color-txt-tertiary: #94A3B8;
-  --color-txt-accent: #7DA2FF;
-  --color-primary: #2F6BFF;
-  --color-primary-hover: #4D7FFF;
-  --color-primary-pressed: #1D4ED8;
-  --color-accent: #2F6BFF;
-  --color-active: rgba(47,107,255,.18);
-  --color-highlight: rgba(47,107,255,.12);
-  --color-subtle: rgba(255,255,255,.04);
-  --color-border-solid: #1E293B;
-  --color-border-low: #1E293B;
+  --color-txt-quaternary: #64748B;
+  --color-txt-disabled: #52627A;
+  --color-txt-accent: #8BAAFF;
+  --color-txt-danger: #FDA29B;
+  --color-txt-success: #6CE9A6;
+  --color-txt-info: #9CB5FF;
+  --color-txt-warning: #FEC84B;
+
+  --color-primary: #477BFF;
+  --color-primary-hover: #6692FF;
+  --color-primary-pressed: #2F6BFF;
+  --color-secondary: #111C2F;
+  --color-secondary-hover: #17243A;
+  --color-secondary-pressed: #1D2B43;
+  --color-tertiary: transparent;
+  --color-tertiary-hover: rgba(255,255,255,.045);
+  --color-tertiary-pressed: rgba(255,255,255,.075);
+  --color-invert-hover: #111C2F;
+  --color-invert-pressed: #17243A;
+  --color-accent: #477BFF;
+  --color-accent-hover: #6692FF;
+  --color-accent-pressed: #2F6BFF;
+  --color-active: rgba(47,107,255,.20);
+  --color-active-hover: rgba(47,107,255,.28);
+  --color-active-pressed: rgba(47,107,255,.34);
+  --color-subtle: rgba(255,255,255,.045);
+  --color-subtle-hover: rgba(255,255,255,.075);
+  --color-subtle-pressed: rgba(255,255,255,.10);
+  --color-highlight: rgba(47,107,255,.14);
+  --color-highlight-hover: rgba(47,107,255,.22);
+  --color-highlight-pressed: rgba(47,107,255,.28);
+  --color-danger: rgba(240,68,56,.14);
+  --color-danger-plain: #F97066;
+  --color-danger-dark: #FDA29B;
+  --color-danger-hover: rgba(240,68,56,.28);
+  --color-danger-pressed: rgba(240,68,56,.38);
+  --color-success: rgba(18,183,106,.14);
+  --color-info: rgba(47,107,255,.14);
+  --color-warning: rgba(247,144,9,.14);
+  --color-dialog: #020617;
+
+  --color-border-solid: #233047;
+  --color-border-low: #233047;
   --color-border-mid: #334155;
-  --color-border-strong: #475569;
+  --color-border-strong: #52627A;
   --color-border-active: #7DA2FF;
-  --color-dialog: #0B1220;
+  --color-border-accent: #7DA2FF;
+  --color-border-danger: #F97066;
+  --color-border-success: #32D583;
+  --color-border-warning: #FDB022;
+  --color-border-info: #7DA2FF;
+
+  --shadow-focus: 0 0 0 3px rgba(125,162,255,.30);
+  --shadow-base: 0 1px 2px rgba(0,0,0,.34), 0 1px 1px rgba(0,0,0,.20);
+  --shadow-hover: 0 4px 12px rgba(0,0,0,.34);
+  --shadow-mid: 0 10px 30px rgba(0,0,0,.38);
 }
 
-html, body {
+html,
+body {
+  min-height: 100%;
   background: var(--color-level-0);
   color: var(--color-txt-primary);
   font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
+}
+
+body {
+  transition: background-color 160ms ease, color 160ms ease;
 }
 
 h1, h2, h3, h4, h5, h6,
@@ -132,7 +197,10 @@ select:focus-visible {
   outline-offset: 2px;
 }
 
-/* Hide scrollbar utility */
+::selection {
+  background: rgba(47,107,255,.24);
+}
+
 .scrollbar-hide {
   -ms-overflow-style: none;
   scrollbar-width: none;

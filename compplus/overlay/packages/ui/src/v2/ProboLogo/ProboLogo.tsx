@@ -1,10 +1,30 @@
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+
 import type { ComponentProps } from "react";
 
 export type ProboLogoProps = ComponentProps<"svg">;
 
 export function ProboLogo(props: ProboLogoProps) {
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 142 32" role="img" aria-label="ISOpilot" fill="none" {...props}>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 142 32" role="img" aria-label="ISOPilot" fill="none" {...props}>
       <rect x="0" y="0" width="32" height="32" rx="8" fill="#2F6BFF" />
       <path
         d="M8.4 17.05 24.9 8.55c.83-.43 1.69.43 1.27 1.26l-8.5 16.49c-.43.84-1.67.7-1.9-.21l-1.4-5.6-5.59-1.4c-.91-.23-1.05-1.47-.38-2.04Z"
@@ -14,13 +34,13 @@ export function ProboLogo(props: ProboLogoProps) {
       <text
         x="42"
         y="21.2"
-        fill="#0B1220"
+        fill="currentColor"
         fontFamily="Inter Tight, Inter, ui-sans-serif, system-ui, sans-serif"
         fontSize="19"
         fontWeight="700"
         letterSpacing="-0.55"
       >
-        ISOpilot
+        ISOPilot
       </text>
     </svg>
   );

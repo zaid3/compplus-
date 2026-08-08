@@ -176,7 +176,7 @@ services:
 
       PROBOD_BASE_URL: "${ISOPILOT_PUBLIC_URL:-http://xcqx8pquoua5s54aey3plps1.72.61.16.251.sslip.io}"
       PROBOD_API_ADDR: ":8080"
-      PROBOD_API_CORS_ALLOWED_ORIGINS: "${ISOPILOT_CORS_ORIGINS:-http://xcqx8pquoua5s54aey3plps1.72.61.16.251.sslip.io,http://72.61.16.251:8090}"
+      PROBOD_API_CORS_ALLOWED_ORIGINS: "${ISOPILOT_CORS_ORIGINS:-http://xcqx8pquoua5s54aey3plps1.72.61.16.251.sslip.io}"
       PROBOD_API_GRAPHQL_DISABLE_SUGGESTION: "true"
 
       PROBOD_AUTH_COOKIE_NAME: "ISOPILOT_SSID"
@@ -226,7 +226,7 @@ services:
       PROBOD_SMTP_USER: "${ISOPILOT_SMTP_USER:-}"
       PROBOD_SMTP_PASSWORD: "${ISOPILOT_SMTP_PASSWORD:-}"
       PROBOD_SMTP_TLS_REQUIRED: "${ISOPILOT_SMTP_TLS_REQUIRED:-true}"
-      PROBOD_MAILER_SENDER_NAME: "ISOpilot"
+      PROBOD_MAILER_SENDER_NAME: "${ISOPILOT_MAILER_SENDER_NAME:-ISOPilot}"
       PROBOD_MAILER_SENDER_EMAIL: "${ISOPILOT_MAILER_SENDER_EMAIL:-no-reply@isopilot.co.uk}"
 
       PROBOD_CHROME_DP_ADDR: "chrome:9222"
@@ -235,8 +235,10 @@ services:
       PROBOD_AGENT_DEFAULT_PROVIDER: "openai"
       PROBOD_AGENT_DEFAULT_MODEL_NAME: "gpt-4o"
 
+    # The Coolify reverse proxy reaches port 8080 over the Docker network.
+    # Bind the diagnostic host port to loopback only so it cannot bypass the proxy.
     ports:
-      - "8090:8080"
+      - "127.0.0.1:8090:8080"
     volumes:
       - "probo-data:/data"
       - "oauth2-key:/oauth2:ro"
