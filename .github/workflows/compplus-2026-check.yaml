@@ -112,7 +112,7 @@ jobs:
           grep -q 'ISOPilot' compplus/overlay/packages/hooks/src/usePageTitle.ts
           grep -q 'ISOPilot' compplus/overlay/packages/emails/src/components/ProboLogo.tsx
           grep -q 's/Probo/ISOPilot/g' Dockerfile.compplus.source
-          grep -q 's/ISOpilot/ISOPILOT/g' Dockerfile.compplus.source
+          grep -q 's/ISOpilot/ISOPilot/g' Dockerfile.compplus.source
           grep -q 'ThemeToggle' compplus/overlay/apps/console/src/components/ThemeManager.tsx
           grep -q 'classList.toggle("dark"' compplus/overlay/apps/console/src/components/ThemeManager.tsx
           grep -q 'Logo withPicto' compplus/overlay/packages/ui/src/Layouts/Layout.tsx
