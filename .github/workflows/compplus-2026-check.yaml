@@ -137,6 +137,16 @@ jobs:
           sed '/^[[:space:]]*exclude_from_hc:/d' compose.prod.yaml > /tmp/compose-ci.yaml
           docker compose -f /tmp/compose-ci.yaml config >/dev/null
 
+      - name: Install exact jq 1.7.1 for contract validation
+        run: |
+          set -euxo pipefail
+          curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 \
+            https://github.com/jqlang/jq/releases/download/jq-1.7.1/jq-linux-amd64 \
+            -o /tmp/jq-1.7.1
+          chmod +x /tmp/jq-1.7.1
+          sudo install -m 0755 /tmp/jq-1.7.1 /usr/local/bin/jq
+          test "$(jq --version)" = "jq-1.7.1"
+
       - name: Build ISOPilot from reviewed Probo plus approved overlays
         run: |
           docker build \
@@ -246,6 +256,142 @@ jobs:
                     | all(. as $f | ($p[$f] | type == "number" and floor == . and . >= 0)))
             ' >/dev/null
           done
+
+          echo "ISOPILOT_CI_ORGANIZATION_ID=${organization_id}" >> "$GITHUB_ENV"
+
+      - name: Browser smoke - theme toggle persists and cross-tab syncs
+        run: |
+          set -euxo pipefail
+
+          chrome_id="$(docker compose -f compose.source-smoke.yaml ps -q chrome)"
+          test -n "$chrome_id"
+          chrome_ip="$(docker inspect --format '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' "$chrome_id")"
+          test -n "$chrome_ip"
+          cdp_url="http://${chrome_ip}:9222"
+
+          for attempt in $(seq 1 30); do
+            if curl -fsS "${cdp_url}/json/version" >/tmp/isopilot-chrome-version.json; then
+              break
+            fi
+            if [ "$attempt" = "30" ]; then
+              echo 'Chrome DevTools endpoint did not become ready'
+              cat /tmp/isopilot-chrome-version.json 2>/dev/null || true
+              exit 1
+            fi
+            sleep 1
+          done
+
+          mkdir -p /tmp/isopilot-browser
+          npm install --prefix /tmp/isopilot-browser --no-save --no-package-lock --no-audit --no-fund playwright-core@1.55.0
+
+          cat >/tmp/isopilot-theme-smoke.mjs <<'EOF'
+          import { readFileSync } from "node:fs";
+          import { chromium } from "/tmp/isopilot-browser/node_modules/playwright-core/index.mjs";
+
+          const cdpURL = process.env.ISOPILOT_CHROME_CDP_URL;
+          const baseURL = "http://probo:8080";
+          const organizationId = process.env.ISOPILOT_CI_ORGANIZATION_ID;
+
+          function assert(condition, message) {
+            if (!condition) throw new Error(message);
+          }
+
+          async function waitForTheme(page, expected) {
+            await page.waitForFunction(
+              value => document.documentElement.dataset.theme === value,
+              expected,
+              { timeout: 15000 },
+            );
+          }
+
+          async function waitForLabel(page, expected) {
+            const button = page.locator('button[aria-label^="Theme:"]').first();
+            await button.waitFor({ state: "visible", timeout: 30000 });
+            await page.waitForFunction(
+              value => document.querySelector('button[aria-label^="Theme:"]')?.getAttribute("aria-label")?.includes(value),
+              expected,
+              { timeout: 15000 },
+            );
+            return button;
+          }
+
+          const browser = await chromium.connectOverCDP(cdpURL);
+          const context = browser.contexts()[0] ?? await browser.newContext();
+
+          const rawCookieJar = readFileSync("/tmp/isopilot-ci-cookie", "utf8");
+          const cookies = [];
+          for (let line of rawCookieJar.split(/\r?\n/)) {
+            if (!line) continue;
+            if (line.startsWith("#HttpOnly_")) {
+              line = line.slice("#HttpOnly_".length);
+            } else if (line.startsWith("#")) {
+              continue;
+            }
+            const fields = line.split("\t");
+            if (fields.length < 7) continue;
+            const path = fields[2] || "/";
+            const secure = fields[3] === "TRUE";
+            const expires = Number(fields[4]);
+            const name = fields[5];
+            const value = fields.slice(6).join("\t");
+            const cookie = { name, value, url: new URL(path, `${baseURL}/`).href, secure };
+            if (Number.isFinite(expires) && expires > 0) cookie.expires = expires;
+            cookies.push(cookie);
+          }
+          assert(cookies.length > 0, "No authenticated cookies were found for browser smoke");
+          await context.addCookies(cookies);
+
+          const pageA = await context.newPage();
+          const targetURL = `${baseURL}/organizations/${organizationId}`;
+          await pageA.goto(targetURL, { waitUntil: "domcontentloaded", timeout: 30000 });
+          await waitForLabel(pageA, "System");
+
+          await pageA.evaluate(() => localStorage.removeItem("isopilot-theme"));
+          await pageA.reload({ waitUntil: "domcontentloaded", timeout: 30000 });
+          let buttonA = await waitForLabel(pageA, "System");
+
+          await buttonA.click();
+          await waitForLabel(pageA, "Light");
+          await waitForTheme(pageA, "light");
+          assert(await pageA.evaluate(() => localStorage.getItem("isopilot-theme")) === "light", "Light theme was not persisted");
+
+          buttonA = pageA.locator('button[aria-label^="Theme:"]').first();
+          await buttonA.click();
+          await waitForLabel(pageA, "Dark");
+          await waitForTheme(pageA, "dark");
+          assert(await pageA.evaluate(() => localStorage.getItem("isopilot-theme")) === "dark", "Dark theme was not persisted");
+          assert(await pageA.evaluate(() => document.documentElement.classList.contains("dark")), "Dark class was not applied");
+
+          await pageA.reload({ waitUntil: "domcontentloaded", timeout: 30000 });
+          await waitForLabel(pageA, "Dark");
+          await waitForTheme(pageA, "dark");
+
+          const pageB = await context.newPage();
+          await pageB.goto(targetURL, { waitUntil: "domcontentloaded", timeout: 30000 });
+          await waitForLabel(pageB, "Dark");
+          await waitForTheme(pageB, "dark");
+
+          buttonA = pageA.locator('button[aria-label^="Theme:"]').first();
+          await buttonA.click();
+          await waitForLabel(pageA, "System");
+          await waitForLabel(pageB, "System");
+          assert(await pageB.evaluate(() => localStorage.getItem("isopilot-theme")) === "system", "Cross-tab storage value did not sync");
+
+          const expectedSystemTheme = await pageB.evaluate(() => matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+          await waitForTheme(pageB, expectedSystemTheme);
+
+          await pageA.evaluate(() => localStorage.setItem("isopilot-theme", "invalid-theme"));
+          await waitForLabel(pageB, "System");
+          await waitForTheme(pageB, expectedSystemTheme);
+          assert(await pageB.evaluate(() => localStorage.getItem("isopilot-theme")) === "invalid-theme", "Storage handler unexpectedly rewrote invalid cross-tab value");
+
+          console.log("Browser theme persistence and cross-tab sync smoke passed");
+          await pageB.close();
+          await pageA.close();
+          await browser.close();
+          EOF
+
+          ISOPILOT_CHROME_CDP_URL="$cdp_url" node /tmp/isopilot-theme-smoke.mjs
 
       - name: Print source-stack logs on failure
         if: failure()
