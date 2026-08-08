@@ -86,7 +86,7 @@ LABEL org.opencontainers.image.description="ISOPilot governance, risk and compli
 RUN useradd -m probo \
     && apt-get update \
     && apt-get upgrade -y \
-    && apt-get install -y --no-install-recommends ca-certificates libcap2-bin \
+    && apt-get install -y --no-install-recommends ca-certificates curl libcap2-bin \
     && rm -rf /var/lib/apt/lists/*
 COPY --from=backend /out/probod /usr/local/bin/probod
 COPY --from=backend /out/probod-bootstrap /usr/local/bin/probod-bootstrap
@@ -96,4 +96,5 @@ RUN chmod +x /usr/local/bin/probod /usr/local/bin/probod-bootstrap /usr/local/bi
     && mkdir -p /etc/probod \
     && chown probo:probo /etc/probod
 USER probo
+HEALTHCHECK --interval=30s --timeout=5s --start-period=25s --retries=3 CMD curl -fsS http://127.0.0.1:8080/ >/dev/null || exit 1
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
