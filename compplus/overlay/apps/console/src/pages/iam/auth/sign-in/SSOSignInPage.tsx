@@ -111,7 +111,7 @@ function NavigateToSSOLoginURL(props: {
   onSSOAvailabilityCheck: (checking: boolean) => void;
   loginSearch: string;
 }) {
-  const { queryRef, loginSearch } = props;
+  const { queryRef, loginSearch, onSSOAvailabilityCheck } = props;
 
   const { t } = useTranslation();
   const { toast } = useToast();
@@ -131,7 +131,7 @@ function NavigateToSSOLoginURL(props: {
         description: t("ssoSignInPage.errors.unavailable"),
         variant: "error",
       });
-      props.onSSOAvailabilityCheck(false);
+      onSSOAvailabilityCheck(false);
       if (!ssoLoginURL.ok) {
         void navigate({ pathname: "/auth/login", search: loginSearch });
       }
@@ -147,7 +147,7 @@ function NavigateToSSOLoginURL(props: {
     }
 
     window.location.href = url.toString();
-  }, [t, loginSearch, navigate, postAuthRedirectUrl, props, searchParams, ssoLoginURL, toast]);
+  }, [t, loginSearch, navigate, onSSOAvailabilityCheck, postAuthRedirectUrl, searchParams, ssoLoginURL, toast]);
 
   return null;
 }
