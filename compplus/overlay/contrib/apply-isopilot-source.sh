@@ -46,10 +46,12 @@ fi
 
 grep -Fq "${biodiversity}" "${iso14001_file}"
 
-# Rebrand customer-facing locale strings only. Internal package names, API names,
-# database identifiers and upstream copyright notices remain unchanged.
-find apps -type f -path '*/_locales/*.json' \
-  -exec sed -i 's/Probo/ISO Pilot/g; s/Comp Plus+/ISO Pilot/g; s/ISOpilot/ISO Pilot/g; s/ISOPilot/ISO Pilot/g' {} +
+# Rebrand customer-facing locale VALUES only. Never mutate JSON keys: React i18n
+# lookups depend on stable keys such as signInPage.newToProbo.
+python3 contrib/rebrand-locales.py
+
+grep -Fq '"newToProbo"' apps/console/src/_locales/en-US.json
+grep -Fq 'ISO Pilot' apps/console/src/_locales/en-US.json
 
 # Keep internal/source identifiers using the compact ISOPilot spelling where
 # changing them to a spaced product name could make code invalid.
@@ -57,6 +59,18 @@ find compplus -type f \( -name '*.go' -o -name '*.ts' -o -name '*.tsx' -o -name 
   -exec sed -i 's/Comp Plus+/ISOPilot/g; s/ISOpilot/ISOPilot/g' {} +
 find pkg/probo pkg/server/api/console -type f \( -name '*.go' -o -name '*.graphql' \) \
   -exec sed -i 's/Comp Plus+/ISOPilot/g; s/ISOpilot/ISOPilot/g' {} +
+
+# Magic-link delivery requires an operator-provided SMTP service. The current
+# production deployment has no SMTP credentials, so do not expose a public send
+# endpoint that can only queue undeliverable email. The verification endpoint is
+# retained so previously issued links would remain valid if one existed.
+connect_resolver="pkg/server/api/connect/v1/resolver.go"
+magic_link_send='r.Post("/magic-link/send", magicLinkHandler.SendHandler)'
+if grep -Fq "${magic_link_send}" "${connect_resolver}"; then
+  sed -i '\#r.Post("/magic-link/send", magicLinkHandler.SendHandler)#d' "${connect_resolver}"
+fi
+! grep -Fq "${magic_link_send}" "${connect_resolver}"
+grep -Fq 'r.Get("/magic-link/verify", magicLinkHandler.VerifyHandler)' "${connect_resolver}"
 
 # Append ISO Pilot visual tokens after upstream theme declarations so the
 # existing component system keeps working while the product uses the blue brand
