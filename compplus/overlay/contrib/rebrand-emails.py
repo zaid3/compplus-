@@ -42,6 +42,35 @@ for path in templates.glob("*.txt"):
     text = text.replace("Powered By ISO Pilot", "ISO Pilot")
     path.write_text(text)
 
+# A few React templates have product wording in their message bodies or title.
+# Patch only those exact visible literals so copyright/license attribution and
+# internal package identifiers remain unchanged.
+replace_exact(
+    Path("packages/emails/src/PasswordReset.tsx"),
+    {
+        "You have requested a password reset for your Probo account.":
+            "You have requested a password reset for your ISO Pilot account.",
+    },
+)
+for email_path in (
+    Path("packages/emails/src/DocumentSigning.tsx"),
+    Path("packages/emails/src/DocumentApproval.tsx"),
+):
+    replace_exact(
+        email_path,
+        {
+            "This process is managed securely by Probo, acting as the compliance partner":
+                "This process is managed securely by ISO Pilot, acting as the compliance partner",
+        },
+    )
+replace_exact(
+    Path("packages/emails/src/MagicLink.tsx"),
+    {
+        '<EmailLayout subject="Probo Magic Link">':
+            '<EmailLayout subject="ISO Pilot Magic Link">',
+    },
+)
+
 # Rebrand the common presenter defaults used by every HTML/text email. Keep the
 # upstream Go package/module identifiers intact; only literal customer-facing
 # values are changed.
