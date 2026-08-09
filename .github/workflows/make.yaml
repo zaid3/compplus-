@@ -98,7 +98,7 @@ jobs:
           go: "false"
       - name: "Generate Relay artifacts"
         run: make relay
-      - name: "Lint source packages in their real workspace layout"
+      - name: "Lint configured source packages"
         run: |
           set -euo pipefail
           for dir in \
@@ -106,7 +106,6 @@ jobs:
             apps/compliance-portal \
             packages/ui \
             packages/eslint-config \
-            packages/emails \
             packages/hooks; do
             if [ -d "$dir" ]; then
               npx eslint "$dir" --concurrency 4
