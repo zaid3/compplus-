@@ -53,6 +53,9 @@ const schema = z.object({
   fullName: z.string().min(2),
 });
 
+const publicSignUpError =
+  "We couldn't create this account. This email may already be registered. Try signing in or reset your password. Otherwise, try again shortly.";
+
 type FormData = z.infer<typeof schema>;
 
 function SignUpPageContent(props: { queryRef: NonNullable<ReturnType<typeof useQueryLoader<SignUpPageQuery>>[0]> }) {
@@ -83,10 +86,11 @@ function SignUpPageContent(props: { queryRef: NonNullable<ReturnType<typeof useQ
       },
       onCompleted: (_, errors) => {
         if (errors) {
-          // Do not surface backend identity/existence details on a public page.
+          // Keep account-existence details private while still giving the user
+          // an actionable path when they may already have an account.
           toast({
-            title: t("signUpPage.errors.failed"),
-            description: t("signUpPage.errors.failed"),
+            title: "Unable to create account",
+            description: publicSignUpError,
             variant: "error",
           });
           return;
@@ -103,8 +107,8 @@ function SignUpPageContent(props: { queryRef: NonNullable<ReturnType<typeof useQ
       },
       onError: () => {
         toast({
-          title: t("signUpPage.errors.failed"),
-          description: t("signUpPage.errors.failed"),
+          title: "Unable to create account",
+          description: publicSignUpError,
           variant: "error",
         });
       },
@@ -174,12 +178,18 @@ function SignUpPageContent(props: { queryRef: NonNullable<ReturnType<typeof useQ
         </Button>
       </form>
 
-      <div className="text-center">
-        <p className="text-sm text-txt-tertiary">
+      <div className="space-y-2 text-center text-sm text-txt-tertiary">
+        <p>
           {t("signUpPage.alreadyHaveAccount")}
           {" "}
           <Link to="/auth/login" className="underline text-txt-primary hover:text-txt-secondary">
             {t("signUpPage.actions.logIn")}
+          </Link>
+        </p>
+        <p>
+          Forgot your password?{" "}
+          <Link to="/auth/forgot-password" className="underline text-txt-primary hover:text-txt-secondary">
+            Reset it here
           </Link>
         </p>
       </div>

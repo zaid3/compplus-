@@ -44,6 +44,17 @@ python3 contrib/rebrand-locales.py
 grep -Fq '"newToProbo"' apps/console/src/_locales/en-US.json
 grep -Fq 'ISO Pilot' apps/console/src/_locales/en-US.json
 
+# Rebrand every customer-facing email surface. The React HTML layout is supplied
+# by the overlay; this script also updates plain-text templates and presenter
+# defaults used by confirmation, recovery, invitation, export and magic-link mail.
+python3 contrib/rebrand-emails.py
+grep -Fq 'Thanks for joining ISO Pilot!' packages/emails/src/ConfirmEmail.tsx
+grep -Fq 'on ISO Pilot' packages/emails/src/Invitation.tsx
+grep -Fq 'SenderCompanyName:               "ISO Pilot"' packages/emails/emails.go
+grep -Fq 'subjectInvitation                             = "Invitation to join %s on ISO Pilot"' packages/emails/emails.go
+! grep -R -Fq 'Powered By Probo' packages/emails/templates
+! grep -R -Fq 'Thanks for joining Probo' packages/emails/templates
+
 # Keep internal/source identifiers compact where a spaced brand could make code invalid.
 find compplus -type f \( -name '*.go' -o -name '*.ts' -o -name '*.tsx' -o -name '*.json' -o -name '*.md' \) \
   -exec sed -i 's/Comp Plus+/ISOPilot/g; s/ISOpilot/ISOPilot/g' {} +
@@ -96,6 +107,7 @@ grep -Fq 'r.Get("/magic-link/verify", magicLinkHandler.VerifyHandler)' "${connec
 # Production auth UI/runtime guardrails. SSO remains dormant until configured.
 sign_in_page="apps/console/src/pages/iam/auth/sign-in/SignInPage.tsx"
 password_page="apps/console/src/pages/iam/auth/sign-in/PasswordSignInPage.tsx"
+sign_up_page="apps/console/src/pages/iam/auth/SignUpPage.tsx"
 web_server="pkg/server/web/web.go"
 grep -Fq 'MagicLinkForm' "${sign_in_page}"
 grep -Fq '/auth/register' "${sign_in_page}"
@@ -103,6 +115,7 @@ grep -Fq '/auth/register' "${password_page}"
 grep -Fq '/auth/forgot-password' "${password_page}"
 ! grep -Fq '/auth/sso-login' "${sign_in_page}"
 grep -Fq 'EMAIL_NOT_VERIFIED' "${password_page}"
+grep -Fq 'This email may already be registered' "${sign_up_page}"
 
 test -f pkg/server/api/connect/v1/public_auth_rate_limiter.go
 grep -Fq 'AroundOperations(publicAuthRateLimitOperations)' pkg/server/api/connect/v1/graphql_handler.go
