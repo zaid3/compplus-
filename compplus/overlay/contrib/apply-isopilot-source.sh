@@ -82,6 +82,23 @@ fi
 ! grep -Fq "${magic_link_send}" "${connect_resolver}"
 grep -Fq 'r.Get("/magic-link/verify", magicLinkHandler.VerifyHandler)' "${connect_resolver}"
 
+# Production auth UI/runtime guardrails. These are intentionally checked in the
+# exact source tree that gets compiled into the release image.
+sign_in_page="apps/console/src/pages/iam/auth/sign-in/SignInPage.tsx"
+password_page="apps/console/src/pages/iam/auth/sign-in/PasswordSignInPage.tsx"
+sso_page="apps/console/src/pages/iam/auth/sign-in/SSOSignInPage.tsx"
+web_server="pkg/server/web/web.go"
+
+! grep -Fq 'MagicLinkForm' "${sign_in_page}"
+! grep -Fq '/auth/register' "${sign_in_page}"
+! grep -Fq '/auth/register' "${password_page}"
+! grep -Fq '/auth/register' "${sso_page}"
+! grep -Fq '/auth/forgot-password' "${password_page}"
+grep -Fq 'PROBOD_AUTH_COOKIE_SECURE="true"' entrypoint.sh
+grep -Fq 'https://app.isopilot.co.uk' entrypoint.sh
+grep -Fq 'PROBOD_AUTH_DISABLE_SIGNUP="true"' entrypoint.sh
+grep -Fq 'Strict-Transport-Security' "${web_server}"
+
 # Append ISO Pilot visual tokens after upstream theme declarations so the
 # existing component system keeps working while the product uses the blue brand
 # palette in both light and dark mode.
