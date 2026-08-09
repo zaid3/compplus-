@@ -106,7 +106,7 @@ jobs:
           swiftlint version
       - name: "Run swift format"
         run: |
-          sources="$(find cmd/probo-agent/installer/macos/enroll-ui \\( -name '*.swift' ! -name '*.generated.swift' ! -path '*/.build/*' \\) | sort)"
+          sources="$(find cmd/probo-agent/installer/macos/enroll-ui -name '*.swift' ! -name '*.generated.swift' ! -path '*/.build/*' | sort)"
           swift format lint --configuration .swift-format --strict --parallel $sources
       - name: "Run SwiftLint"
         run: swiftlint lint --strict --config .swiftlint.yml --cache-path /tmp/swiftlint-cache
