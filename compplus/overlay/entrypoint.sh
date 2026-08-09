@@ -42,19 +42,23 @@ export PROBOD_MAILER_SENDER_NAME="ISO Pilot"
 
 # Email-backed public authentication must fail closed. A partially configured
 # SMTP service is worse than a disabled one because signup/reset can appear to
-# work while verification mail never arrives.
+# work while verification mail never arrives. The sender address may have a
+# harmless default, so completeness is determined by the three SMTP credentials.
 smtp_fields=0
 [ -n "${PROBOD_SMTP_ADDR:-}" ] && smtp_fields=$((smtp_fields + 1))
 [ -n "${PROBOD_SMTP_USER:-}" ] && smtp_fields=$((smtp_fields + 1))
 [ -n "${PROBOD_SMTP_PASSWORD:-}" ] && smtp_fields=$((smtp_fields + 1))
-[ -n "${PROBOD_MAILER_SENDER_EMAIL:-}" ] && smtp_fields=$((smtp_fields + 1))
 
-if [ "${smtp_fields}" -ne 0 ] && [ "${smtp_fields}" -ne 4 ]; then
-  echo "Error: SMTP configuration is incomplete; address, user, password and sender email are all required" >&2
+if [ "${smtp_fields}" -ne 0 ] && [ "${smtp_fields}" -ne 3 ]; then
+  echo "Error: SMTP configuration is incomplete; address, user and password are all required" >&2
   exit 1
 fi
 
-if [ "${smtp_fields}" -eq 4 ]; then
+if [ "${smtp_fields}" -eq 3 ]; then
+  if [ -z "${PROBOD_MAILER_SENDER_EMAIL:-}" ]; then
+    echo "Error: SMTP sender email is required when SMTP is enabled" >&2
+    exit 1
+  fi
   export PROBOD_SMTP_TLS_REQUIRED="true"
   email_auth_ready="true"
 else
