@@ -18,11 +18,12 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import type { GraphQLError } from "@probo/helpers";
 import { Button, Field, IconChevronLeft, useToast } from "@probo/ui";
 import type { FormEventHandler } from "react";
 import { useTranslation } from "react-i18next";
 import { useMutation } from "react-relay";
-import { Link, matchPath, useLocation } from "react-router";
+import { Link, matchPath, useLocation, useNavigate } from "react-router";
 import { graphql } from "relay-runtime";
 
 import type { PasswordSignInPageMutation } from "#/__generated__/iam/PasswordSignInPageMutation.graphql";
@@ -40,6 +41,7 @@ const signInMutation = graphql`
 
 export default function PasswordSignInPage() {
   const location = useLocation();
+  const navigate = useNavigate();
   const postAuthRedirectUrl = usePostAuthRedirectUrl();
 
   const { t } = useTranslation();
@@ -71,8 +73,20 @@ export default function PasswordSignInPage() {
       },
       onCompleted: (_, error) => {
         if (error) {
-          // Keep authentication failures intentionally generic so the login UI
-          // does not reveal whether an account exists or which check failed.
+          // EMAIL_NOT_VERIFIED is safe to act on here because the backend only
+          // reaches it after a valid credential check. All other failures stay
+          // intentionally generic to avoid account-enumeration details.
+          const errors = Array.isArray(error) ? error : [error];
+          const emailNotVerified = errors.some(
+            e => (e as GraphQLError).extensions?.code === "EMAIL_NOT_VERIFIED",
+          );
+
+          if (emailNotVerified) {
+            const search = new URLSearchParams({ email: emailValue }).toString();
+            void navigate(`/auth/resend-verification-email?${search}`);
+            return;
+          }
+
           toast({
             title: t("common.error"),
             description: t("passwordSignInPage.errors.login"),
@@ -136,6 +150,28 @@ export default function PasswordSignInPage() {
       <Button className="w-xs h-10 mx-auto mt-6" disabled={isSigningIn}>
         {isSigningIn ? t("passwordSignInPage.actions.loggingIn") : t("passwordSignInPage.actions.login")}
       </Button>
+
+      <div className="text-center text-sm text-txt-secondary">
+        {t("passwordSignInPage.forgotPassword")}
+        {" "}
+        <Link
+          to="/auth/forgot-password"
+          className="underline hover:text-txt-primary"
+        >
+          {t("passwordSignInPage.actions.resetPassword")}
+        </Link>
+      </div>
+
+      <div className="text-center text-sm text-txt-secondary">
+        {t("passwordSignInPage.noAccount")}
+        {" "}
+        <Link
+          to={{ pathname: "/auth/register", search: location.search }}
+          className="underline hover:text-txt-primary"
+        >
+          {t("passwordSignInPage.actions.register")}
+        </Link>
+      </div>
 
       <p className="text-center text-xs text-txt-tertiary">
         ISO Pilot secure sign-in
