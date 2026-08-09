@@ -1,11 +1,7 @@
 # syntax=docker/dockerfile:1.7
 
-# ISOpilot full source build. GitHub Actions compiles the complete application;
-# the production VPS downloads the resulting prebuilt runtime.
-#
-# Keep the Probo architecture intact and pin to a reviewed upstream commit so
-# every ISOpilot release is reproducible. This 2026-08-07 pin includes Probo's
-# latest membership/authentication hardening and npm dependency security fixes.
+# ISOPilot full source build. Keep the reviewed Probo architecture intact and
+# add only the ISOPilot overlay/customization layer needed by this product.
 ARG PROBO_UPSTREAM_SHA=7d4b92c5ef1d77d0815f22749e01b8202d683d58
 
 FROM debian:bookworm-slim AS source
@@ -19,26 +15,11 @@ RUN git clone --filter=blob:none https://github.com/getprobo/probo.git . \
     && test "$(git rev-parse HEAD)" = "${PROBO_UPSTREAM_SHA}" \
     && rm -rf .git
 
+# The overlay contains the ISOPilot compliance packs, GraphQL/service additions,
+# UI customizations and the single guarded source-customization script.
 COPY compplus/overlay/ /src/
-
-# Fast Start needs framework references to resolve inside the selected
-# organisation. The helper is supplied by the ISOpilot overlay. Keeping this
-# patch explicit makes a future upstream change fail the build instead of
-# silently weakening tenant isolation.
-RUN sed -i 's/framework.LoadByReferenceID(ctx, tx, scope, standard.Framework)/framework.LoadByOrganizationIDAndReferenceID(ctx, tx, scope, organization.ID, standard.Framework)/' pkg/probo/measure_service.go \
-    && grep -q 'LoadByOrganizationIDAndReferenceID' pkg/probo/measure_service.go \
-    && grep -q 'MeasureID:[[:space:]]*measure.ID' pkg/probo/measure_service.go
-
-# ISO 14001:2026 explicitly elevates biodiversity alongside climate and resource
-# efficiency. Make it a visible starter prompt in the aspects register.
-RUN sed -i 's/"Water use where relevant", /"Water use where relevant", "Biodiversity, ecosystems, habitats and land-use impacts where relevant", /' compplus/templates/pack_iso14001.go \
-    && grep -q 'Biodiversity, ecosystems, habitats and land-use impacts' compplus/templates/pack_iso14001.go
-
-# Rebrand customer-facing strings while preserving upstream package/API names,
-# database identifiers, original copyright notices and legacy COMPPLUS- IDs.
-RUN find apps -type f -path '*/_locales/*.json' -exec sed -i 's/Probo/ISOpilot/g; s/Comp Plus+/ISOpilot/g' {} + \
-    && find compplus -type f \( -name '*.go' -o -name '*.ts' -o -name '*.tsx' -o -name '*.json' -o -name '*.md' \) -exec sed -i 's/Comp Plus+/ISOpilot/g' {} + \
-    && find pkg/probo pkg/server/api/console -type f \( -name '*.go' -o -name '*.graphql' \) -exec sed -i 's/Comp Plus+/ISOpilot/g' {} +
+RUN chmod +x contrib/apply-isopilot-source.sh \
+    && contrib/apply-isopilot-source.sh
 
 FROM node:24-bookworm AS frontend
 WORKDIR /src
@@ -68,18 +49,18 @@ RUN go mod download
 RUN make generate
 RUN CGO_ENABLED=0 GOOS=linux go build \
       -trimpath \
-      -ldflags="-s -w -X main.env=prod -X main.version=isopilot-2026.08.07" \
+      -ldflags="-s -w -X main.env=prod -X main.version=isopilot-2026.08.08" \
       -o /out/probod ./cmd/probod
 RUN CGO_ENABLED=0 GOOS=linux go build \
       -trimpath \
-      -ldflags="-s -w -X main.version=isopilot-2026.08.07" \
+      -ldflags="-s -w -X main.version=isopilot-2026.08.08" \
       -o /out/probod-bootstrap ./cmd/probod-bootstrap
 
 FROM ubuntu:24.04
 LABEL org.opencontainers.image.source="https://github.com/zaid3/compplus-"
 LABEL org.opencontainers.image.licenses="MIT"
-LABEL org.opencontainers.image.vendor="ISOpilot"
-LABEL org.opencontainers.image.description="ISOpilot governance, risk and compliance platform"
+LABEL org.opencontainers.image.vendor="ISOPilot"
+LABEL org.opencontainers.image.description="ISOPilot governance, risk and compliance platform"
 RUN useradd -m probo \
     && apt-get update \
     && apt-get upgrade -y \
