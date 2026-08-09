@@ -21,6 +21,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Compute exact runtime fingerprint
+        run: |
+          set -euo pipefail
+          fingerprint="$({
+            find Dockerfile.compplus.source compplus/overlay -type f -print | LC_ALL=C sort |
+            while IFS= read -r file; do
+              printf '%s\n' "$file"
+              sha256sum "$file" | awk '{print $1}'
+            done
+          } | sha256sum | awk '{print $1}')"
+          printf '%s\n' "$fingerprint" > runtime-fingerprint.txt
+          echo "Runtime fingerprint: $fingerprint"
+
       - name: Build full ISOpilot image
         run: docker build --file Dockerfile.compplus.source --tag isopilot:runtime .
 
@@ -29,15 +42,25 @@ jobs:
           set -euxo pipefail
           mkdir -p runtime
           cid="$(docker create isopilot:runtime)"
+          trap 'docker rm -f "$cid" >/dev/null 2>&1 || true' EXIT
           docker cp "$cid:/usr/local/bin/probod" runtime/probod
           docker cp "$cid:/usr/local/bin/probod-bootstrap" runtime/probod-bootstrap
           docker cp "$cid:/usr/local/bin/entrypoint.sh" runtime/entrypoint.sh
           docker rm "$cid"
+          trap - EXIT
           chmod +x runtime/probod runtime/probod-bootstrap runtime/entrypoint.sh
-          tar -C runtime -czf compplus-linux-amd64.tar.gz probod probod-bootstrap entrypoint.sh
+
+          fingerprint="$(cat runtime-fingerprint.txt)"
+          exact_name="compplus-linux-amd64-${fingerprint}.tar.gz"
+          tar -C runtime -czf "$exact_name" probod probod-bootstrap entrypoint.sh
+          sha256sum "$exact_name" > "${exact_name}.sha256"
+
+          # Keep the rolling names for compatibility with any older deployment
+          # definition, but new production builds use the immutable fingerprint.
+          cp "$exact_name" compplus-linux-amd64.tar.gz
           sha256sum compplus-linux-amd64.tar.gz > compplus-linux-amd64.tar.gz.sha256
 
-      - name: Publish rolling runtime release
+      - name: Publish rolling and immutable runtime assets
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -45,7 +68,12 @@ jobs:
           if ! gh release view runtime-latest >/dev/null 2>&1; then
             gh release create runtime-latest --target main --title "ISOpilot Runtime" --notes "Prebuilt ISOpilot runtime for Coolify deployment."
           fi
+
+          fingerprint="$(cat runtime-fingerprint.txt)"
+          exact_name="compplus-linux-amd64-${fingerprint}.tar.gz"
           gh release upload runtime-latest \
+            "$exact_name" \
+            "${exact_name}.sha256" \
             compplus-linux-amd64.tar.gz \
             compplus-linux-amd64.tar.gz.sha256 \
             --clobber
