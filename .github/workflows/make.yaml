@@ -23,6 +23,8 @@ jobs:
       - uses: "./.github/actions/setup"
         with:
           go: "false"
+      - name: "Audit production dependencies"
+        run: npm audit --omit=dev --audit-level=high
       - name: "Generate Relay artifacts"
         run: make relay
       - name: "Build emails"
