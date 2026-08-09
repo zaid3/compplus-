@@ -40,9 +40,34 @@ export PROBOD_AUTH_COOKIE_SECURE="true"
 export PROBOD_AUTH_COOKIE_SAMESITE="lax"
 export PROBOD_MAILER_SENDER_NAME="ISO Pilot"
 
-# Public self-registration is disabled for the production launch. It can be
-# deliberately enabled later only after outbound email/verification is ready.
-if [ "${ISOPILOT_ENABLE_PUBLIC_SIGNUP:-false}" = "true" ]; then
+# Email-backed public authentication must fail closed. A partially configured
+# SMTP service is worse than a disabled one because signup/reset can appear to
+# work while verification mail never arrives.
+smtp_fields=0
+[ -n "${PROBOD_SMTP_ADDR:-}" ] && smtp_fields=$((smtp_fields + 1))
+[ -n "${PROBOD_SMTP_USER:-}" ] && smtp_fields=$((smtp_fields + 1))
+[ -n "${PROBOD_SMTP_PASSWORD:-}" ] && smtp_fields=$((smtp_fields + 1))
+[ -n "${PROBOD_MAILER_SENDER_EMAIL:-}" ] && smtp_fields=$((smtp_fields + 1))
+
+if [ "${smtp_fields}" -ne 0 ] && [ "${smtp_fields}" -ne 4 ]; then
+  echo "Error: SMTP configuration is incomplete; address, user, password and sender email are all required" >&2
+  exit 1
+fi
+
+if [ "${smtp_fields}" -eq 4 ]; then
+  export PROBOD_SMTP_TLS_REQUIRED="true"
+  email_auth_ready="true"
+else
+  email_auth_ready="false"
+fi
+
+# Respect the operator's existing PROBOD_AUTH_DISABLE_SIGNUP value as a kill
+# switch. Otherwise, public signup becomes available only when verified-email
+# delivery is fully configured.
+operator_disable_signup="${PROBOD_AUTH_DISABLE_SIGNUP:-false}"
+if [ "${operator_disable_signup}" = "true" ]; then
+  export PROBOD_AUTH_DISABLE_SIGNUP="true"
+elif [ "${email_auth_ready}" = "true" ]; then
   export PROBOD_AUTH_DISABLE_SIGNUP="false"
 else
   export PROBOD_AUTH_DISABLE_SIGNUP="true"
@@ -61,7 +86,7 @@ if [ -n "${PROBOD_ENCRYPTION_KEY:-}" ]; then
   echo "Generating configuration file from environment variables at: $CONFIG_FILE"
   probod-bootstrap -output "$CONFIG_FILE"
 elif [ -f "$CONFIG_FILE" ]; then
-  echo "Using existing configuration file at: $CONFIG_FILE"
+  echo "Using existing configuration file at $CONFIG_FILE"
 else
   echo "Error: PROBOD_ENCRYPTION_KEY is unset and no config file found at $CONFIG_FILE" >&2
   exit 1
