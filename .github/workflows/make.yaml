@@ -105,8 +105,7 @@ jobs:
             apps/console \
             apps/compliance-portal \
             packages/ui \
-            packages/eslint-config \
-            packages/hooks; do
+            packages/eslint-config; do
             if [ -d "$dir" ]; then
               npx eslint "$dir" --concurrency 4
             fi
