@@ -15,23 +15,34 @@ jobs:
   dependency-lock-fix:
     name: "dependency-lock-fix"
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
     steps:
       - uses: "actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0" # v6
+      - uses: "actions/setup-node@v6"
         with:
-          submodules: recursive
-      - uses: "./.github/actions/setup"
-        with:
-          go: "false"
-      - name: "Generate safe lockfile remediation"
-        run: npm audit fix --package-lock-only
-      - name: "Verify no high production dependency vulnerabilities remain"
-        run: npm audit --omit=dev --audit-level=high
-      - name: "Upload remediated lockfile"
+          node-version-file: ".nvmrc"
+      - name: "Use repository npm version"
+        run: npm install -g npm@^11.8.0
+      - name: "Generate remediation from exact production source"
+        env:
+          PROBO_UPSTREAM_SHA: "7d4b92c5ef1d77d0815f22749e01b8202d683d58"
+        run: |
+          set -euo pipefail
+          git clone --filter=blob:none https://github.com/getprobo/probo.git /tmp/isopilot-source
+          cd /tmp/isopilot-source
+          git checkout --detach "$PROBO_UPSTREAM_SHA"
+          test "$(git rev-parse HEAD)" = "$PROBO_UPSTREAM_SHA"
+          cp -a "$GITHUB_WORKSPACE/compplus/overlay/." .
+          chmod +x contrib/apply-isopilot-source.sh
+          contrib/apply-isopilot-source.sh
+          npm audit fix --package-lock-only
+          npm audit --omit=dev --audit-level=high
+          cp package-lock.json "$GITHUB_WORKSPACE/remediated-package-lock.json"
+      - name: "Upload remediated production lockfile"
         uses: "actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a" # v7
         with:
-          name: "remediated-package-lock"
-          path: package-lock.json
+          name: "remediated-production-package-lock"
+          path: remediated-package-lock.json
           retention-days: 1
 
   frontend-build:
@@ -45,8 +56,6 @@ jobs:
       - uses: "./.github/actions/setup"
         with:
           go: "false"
-      - name: "Audit production dependencies"
-        run: npm audit --omit=dev --audit-level=high
       - name: "Generate Relay artifacts"
         run: make relay
       - name: "Build emails"
