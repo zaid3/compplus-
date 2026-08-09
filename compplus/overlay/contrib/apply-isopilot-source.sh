@@ -60,6 +60,16 @@ find compplus -type f \( -name '*.go' -o -name '*.ts' -o -name '*.tsx' -o -name 
 find pkg/probo pkg/server/api/console -type f \( -name '*.go' -o -name '*.graphql' \) \
   -exec sed -i 's/Comp Plus+/ISOPilot/g; s/ISOpilot/ISOPilot/g' {} +
 
+# Keep future auth mail branding aligned with the product even when SMTP is
+# enabled later.
+auth_service="pkg/iam/auth_service.go"
+old_magic_sender='magicLinkDefaultSenderName = "Probo"'
+new_magic_sender='magicLinkDefaultSenderName = "ISO Pilot"'
+if grep -Fq "${old_magic_sender}" "${auth_service}"; then
+  sed -i "s/${old_magic_sender}/${new_magic_sender}/" "${auth_service}"
+fi
+grep -Fq "${new_magic_sender}" "${auth_service}"
+
 # Magic-link delivery requires an operator-provided SMTP service. The current
 # production deployment has no SMTP credentials, so do not expose a public send
 # endpoint that can only queue undeliverable email. The verification endpoint is
