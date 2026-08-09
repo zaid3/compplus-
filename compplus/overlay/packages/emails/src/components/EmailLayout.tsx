@@ -1,3 +1,23 @@
+// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+
 import {
   Body,
   Container,
@@ -9,31 +29,25 @@ import {
 } from 'react-email';
 import * as React from 'react';
 import { Logo } from './Logo';
-import { ProboLogo } from './ProboLogo';
 
 interface EmailLayoutProps {
   subject: string;
   children: React.ReactNode;
 }
 
-export const EmailLayout = ({
-  subject,
-  children,
-}: EmailLayoutProps) => {
-  const brandedSubject = subject.replace(/^Probo\b/, 'ISOpilot').replace(/^Comp Plus\+\b/, 'ISOpilot');
-
+export const EmailLayout = ({ subject, children }: EmailLayoutProps) => {
   return (
     <Html lang="en">
       <Head>
         <meta name="x-apple-disable-message-reformatting" />
         <meta httpEquiv="X-UA-Compatible" content="IE=edge" />
-        <title>{brandedSubject}</title>
+        <title>{subject}</title>
       </Head>
       <Body style={main}>
         <Container style={container}>
           <Section style={content}>
             <Section style={logoSection}>
-              <Link href="{{.SenderCompanyWebsiteURL}}">
+              <Link href="https://app.isopilot.co.uk" style={{ textDecoration: 'none' }}>
                 <Logo />
               </Link>
             </Section>
@@ -44,15 +58,7 @@ export const EmailLayout = ({
           </Section>
 
           <Section style={footerSection}>
-            <Text style={footerAddress}>
-              {"{{.SenderCompanyHeadquarterAddress}}"}
-            </Text>
-            <Text style={footerAddress}>
-              <span style={{verticalAlign: "middle"}}>Your compliance co-pilot · </span>
-              <Link style={{display: "inline-block", height: "16px", verticalAlign: "middle"}} href="{{.SenderCompanyWebsiteURL}}">
-                <ProboLogo />
-              </Link>
-            </Text>
+            <Text style={footerAddress}>ISO Pilot</Text>
           </Section>
         </Container>
       </Body>
@@ -130,12 +136,12 @@ export const footerText: React.CSSProperties = {
 };
 
 const footerSection: React.CSSProperties = {
-  padding: '30px 40px',
+  padding: '24px 40px',
   borderTop: '1px solid #E4E9F2',
 };
 
 const footerAddress: React.CSSProperties = {
-  margin: '10px 0 0 0',
+  margin: '0',
   color: '#64748B',
   fontSize: '12px',
   lineHeight: '18px',
