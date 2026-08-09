@@ -35,7 +35,12 @@ jobs:
           cp -a "$GITHUB_WORKSPACE/compplus/overlay/." .
           chmod +x contrib/apply-isopilot-source.sh
           contrib/apply-isopilot-source.sh
+          set +e
           npm audit fix --package-lock-only
+          audit_fix_status=$?
+          set -e
+          echo "npm audit fix exit status: $audit_fix_status"
+          test -s package-lock.json
           cp package-lock.json "$GITHUB_WORKSPACE/remediated-package-lock.json"
       - name: "Audit shipped frontend workspaces"
         working-directory: /tmp/isopilot-source
