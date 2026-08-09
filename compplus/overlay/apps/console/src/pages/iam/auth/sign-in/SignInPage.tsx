@@ -22,7 +22,7 @@ import { usePageTitle } from "@probo/hooks";
 import { Button } from "@probo/ui";
 import { useTranslation } from "react-i18next";
 import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
-import { useLocation, useSearchParams } from "react-router";
+import { Link, useLocation, useSearchParams } from "react-router";
 import { graphql } from "relay-runtime";
 
 import type { SignInPageQuery } from "#/__generated__/iam/SignInPageQuery.graphql";
@@ -30,6 +30,7 @@ import { usePostAuthRedirectUrl } from "#/hooks/usePostAuthRedirectUrl";
 import { isOAuthAuthorizeContinueUrl } from "#/lib/buildAuthorizeContinueURL";
 
 import { Divider } from "./_components/Divider";
+import { MagicLinkForm } from "./_components/MagicLinkForm";
 import { OAuthClientBrandingSection } from "./_components/OAuthClientBrandingSection";
 import { OIDCButton } from "./_components/OIDCButton";
 
@@ -91,9 +92,7 @@ export default function SignInPage(props: Props) {
 
       <div className="space-y-2 text-center">
         <h1 className="text-2xl font-bold">
-          {isAuthorizeFlow
-            ? authorizeHeading
-            : t("signInPage.title")}
+          {isAuthorizeFlow ? authorizeHeading : t("signInPage.title")}
         </h1>
         {isAuthorizeFlow && (
           <p className="text-txt-tertiary">
@@ -124,14 +123,19 @@ export default function SignInPage(props: Props) {
 
         <Divider>{t("signInPage.or")}</Divider>
 
-        <Button
-          variant="secondary"
-          className="w-full h-10"
-          to={{ pathname: "/auth/sso-login", search: location.search }}
-        >
-          {t("signInPage.actions.signInWithSso")}
-        </Button>
+        <MagicLinkForm />
       </div>
+
+      <p className="text-center text-sm text-txt-secondary">
+        {t("signInPage.newToProbo")}
+        {" "}
+        <Link
+          to={{ pathname: "/auth/register", search: location.search }}
+          className="underline hover:text-txt-primary"
+        >
+          {t("signInPage.actions.createAccount")}
+        </Link>
+      </p>
 
       <p className="text-center text-xs text-txt-tertiary">
         ISO Pilot secure sign-in
