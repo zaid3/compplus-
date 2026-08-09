@@ -19,14 +19,12 @@ import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 import { CreateDocumentDialog } from "./_components/CreateDocumentDialog";
 import { DocumentList } from "./_components/DocumentList";
-import { TemplateLibraryDialog } from "./_components/TemplateLibraryDialog";
 
 export const documentsPageQuery = graphql`
   query DocumentsPageQuery($organizationId: ID!) {
     organization: node(id: $organizationId) {
       __typename
       ... on Organization {
-        name
         canCreateDocument: permission(action: "core:document:create")
         ...DocumentListFragment @arguments(first: 50, order: { field: TITLE, direction: ASC })
       }
@@ -46,7 +44,7 @@ export default function DocumentsPage(props: {
     throw new Error("invalid type for node");
   }
 
-  usePageTitle("Documents | Template Library");
+  usePageTitle("Documents");
 
   const [tab, setTab] = useState<"ACTIVE" | "ARCHIVED">("ACTIVE");
   const [documentListConnectionId, setDocumentListConnectionId] = useState(
@@ -61,24 +59,18 @@ export default function DocumentsPage(props: {
     <div className="space-y-6">
       <PageHeader
         title={t("documentsPage.title")}
-        description="Use ready-made ISOpilot policies, procedures, registers and forms, or create your own document."
+        description="Create, review and manage your organisation documents."
       >
         <div className="flex gap-2">
           {organization.canCreateDocument && tab === "ACTIVE" && (
-            <>
-              <TemplateLibraryDialog
-                organizationName={organization.name ?? ""}
-                trigger={<Button>Template Library</Button>}
-              />
-              <CreateDocumentDialog
-                connection={documentListConnectionId}
-                trigger={(
-                  <Button variant="secondary" icon={IconPlusLarge}>
-                    {t("documentsPage.actions.new")}
-                  </Button>
-                )}
-              />
-            </>
+            <CreateDocumentDialog
+              connection={documentListConnectionId}
+              trigger={(
+                <Button icon={IconPlusLarge}>
+                  {t("documentsPage.actions.new")}
+                </Button>
+              )}
+            />
           )}
         </div>
       </PageHeader>
