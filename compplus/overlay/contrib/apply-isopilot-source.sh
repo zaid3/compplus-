@@ -60,8 +60,7 @@ find compplus -type f \( -name '*.go' -o -name '*.ts' -o -name '*.tsx' -o -name 
 find pkg/probo pkg/server/api/console -type f \( -name '*.go' -o -name '*.graphql' \) \
   -exec sed -i 's/Comp Plus+/ISOPilot/g; s/ISOpilot/ISOPilot/g' {} +
 
-# Keep future auth mail branding aligned with the product even when SMTP is
-# enabled later.
+# Keep auth mail branding aligned with the product.
 auth_service="pkg/iam/auth_service.go"
 old_magic_sender='magicLinkDefaultSenderName = "Probo"'
 new_magic_sender='magicLinkDefaultSenderName = "ISO Pilot"'
@@ -70,33 +69,59 @@ if grep -Fq "${old_magic_sender}" "${auth_service}"; then
 fi
 grep -Fq "${new_magic_sender}" "${auth_service}"
 
-# Magic-link delivery requires an operator-provided SMTP service. The current
-# production deployment has no SMTP credentials, so do not expose a public send
-# endpoint that can only queue undeliverable email. The verification endpoint is
-# retained so previously issued links would remain valid if one existed.
+# Preserve compatibility with existing passwords at login while requiring a
+# stronger baseline whenever a password is newly created, changed, or reset.
+sed -i 's/v.Check(req.Password, "password", PasswordValidator())/v.Check(req.Password, "password", StrongPasswordValidator())/g' "${auth_service}"
+sed -i 's/v.Check(req.NewPassword, "newPassword", PasswordValidator())/v.Check(req.NewPassword, "newPassword", StrongPasswordValidator())/' "${auth_service}"
+
+grep -Fq 'v.Check(password, "password", PasswordValidator())' "${auth_service}"
+test "$(grep -Fc 'v.Check(req.Password, "password", StrongPasswordValidator())' "${auth_service}")" -ge 2
+grep -Fq 'v.Check(req.NewPassword, "newPassword", StrongPasswordValidator())' "${auth_service}"
+grep -Fq 'func StrongPasswordValidator()' pkg/iam/validators.go
+
+# Match the frontend to the server's 12-character policy for all new passwords.
+for password_page_file in \
+  apps/console/src/pages/iam/auth/SignUpPage.tsx \
+  apps/console/src/pages/iam/auth/ResetPasswordPage.tsx \
+  apps/console/src/pages/iam/auth/CreatePasswordPage.tsx; do
+  sed -i 's/z.string().min(8)/z.string().min(12)/g' "${password_page_file}"
+  grep -Fq 'z.string().min(12)' "${password_page_file}"
+done
+
+# Email-backed magic links are available again, but the public send endpoint is
+# always wrapped in the server-side limiter from the ISO Pilot overlay.
 connect_resolver="pkg/server/api/connect/v1/resolver.go"
-magic_link_send='r.Post("/magic-link/send", magicLinkHandler.SendHandler)'
-if grep -Fq "${magic_link_send}" "${connect_resolver}"; then
-  sed -i '\#r.Post("/magic-link/send", magicLinkHandler.SendHandler)#d' "${connect_resolver}"
+old_magic_link_route='r.Post("/magic-link/send", magicLinkHandler.SendHandler)'
+limited_magic_link_route='r.With(magicLinkRateLimitMiddleware).Post("/magic-link/send", magicLinkHandler.SendHandler)'
+if grep -Fq "${old_magic_link_route}" "${connect_resolver}"; then
+  sed -i 's#r.Post("/magic-link/send", magicLinkHandler.SendHandler)#r.With(magicLinkRateLimitMiddleware).Post("/magic-link/send", magicLinkHandler.SendHandler)#' "${connect_resolver}"
 fi
-! grep -Fq "${magic_link_send}" "${connect_resolver}"
+grep -Fq "${limited_magic_link_route}" "${connect_resolver}"
 grep -Fq 'r.Get("/magic-link/verify", magicLinkHandler.VerifyHandler)' "${connect_resolver}"
 
-# Production auth UI/runtime guardrails. These are intentionally checked in the
-# exact source tree that gets compiled into the release image.
+# Production auth UI/runtime guardrails. SSO remains dormant until an operator
+# configures an identity provider; email/password, verification, recovery and
+# magic-link flows are the supported public entry points.
 sign_in_page="apps/console/src/pages/iam/auth/sign-in/SignInPage.tsx"
 password_page="apps/console/src/pages/iam/auth/sign-in/PasswordSignInPage.tsx"
-sso_page="apps/console/src/pages/iam/auth/sign-in/SSOSignInPage.tsx"
 web_server="pkg/server/web/web.go"
 
-! grep -Fq 'MagicLinkForm' "${sign_in_page}"
-! grep -Fq '/auth/register' "${sign_in_page}"
-! grep -Fq '/auth/register' "${password_page}"
-! grep -Fq '/auth/register' "${sso_page}"
-! grep -Fq '/auth/forgot-password' "${password_page}"
+grep -Fq 'MagicLinkForm' "${sign_in_page}"
+grep -Fq '/auth/register' "${sign_in_page}"
+grep -Fq '/auth/register' "${password_page}"
+grep -Fq '/auth/forgot-password' "${password_page}"
+! grep -Fq '/auth/sso-login' "${sign_in_page}"
+grep -Fq 'EMAIL_NOT_VERIFIED' "${password_page}"
+
+test -f pkg/server/api/connect/v1/public_auth_rate_limiter.go
+grep -Fq 'AroundOperations(publicAuthRateLimitOperations)' pkg/server/api/connect/v1/graphql_handler.go
+grep -Fq 'magicLinkRateLimitMiddleware' pkg/server/api/connect/v1/public_auth_rate_limiter.go
+
 grep -Fq 'PROBOD_AUTH_COOKIE_SECURE="true"' entrypoint.sh
+grep -Fq 'PROBOD_AUTH_COOKIE_SAMESITE="lax"' entrypoint.sh
 grep -Fq 'https://app.isopilot.co.uk' entrypoint.sh
-grep -Fq 'PROBOD_AUTH_DISABLE_SIGNUP="true"' entrypoint.sh
+grep -Fq 'SMTP configuration is incomplete' entrypoint.sh
+grep -Fq 'PROBOD_SMTP_TLS_REQUIRED="true"' entrypoint.sh
 grep -Fq 'Strict-Transport-Security' "${web_server}"
 
 # Append ISO Pilot visual tokens after upstream theme declarations so the
