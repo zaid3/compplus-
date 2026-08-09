@@ -21,18 +21,12 @@
 
 set -Eeuo pipefail
 
-# Apply the small source-level adaptations that must be made to pinned upstream
-# Probo after the ISO Pilot overlay is copied in. Each replacement is guarded so
-# an upstream change fails loudly instead of silently producing a weaker build.
-
 measure_file="pkg/probo/measure_service.go"
 old_framework_lookup='framework.LoadByReferenceID(ctx, tx, scope, standard.Framework)'
 new_framework_lookup='framework.LoadByOrganizationIDAndReferenceID(ctx, tx, scope, organization.ID, standard.Framework)'
-
 if grep -Fq "${old_framework_lookup}" "${measure_file}"; then
   sed -i "s#${old_framework_lookup}#${new_framework_lookup}#" "${measure_file}"
 fi
-
 grep -Fq "${new_framework_lookup}" "${measure_file}"
 grep -Eq 'MeasureID:[[:space:]]*measure.ID' "${measure_file}"
 
@@ -43,24 +37,19 @@ if ! grep -Fq "${biodiversity}" "${iso14001_file}"; then
     's/"Water use where relevant", /"Water use where relevant", "Biodiversity, ecosystems, habitats and land-use impacts where relevant", /' \
     "${iso14001_file}"
 fi
-
 grep -Fq "${biodiversity}" "${iso14001_file}"
 
-# Rebrand customer-facing locale VALUES only. Never mutate JSON keys: React i18n
-# lookups depend on stable keys such as signInPage.newToProbo.
+# Rebrand customer-facing locale VALUES only. Never mutate JSON keys.
 python3 contrib/rebrand-locales.py
-
 grep -Fq '"newToProbo"' apps/console/src/_locales/en-US.json
 grep -Fq 'ISO Pilot' apps/console/src/_locales/en-US.json
 
-# Keep internal/source identifiers using the compact ISOPilot spelling where
-# changing them to a spaced product name could make code invalid.
+# Keep internal/source identifiers compact where a spaced brand could make code invalid.
 find compplus -type f \( -name '*.go' -o -name '*.ts' -o -name '*.tsx' -o -name '*.json' -o -name '*.md' \) \
   -exec sed -i 's/Comp Plus+/ISOPilot/g; s/ISOpilot/ISOPilot/g' {} +
 find pkg/probo pkg/server/api/console -type f \( -name '*.go' -o -name '*.graphql' \) \
   -exec sed -i 's/Comp Plus+/ISOPilot/g; s/ISOpilot/ISOPilot/g' {} +
 
-# Keep auth mail branding aligned with the product.
 auth_service="pkg/iam/auth_service.go"
 old_magic_sender='magicLinkDefaultSenderName = "Probo"'
 new_magic_sender='magicLinkDefaultSenderName = "ISO Pilot"'
@@ -69,17 +58,23 @@ if grep -Fq "${old_magic_sender}" "${auth_service}"; then
 fi
 grep -Fq "${new_magic_sender}" "${auth_service}"
 
+# Close two public-auth boundaries in the pinned upstream source:
+# 1) magic links may authenticate existing identities but cannot create accounts;
+# 2) signup does not leave an authenticated session before email verification.
+python3 contrib/harden-public-auth.py
+grep -Fq 'return NewInvalidCredentialsError("invalid magic link")' "${auth_service}"
+grep -Fq 'cannot close unverified signup session' pkg/server/api/connect/v1/session_resolvers.go
+! grep -Fq 'r.sessionCookie.Set(w, session)' <(sed -n '/func (r \*mutationResolver) SignUp/,/\/\/ SignOut/p' pkg/server/api/connect/v1/session_resolvers.go)
+
 # Preserve compatibility with existing passwords at login while requiring a
 # stronger baseline whenever a password is newly created, changed, or reset.
 sed -i 's/v.Check(req.Password, "password", PasswordValidator())/v.Check(req.Password, "password", StrongPasswordValidator())/g' "${auth_service}"
 sed -i 's/v.Check(req.NewPassword, "newPassword", PasswordValidator())/v.Check(req.NewPassword, "newPassword", StrongPasswordValidator())/' "${auth_service}"
-
 grep -Fq 'v.Check(password, "password", PasswordValidator())' "${auth_service}"
 test "$(grep -Fc 'v.Check(req.Password, "password", StrongPasswordValidator())' "${auth_service}")" -ge 2
 grep -Fq 'v.Check(req.NewPassword, "newPassword", StrongPasswordValidator())' "${auth_service}"
 grep -Fq 'func StrongPasswordValidator()' pkg/iam/validators.go
 
-# Match the frontend to the server's 12-character policy for all new passwords.
 for password_page_file in \
   apps/console/src/pages/iam/auth/SignUpPage.tsx \
   apps/console/src/pages/iam/auth/ResetPasswordPage.tsx \
@@ -88,8 +83,7 @@ for password_page_file in \
   grep -Fq 'z.string().min(12)' "${password_page_file}"
 done
 
-# Email-backed magic links are available again, but the public send endpoint is
-# always wrapped in the server-side limiter from the ISO Pilot overlay.
+# Magic-link delivery is available only behind a server-side limiter.
 connect_resolver="pkg/server/api/connect/v1/resolver.go"
 old_magic_link_route='r.Post("/magic-link/send", magicLinkHandler.SendHandler)'
 limited_magic_link_route='r.With(magicLinkRateLimitMiddleware).Post("/magic-link/send", magicLinkHandler.SendHandler)'
@@ -99,13 +93,10 @@ fi
 grep -Fq "${limited_magic_link_route}" "${connect_resolver}"
 grep -Fq 'r.Get("/magic-link/verify", magicLinkHandler.VerifyHandler)' "${connect_resolver}"
 
-# Production auth UI/runtime guardrails. SSO remains dormant until an operator
-# configures an identity provider; email/password, verification, recovery and
-# magic-link flows are the supported public entry points.
+# Production auth UI/runtime guardrails. SSO remains dormant until configured.
 sign_in_page="apps/console/src/pages/iam/auth/sign-in/SignInPage.tsx"
 password_page="apps/console/src/pages/iam/auth/sign-in/PasswordSignInPage.tsx"
 web_server="pkg/server/web/web.go"
-
 grep -Fq 'MagicLinkForm' "${sign_in_page}"
 grep -Fq '/auth/register' "${sign_in_page}"
 grep -Fq '/auth/register' "${password_page}"
@@ -116,6 +107,7 @@ grep -Fq 'EMAIL_NOT_VERIFIED' "${password_page}"
 test -f pkg/server/api/connect/v1/public_auth_rate_limiter.go
 grep -Fq 'AroundOperations(publicAuthRateLimitOperations)' pkg/server/api/connect/v1/graphql_handler.go
 grep -Fq 'magicLinkRateLimitMiddleware' pkg/server/api/connect/v1/public_auth_rate_limiter.go
+grep -Fq 'maxPublicAuthRateBuckets' pkg/server/api/connect/v1/public_auth_rate_limiter.go
 
 grep -Fq 'PROBOD_AUTH_COOKIE_SECURE="true"' entrypoint.sh
 grep -Fq 'PROBOD_AUTH_COOKIE_SAMESITE="lax"' entrypoint.sh
@@ -124,19 +116,15 @@ grep -Fq 'SMTP configuration is incomplete' entrypoint.sh
 grep -Fq 'PROBOD_SMTP_TLS_REQUIRED="true"' entrypoint.sh
 grep -Fq 'Strict-Transport-Security' "${web_server}"
 
-# Append ISO Pilot visual tokens after upstream theme declarations so the
-# existing component system keeps working while the product uses the blue brand
-# palette in both light and dark mode.
+# Append ISO Pilot visual tokens after upstream theme declarations.
 theme_file="packages/ui/src/theme.css"
 theme_overrides="packages/ui/src/isopilot-theme.css"
 theme_marker="ISO Pilot production theme overrides"
-
 test -f "${theme_overrides}"
 if ! grep -Fq "${theme_marker}" "${theme_file}"; then
   printf '\n' >> "${theme_file}"
   cat "${theme_overrides}" >> "${theme_file}"
 fi
-
 grep -Fq "${theme_marker}" "${theme_file}"
 
 echo "ISO Pilot source customizations applied successfully"
