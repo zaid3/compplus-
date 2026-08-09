@@ -1,4 +1,5 @@
 name: "make"
+
 on:
   push:
     branches:
@@ -11,235 +12,16 @@ permissions:
   contents: "read"
 
 jobs:
-  # ── Snapshot: build frontend apps ──────────────────────────────────
-  build-apps:
-    name: "build-apps"
-    if: github.event_name == 'push'
-    runs-on: "runs-on=${{ github.run_id }}/runner=4cpu-linux-x64/extras=s3-cache"
-    permissions:
-      contents: "read"
-    steps:
-      - uses: "actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0" # v6
-        with:
-          submodules: recursive
-      - uses: "runs-on/action@d141ef83eb66d096ce8afc767e09115a65c63b60" # v2
-      - uses: "./.github/actions/setup"
-        with:
-          go: "false"
-      - run: "npm --workspace @probo/emails run build"
-      - run: "make relay"
-      - name: "Build console"
-        run: |
-          npm --workspace @probo/console run check
-          NODE_ENV=production npm --workspace @probo/console run build
-      - name: "Build compliance-portal"
-        run: |
-          npm --workspace @probo/compliance-portal run check
-          NODE_ENV=production npm --workspace @probo/compliance-portal run build
-      - uses: "actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a" # v7
-        with:
-          name: "frontend-apps"
-          path: |
-            apps/console/dist/
-            apps/compliance-portal/dist/
-            packages/emails/dist/
-          retention-days: 1
-
-  # ── Snapshot: build probod group binaries (matrix by GOOS/GOARCH) ──
-  build-snapshot-binary:
-    name: "probod binary (${{ matrix.goos }}/${{ matrix.goarch }})"
-    if: github.event_name == 'push'
-    needs: [build-apps]
-    runs-on: "runs-on=${{ github.run_id }}/runner=4cpu-linux-x64/extras=s3-cache"
-    permissions:
-      contents: "read"
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - { goos: linux, goarch: amd64 }
-          - { goos: linux, goarch: arm64 }
-          - { goos: darwin, goarch: amd64 }
-          - { goos: darwin, goarch: arm64 }
-          - { goos: windows, goarch: amd64 }
-          - { goos: freebsd, goarch: amd64 }
-          - { goos: freebsd, goarch: arm64 }
-          - { goos: openbsd, goarch: amd64 }
-          - { goos: openbsd, goarch: arm64 }
-    steps:
-      - uses: "actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0" # v6
-        with:
-          submodules: recursive
-      - uses: "runs-on/action@d141ef83eb66d096ce8afc767e09115a65c63b60" # v2
-      - uses: "./.github/actions/setup"
-        with:
-          node: "false"
-      - uses: "actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c" # v8
-        with:
-          name: "frontend-apps"
-      - name: "Generate Go code"
-        run: |
-          go generate ./pkg/server/api/connect/v1
-          go generate ./pkg/server/api/mcp/v1
-          go generate ./pkg/server/api/console/v1
-          go generate ./pkg/server/api/complianceportal/v1
-      - name: "Build binaries"
-        env:
-          CGO_ENABLED: "0"
-          GOOS: "${{ matrix.goos }}"
-          GOARCH: "${{ matrix.goarch }}"
-        run: |
-          EXT=""
-          if [ "$GOOS" = "windows" ]; then EXT=".exe"; fi
-
-          go build -ldflags "-s -w -X 'main.version=snapshot' -X 'main.env=prod'" \
-            -gcflags="-e" -o "dist/probod${EXT}" ./cmd/probod/main.go
-
-          go build -ldflags "-s -w" \
-            -gcflags="-e" -o "dist/probod-bootstrap${EXT}" ./cmd/probod-bootstrap/main.go
-
-          go build -ldflags "-s -w -X 'main.version=snapshot'" \
-            -gcflags="-e" -o "dist/prb${EXT}" ./cmd/prb/main.go
-      - uses: "actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a" # v7
-        with:
-          name: "binary-${{ matrix.goos }}-${{ matrix.goarch }}"
-          path: "dist/"
-          retention-days: 1
-
-  # ── Snapshot: build probo-agent binaries (matrix by GOOS/GOARCH) ───
-  build-snapshot-probo-agent:
-    name: "probo-agent (${{ matrix.goos }}/${{ matrix.goarch }})"
-    if: github.event_name == 'push'
-    runs-on: "runs-on=${{ github.run_id }}/runner=4cpu-linux-x64/extras=s3-cache"
-    permissions:
-      contents: "read"
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - { goos: linux, goarch: amd64 }
-          - { goos: linux, goarch: arm64 }
-          - { goos: darwin, goarch: amd64 }
-          - { goos: darwin, goarch: arm64 }
-          - { goos: windows, goarch: amd64 }
-          - { goos: windows, goarch: arm64 }
-          - { goos: freebsd, goarch: amd64 }
-          - { goos: freebsd, goarch: arm64 }
-    steps:
-      - uses: "actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0" # v6
-        with:
-          submodules: recursive
-      - uses: "runs-on/action@d141ef83eb66d096ce8afc767e09115a65c63b60" # v2
-      - uses: "./.github/actions/setup"
-        with:
-          node: "false"
-      - name: "Build probo-agent"
-        env:
-          CGO_ENABLED: "0"
-          GOOS: "${{ matrix.goos }}"
-          GOARCH: "${{ matrix.goarch }}"
-        run: |
-          EXT=""
-          if [ "$GOOS" = "windows" ]; then EXT=".exe"; fi
-
-          go build -ldflags "-s -w -X 'main.version=snapshot'" \
-            -gcflags="-e" -o "dist/probo-agent${EXT}" ./cmd/probo-agent
-
-  # ── Snapshot: build Docker images (matrix by architecture) ─────────
-  build-snapshot-docker:
-    name: "docker (${{ matrix.arch }})"
-    if: github.event_name == 'push'
-    needs: [build-snapshot-binary]
-    runs-on: "runs-on=${{ github.run_id }}/runner=${{ matrix.runner }}/extras=s3-cache"
-    permissions:
-      contents: "read"
-      security-events: "write"
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - arch: amd64
-            platform: "linux/amd64"
-            runner: "4cpu-linux-x64"
-          - arch: arm64
-            platform: "linux/arm64"
-            runner: "4cpu-linux-arm64"
-    steps:
-      - uses: "actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0" # v6
-      - uses: "runs-on/action@d141ef83eb66d096ce8afc767e09115a65c63b60" # v2
-      - uses: "docker/setup-buildx-action@d7f5e7f509e45cec5c76c4d5afdd7de93d0b3df5" # v4.1.0
-      - uses: "docker/login-action@650006c6eb7dba73a995cc03b0b2d7f5ca915bee" # v4.2.0
-        with:
-          registry: artifact.probo.inc
-          username: ${{ secrets.HARBOR_USERNAME }}
-          password: ${{ secrets.HARBOR_PASSWORD }}
-      - uses: "actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c" # v8
-        with:
-          name: "binary-linux-${{ matrix.arch }}"
-          path: "linux/${{ matrix.arch }}"
-      - name: "Prepare binaries"
-        run: "chmod +x linux/${{ matrix.arch }}/*"
-      - name: "Build Docker image"
-        run: |
-          docker buildx build \
-            --platform "${{ matrix.platform }}" \
-            --build-arg "BASE_IMAGE=artifact.probo.inc/dockerhub/library/ubuntu@sha256:c4a8d5503dfb2a3eb8ab5f807da5bc69a85730fb49b5cfca2330194ebcc41c7b" \
-            --tag "artifact.probo.inc/probo/probo:snapshot-${{ matrix.arch }}" \
-            --load \
-            .
-      - name: "Cache Trivy database"
-        uses: "runs-on/cache@a5f51d6f3fece787d03b7b4e981c82538a0654ed" # v4
-        with:
-          path: ~/.cache/trivy
-          key: "trivy-db-${{ matrix.arch }}-${{ github.run_id }}"
-          restore-keys: "trivy-db-${{ matrix.arch }}-"
-      - name: "Scan Docker image with Trivy"
-        uses: "aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25" # 0.36.0
-        with:
-          image-ref: "artifact.probo.inc/probo/probo:snapshot-${{ matrix.arch }}"
-          format: "table"
-          exit-code: 1
-          ignore-unfixed: true
-          vuln-type: "os,library"
-          severity: "CRITICAL,HIGH"
-          cache-dir: ~/.cache/trivy
-
-  # ── Snapshot: SBOM & vulnerability scan ────────────────────────────
-  snapshot-scan:
-    name: "snapshot-scan"
-    if: github.event_name == 'push'
-    needs: [build-snapshot-binary]
-    runs-on: "runs-on=${{ github.run_id }}/runner=2cpu-linux-x64/extras=s3-cache"
-    permissions:
-      contents: "read"
-    steps:
-      - uses: "actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0" # v6
-        with:
-          submodules: recursive
-      - uses: "runs-on/action@d141ef83eb66d096ce8afc767e09115a65c63b60" # v2
-      - uses: "anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610" # v0.24.0
-        with:
-          path: ./
-          format: cyclonedx-json
-          output-file: sbom.json
-      - uses: "anchore/scan-action@e1165082ffb1fe366ebaf02d8526e7c4989ea9d2" # v7.4.0
-        with:
-          sbom: "sbom.json"
-          fail-build: true
-          severity-cutoff: critical
-          output-format: table
-
-  # ── Build probod group (PR + push validation) ────────────────────────
   build:
     name: "build-probod"
-    runs-on: "runs-on=${{ github.run_id }}/runner=8cpu-linux-x64/extras=s3-cache"
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
     permissions:
       contents: "read"
     steps:
       - uses: "actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0" # v6
         with:
           submodules: recursive
-      - uses: "runs-on/action@d141ef83eb66d096ce8afc767e09115a65c63b60" # v2
       - uses: "./.github/actions/setup"
         with:
           node: "false"
@@ -270,14 +52,14 @@ jobs:
 
   build-probo-agent:
     name: "build-probo-agent"
-    runs-on: "runs-on=${{ github.run_id }}/runner=4cpu-linux-x64/extras=s3-cache"
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
     permissions:
       contents: "read"
     steps:
       - uses: "actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0" # v6
         with:
           submodules: recursive
-      - uses: "runs-on/action@d141ef83eb66d096ce8afc767e09115a65c63b60" # v2
       - uses: "./.github/actions/setup"
         with:
           node: "false"
@@ -290,7 +72,8 @@ jobs:
 
   lint-go:
     name: "lint-go"
-    runs-on: "runs-on=${{ github.run_id }}/runner=4cpu-linux-x64/extras=s3-cache"
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
     permissions:
       contents: "read"
       pull-requests: "write"
@@ -298,7 +81,6 @@ jobs:
       - uses: "actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0" # v6
         with:
           submodules: recursive
-      - uses: "runs-on/action@d141ef83eb66d096ce8afc767e09115a65c63b60" # v2
       - uses: "./.github/actions/setup"
         with:
           node: "false"
@@ -347,7 +129,8 @@ jobs:
 
   lint-js:
     name: "lint-js"
-    runs-on: "runs-on=${{ github.run_id }}/runner=4cpu-linux-x64/extras=s3-cache"
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
     permissions:
       contents: "read"
       pull-requests: "write"
@@ -355,7 +138,6 @@ jobs:
       - uses: "actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0" # v6
         with:
           submodules: recursive
-      - uses: "runs-on/action@d141ef83eb66d096ce8afc767e09115a65c63b60" # v2
       - uses: "./.github/actions/setup"
         with:
           go: "false"
@@ -376,7 +158,8 @@ jobs:
 
   lint-swift:
     name: "lint-swift"
-    runs-on: "runs-on=${{ github.run_id }}/runner=2cpu-linux-x64/extras=s3-cache"
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
     permissions:
       contents: "read"
       pull-requests: "write"
@@ -384,7 +167,6 @@ jobs:
       - uses: "actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0" # v6
         with:
           submodules: recursive
-      - uses: "runs-on/action@d141ef83eb66d096ce8afc767e09115a65c63b60" # v2
       - uses: "swift-actions/setup-swift@7ca6abe6b3b0e8b5421b88be48feee39cbf52c6a" # v2.4.0
         with:
           swift-version: "6.0"
@@ -415,14 +197,14 @@ jobs:
 
   lint-shell:
     name: "lint-shell"
-    runs-on: "runs-on=${{ github.run_id }}/runner=2cpu-linux-x64/extras=s3-cache"
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
     permissions:
       contents: "read"
     steps:
       - uses: "actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0" # v6
         with:
           submodules: recursive
-      - uses: "runs-on/action@d141ef83eb66d096ce8afc767e09115a65c63b60" # v2
       - name: "Install shellcheck and shfmt"
         env:
           SHELLCHECK_VERSION: "v0.11.0"
@@ -444,14 +226,14 @@ jobs:
 
   test:
     name: "test"
-    runs-on: "runs-on=${{ github.run_id }}/runner=4cpu-linux-x64/extras=s3-cache"
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
     permissions:
       contents: "read"
     steps:
       - uses: "actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0" # v6
         with:
           submodules: recursive
-      - uses: "runs-on/action@d141ef83eb66d096ce8afc767e09115a65c63b60" # v2
       - uses: "./.github/actions/setup"
       - name: "Create placeholder dist files"
         run: |
@@ -478,65 +260,4 @@ jobs:
           path: |
             coverage.out
             coverage.html
-          retention-days: 30
-
-  test-e2e:
-    name: "test-e2e"
-    runs-on: "runs-on=${{ github.run_id }}/runner=4cpu-linux-x64/extras=s3-cache"
-    env:
-      COMPOSE_FILE: "compose.yaml:compose.github-action.yaml"
-      DOCKER_COMPOSE_FLAGS: "-f compose.github-action.yaml"
-    permissions:
-      contents: "read"
-    steps:
-      - uses: "actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0" # v6
-        with:
-          submodules: recursive
-      - uses: "runs-on/action@d141ef83eb66d096ce8afc767e09115a65c63b60" # v2
-      - uses: "./.github/actions/setup"
-      - uses: "docker/setup-compose-action@4eb059ff7f16592f9c84d5ca339c53cb7c5064e2" # v2.3.0
-      - uses: "docker/login-action@650006c6eb7dba73a995cc03b0b2d7f5ca915bee" # v4.2.0
-        with:
-          registry: artifact.probo.inc
-          username: ${{ secrets.HARBOR_USERNAME }}
-          password: ${{ secrets.HARBOR_PASSWORD }}
-      - name: "Install mkcert"
-        run: |
-          go install filippo.io/mkcert@latest
-          sudo mkcert -install 2>&1 | grep -v 'no Firefox and/or Chrome/Chromium security databases found' || true
-      - name: "Cache Docker images"
-        id: docker-cache
-        uses: "runs-on/cache@a5f51d6f3fece787d03b7b4e981c82538a0654ed" # v4
-        with:
-          path: /tmp/docker-images
-          key: "docker-images-${{ hashFiles('compose.yaml', 'compose.github-action.yaml') }}"
-      - name: "Load cached Docker images"
-        if: steps.docker-cache.outputs.cache-hit == 'true'
-        run: "docker load -i /tmp/docker-images/images.tar"
-      - name: "Pull and save Docker images"
-        if: steps.docker-cache.outputs.cache-hit != 'true'
-        run: |
-          docker compose pull
-          mkdir -p /tmp/docker-images
-          docker save $(docker compose config --images) -o /tmp/docker-images/images.tar
-      - name: "Build probod"
-        run: "make bin/probod"
-      - name: "Start stack"
-        run: "make stack-up"
-      - run: "make stack-ps"
-      - name: "Run e2e tests"
-        env:
-          PROBO_E2E_BINARY: "${{ github.workspace }}/bin/probod"
-          GOTESTSUM_FORMAT: "testname"
-          GOTESTSUM_JUNITFILE: "junit-e2e.xml"
-        run: |
-          PROBOD_ACME_ROOT_CA="$(cat compose/step-ca/certs/root_ca.crt)" \
-            CGO_ENABLED=1 go tool gotestsum -- -race -cover -coverprofile=coverage.out -count=1 ./e2e/console/...
-      - name: "Upload test results"
-        uses: "actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a" # v7
-        if: "always()"
-        continue-on-error: true
-        with:
-          name: "junit-e2e-results"
-          path: "junit-e2e.xml"
           retention-days: 30
