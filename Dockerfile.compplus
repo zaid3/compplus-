@@ -2,12 +2,11 @@
 
 # Production runtime image for Coolify.
 # The CPU/RAM-heavy Node + Go compilation happens in GitHub Actions using
-# Dockerfile.compplus.source. Coolify only downloads the prebuilt runtime bundle.
+# Dockerfile.compplus.source. Coolify downloads the exact prebuilt runtime
+# bundle matching the current source/overlay fingerprint.
 FROM ubuntu:24.04
 
-# Internal runtime asset names remain stable for deployment compatibility.
-ARG COMPPLUS_RUNTIME_URL=https://github.com/zaid3/compplus-/releases/download/runtime-latest/compplus-linux-amd64.tar.gz
-ARG COMPPLUS_RUNTIME_REVISION=2026-08-07-isopilot-v2
+ARG COMPPLUS_RUNTIME_RELEASE_BASE=https://github.com/zaid3/compplus-/releases/download/runtime-latest
 
 LABEL org.opencontainers.image.source="https://github.com/zaid3/compplus-"
 LABEL org.opencontainers.image.licenses="MIT"
@@ -19,28 +18,42 @@ RUN useradd -m probo \
     && apt-get install -y --no-install-recommends ca-certificates curl libcap2-bin \
     && rm -rf /var/lib/apt/lists/*
 
-# These tiny source fingerprints intentionally bust the runtime-download cache
-# whenever the ISOpilot overlay or pinned upstream build definition changes.
-COPY Dockerfile.compplus.source /tmp/Dockerfile.compplus.source
-COPY compplus/overlay/ /tmp/compplus-overlay-fingerprint/
+# Stage the exact source inputs used by the runtime publisher. The content
+# fingerprint prevents Coolify from downloading an older rolling release while
+# GitHub Actions is still publishing the bundle for the current main commit.
+COPY Dockerfile.compplus.source /tmp/runtime-fingerprint/Dockerfile.compplus.source
+COPY compplus/overlay/ /tmp/runtime-fingerprint/compplus/overlay/
 
-# The runtime release can take a few minutes to finish after a main-branch push.
-# Wait for it instead of failing Coolify immediately on a temporary GitHub 404.
 RUN set -eux; \
-    echo "Installing ISOpilot runtime ${COMPPLUS_RUNTIME_REVISION}"; \
+    expected_fingerprint="$(cd /tmp/runtime-fingerprint && { \
+      find Dockerfile.compplus.source compplus/overlay -type f -print | LC_ALL=C sort | \
+      while IFS= read -r file; do \
+        printf '%s\n' "$file"; \
+        sha256sum "$file" | awk '{print $1}'; \
+      done; \
+    } | sha256sum | awk '{print $1}')"; \
+    runtime_name="compplus-linux-amd64-${expected_fingerprint}.tar.gz"; \
+    runtime_url="${COMPPLUS_RUNTIME_RELEASE_BASE}/${runtime_name}"; \
+    checksum_url="${runtime_url}.sha256"; \
+    echo "Waiting for exact ISOpilot runtime fingerprint ${expected_fingerprint}"; \
     downloaded=0; \
-    for attempt in $(seq 1 60); do \
-      if curl -fL --connect-timeout 15 --max-time 180 "${COMPPLUS_RUNTIME_URL}" -o /tmp/compplus-runtime.tar.gz; then \
+    for attempt in $(seq 1 90); do \
+      if curl -fL --connect-timeout 15 --max-time 180 "${runtime_url}" -o /tmp/compplus-runtime.tar.gz \
+        && curl -fL --connect-timeout 15 --max-time 60 "${checksum_url}" -o /tmp/compplus-runtime.tar.gz.sha256; then \
         downloaded=1; \
         break; \
       fi; \
-      echo "Runtime not published yet (attempt ${attempt}/60); waiting 10 seconds..."; \
-      rm -f /tmp/compplus-runtime.tar.gz; \
+      echo "Exact runtime not published yet (attempt ${attempt}/90); waiting 10 seconds..."; \
+      rm -f /tmp/compplus-runtime.tar.gz /tmp/compplus-runtime.tar.gz.sha256; \
       sleep 10; \
     done; \
     test "$downloaded" = "1"; \
+    cd /tmp; \
+    expected_checksum="$(awk '{print $1}' compplus-runtime.tar.gz.sha256)"; \
+    actual_checksum="$(sha256sum compplus-runtime.tar.gz | awk '{print $1}')"; \
+    test "$expected_checksum" = "$actual_checksum"; \
     tar -xzf /tmp/compplus-runtime.tar.gz -C /usr/local/bin; \
-    rm -rf /tmp/compplus-runtime.tar.gz /tmp/Dockerfile.compplus.source /tmp/compplus-overlay-fingerprint; \
+    rm -rf /tmp/compplus-runtime.tar.gz /tmp/compplus-runtime.tar.gz.sha256 /tmp/runtime-fingerprint; \
     chmod +x /usr/local/bin/probod /usr/local/bin/probod-bootstrap /usr/local/bin/entrypoint.sh; \
     setcap CAP_NET_BIND_SERVICE=+eip /usr/local/bin/probod; \
     mkdir -p /etc/probod; \
