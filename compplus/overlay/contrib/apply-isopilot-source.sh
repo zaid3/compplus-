@@ -22,7 +22,7 @@
 set -Eeuo pipefail
 
 # Apply the small source-level adaptations that must be made to pinned upstream
-# Probo after the ISOPilot overlay is copied in. Each replacement is guarded so
+# Probo after the ISO Pilot overlay is copied in. Each replacement is guarded so
 # an upstream change fails loudly instead of silently producing a weaker build.
 
 measure_file="pkg/probo/measure_service.go"
@@ -46,13 +46,31 @@ fi
 
 grep -Fq "${biodiversity}" "${iso14001_file}"
 
-# Rebrand customer-facing source strings only. Internal package names, API names,
+# Rebrand customer-facing locale strings only. Internal package names, API names,
 # database identifiers and upstream copyright notices remain unchanged.
 find apps -type f -path '*/_locales/*.json' \
-  -exec sed -i 's/Probo/ISOPilot/g; s/Comp Plus+/ISOPilot/g; s/ISOpilot/ISOPilot/g' {} +
+  -exec sed -i 's/Probo/ISO Pilot/g; s/Comp Plus+/ISO Pilot/g; s/ISOpilot/ISO Pilot/g; s/ISOPilot/ISO Pilot/g' {} +
+
+# Keep internal/source identifiers using the compact ISOPilot spelling where
+# changing them to a spaced product name could make code invalid.
 find compplus -type f \( -name '*.go' -o -name '*.ts' -o -name '*.tsx' -o -name '*.json' -o -name '*.md' \) \
   -exec sed -i 's/Comp Plus+/ISOPilot/g; s/ISOpilot/ISOPilot/g' {} +
 find pkg/probo pkg/server/api/console -type f \( -name '*.go' -o -name '*.graphql' \) \
   -exec sed -i 's/Comp Plus+/ISOPilot/g; s/ISOpilot/ISOPilot/g' {} +
 
-echo "ISOPilot source customizations applied successfully"
+# Append ISO Pilot visual tokens after upstream theme declarations so the
+# existing component system keeps working while the product uses the blue brand
+# palette in both light and dark mode.
+theme_file="packages/ui/src/theme.css"
+theme_overrides="packages/ui/src/isopilot-theme.css"
+theme_marker="ISO Pilot production theme overrides"
+
+test -f "${theme_overrides}"
+if ! grep -Fq "${theme_marker}" "${theme_file}"; then
+  printf '\n' >> "${theme_file}"
+  cat "${theme_overrides}" >> "${theme_file}"
+fi
+
+grep -Fq "${theme_marker}" "${theme_file}"
+
+echo "ISO Pilot source customizations applied successfully"
