@@ -36,9 +36,18 @@ jobs:
           chmod +x contrib/apply-isopilot-source.sh
           contrib/apply-isopilot-source.sh
           npm audit fix --package-lock-only
-          npm audit --omit=dev --audit-level=high
           cp package-lock.json "$GITHUB_WORKSPACE/remediated-package-lock.json"
+      - name: "Audit shipped frontend workspaces"
+        working-directory: /tmp/isopilot-source
+        run: |
+          npm audit \
+            --workspace @probo/console \
+            --workspace @probo/compliance-portal \
+            --workspace @probo/emails \
+            --omit=dev \
+            --audit-level=high
       - name: "Upload remediated production lockfile"
+        if: always()
         uses: "actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a" # v7
         with:
           name: "remediated-production-package-lock"
