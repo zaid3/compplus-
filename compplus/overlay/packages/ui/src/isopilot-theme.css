@@ -1,0 +1,262 @@
+/* ISO Pilot production theme overrides.
+ * Appended after the upstream Probo theme by apply-isopilot-source.sh so the
+ * product keeps upstream component behaviour while using ISO Pilot branding.
+ */
+
+:root {
+  color-scheme: light;
+
+  --color-level-0: #f5f8fd;
+  --color-level-1: #ffffff;
+  --color-level-2: #f8faff;
+  --color-level-3: #e8eef8;
+
+  --color-black: #0b1220;
+
+  --color-txt-primary: #0f172a;
+  --color-invert: #ffffff;
+  --color-txt-invert: #ffffff;
+  --color-txt-secondary: #52657f;
+  --color-txt-tertiary: #6b7f99;
+  --color-txt-quaternary: #a8b5c7;
+  --color-txt-disabled: #c8d1dd;
+  --color-txt-accent: #2f6bff;
+  --color-txt-danger: #d92d3f;
+  --color-txt-success: #168a62;
+  --color-txt-info: #246bfe;
+  --color-txt-warning: #b86600;
+
+  --color-primary: #2f6bff;
+  --color-secondary: #ffffff;
+  --color-tertiary: #f8faff;
+  --color-subtle: #f1f5fb;
+  --color-highlight: #eaf1ff;
+  --color-active: #e9f0ff;
+  --color-accent: #2f6bff;
+  --color-danger: #fff0f2;
+  --color-danger-plain: #dc3d52;
+  --color-danger-dark: #c72f42;
+  --color-success: #edf9f4;
+  --color-info: #edf4ff;
+  --color-warning: #fff7e8;
+  --color-dialog: #ffffff;
+
+  --color-border-solid: #e2e8f2;
+  --color-border-low: #dce5f0;
+  --color-border-mid: #cad6e6;
+  --color-border-strong: #9eb0c8;
+  --color-border-active: #2f6bff;
+  --color-border-accent: #2f6bff;
+  --color-border-danger: #dc3d52;
+  --color-border-success: #1a9d72;
+  --color-border-warning: #e99620;
+  --color-border-info: #2f6bff;
+
+  --color-primary-hover: #245de5;
+  --color-invert-hover: #f5f8fd;
+  --color-secondary-hover: #f7f9fd;
+  --color-tertiary-hover: #eef3fa;
+  --color-subtle-hover: #eaf0f8;
+  --color-highlight-hover: #dfe9ff;
+  --color-accent-hover: #245de5;
+  --color-active-hover: #dce7ff;
+  --color-danger-hover: #cf3549;
+
+  --color-primary-pressed: #1f52cc;
+  --color-invert-pressed: #edf2f8;
+  --color-secondary-pressed: #eef3f8;
+  --color-tertiary-pressed: #e4ebf5;
+  --color-subtle-pressed: #e0e8f3;
+  --color-highlight-pressed: #d4e1ff;
+  --color-accent-pressed: #1f52cc;
+  --color-active-pressed: #cfddff;
+  --color-danger-pressed: #bd3042;
+
+  --shadow-base: 0 1px 2px rgba(15, 23, 42, 0.05), 0 8px 24px rgba(46, 71, 110, 0.04);
+  --shadow-hover: 0 2px 4px rgba(15, 23, 42, 0.06), 0 12px 28px rgba(46, 71, 110, 0.08);
+  --shadow-focus: 0 0 0 4px rgba(47, 107, 255, 0.2);
+  --shadow-mid: 0 8px 30px rgba(27, 51, 88, 0.08), 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+:root.dark {
+  color-scheme: dark;
+
+  --color-level-0: #07111f;
+  --color-level-1: #0b1728;
+  --color-level-2: #101e32;
+  --color-level-3: #192a42;
+
+  --color-black: #ffffff;
+
+  --color-txt-primary: #f3f7ff;
+  --color-invert: #07111f;
+  --color-txt-invert: #ffffff;
+  --color-txt-secondary: #a9b8cc;
+  --color-txt-tertiary: #8395ad;
+  --color-txt-quaternary: #53657d;
+  --color-txt-disabled: #405269;
+  --color-txt-accent: #6f9cff;
+  --color-txt-danger: #ff7b8c;
+  --color-txt-success: #6ed5ad;
+  --color-txt-info: #78a7ff;
+  --color-txt-warning: #ffc46b;
+
+  --color-primary: #3f78ff;
+  --color-secondary: #101e32;
+  --color-tertiary: #0d1a2c;
+  --color-subtle: rgba(126, 166, 224, 0.06);
+  --color-highlight: rgba(78, 128, 255, 0.12);
+  --color-active: rgba(58, 113, 255, 0.18);
+  --color-accent: #4b82ff;
+  --color-danger: rgba(255, 75, 98, 0.12);
+  --color-danger-plain: #e35467;
+  --color-danger-dark: #ff6e80;
+  --color-success: rgba(58, 197, 146, 0.12);
+  --color-info: rgba(69, 126, 255, 0.14);
+  --color-warning: rgba(232, 159, 54, 0.12);
+  --color-dialog: #0d1a2c;
+
+  --color-border-solid: rgba(169, 190, 220, 0.13);
+  --color-border-low: rgba(169, 190, 220, 0.12);
+  --color-border-mid: rgba(169, 190, 220, 0.2);
+  --color-border-strong: rgba(184, 204, 232, 0.34);
+  --color-border-active: #6f9cff;
+  --color-border-accent: #5d8cff;
+  --color-border-danger: #f16879;
+  --color-border-success: #55c99e;
+  --color-border-warning: #eeb45d;
+  --color-border-info: #6f9cff;
+
+  --color-primary-hover: #5487ff;
+  --color-invert-hover: #0d1a2c;
+  --color-secondary-hover: #14243a;
+  --color-tertiary-hover: #122138;
+  --color-subtle-hover: rgba(126, 166, 224, 0.1);
+  --color-highlight-hover: rgba(78, 128, 255, 0.17);
+  --color-accent-hover: #5b8dff;
+  --color-active-hover: rgba(58, 113, 255, 0.24);
+  --color-danger-hover: #e75a6c;
+
+  --color-primary-pressed: #336af0;
+  --color-invert-pressed: #122138;
+  --color-secondary-pressed: #17283f;
+  --color-tertiary-pressed: #16253a;
+  --color-subtle-pressed: rgba(126, 166, 224, 0.14);
+  --color-highlight-pressed: rgba(78, 128, 255, 0.22);
+  --color-accent-pressed: #3973f5;
+  --color-active-pressed: rgba(58, 113, 255, 0.3);
+  --color-danger-pressed: #cf4b5c;
+
+  --shadow-base: 0 1px 2px rgba(0, 0, 0, 0.24), 0 10px 28px rgba(0, 0, 0, 0.12);
+  --shadow-hover: 0 2px 5px rgba(0, 0, 0, 0.3), 0 14px 34px rgba(0, 0, 0, 0.18);
+  --shadow-focus: 0 0 0 4px rgba(93, 140, 255, 0.28);
+  --shadow-mid: 0 12px 34px rgba(0, 0, 0, 0.24), 0 1px 2px rgba(0, 0, 0, 0.18);
+}
+
+.isopilot-shell {
+  background:
+    radial-gradient(circle at 72% 0%, rgba(47, 107, 255, 0.055), transparent 34rem),
+    var(--color-level-0);
+}
+
+.dark .isopilot-shell {
+  background:
+    radial-gradient(circle at 70% 0%, rgba(62, 119, 255, 0.12), transparent 34rem),
+    radial-gradient(circle at 0% 100%, rgba(28, 69, 137, 0.13), transparent 30rem),
+    var(--color-level-0);
+}
+
+.isopilot-header {
+  background: color-mix(in srgb, var(--color-level-1) 92%, transparent);
+  backdrop-filter: blur(16px) saturate(140%);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+  box-shadow: 0 1px 0 rgba(103, 126, 158, 0.08);
+}
+
+.isopilot-sidebar {
+  position: relative;
+  background:
+    linear-gradient(180deg, rgba(232, 240, 255, 0.76) 0%, rgba(247, 250, 255, 0.94) 45%, rgba(255, 255, 255, 0.92) 100%);
+  box-shadow: 10px 0 30px rgba(41, 72, 116, 0.035);
+}
+
+.dark .isopilot-sidebar {
+  background:
+    linear-gradient(180deg, rgba(10, 24, 43, 0.98) 0%, rgba(8, 20, 36, 0.98) 58%, rgba(7, 17, 31, 0.99) 100%);
+  box-shadow: 12px 0 34px rgba(0, 0, 0, 0.18);
+}
+
+.isopilot-sidebar-item {
+  position: relative;
+  border: 1px solid transparent;
+  transition: color 160ms ease, background-color 160ms ease, border-color 160ms ease, transform 160ms ease, box-shadow 160ms ease;
+}
+
+.isopilot-sidebar-item:hover {
+  transform: translateX(1px);
+}
+
+.isopilot-sidebar-item-active {
+  color: var(--color-txt-accent) !important;
+  background: linear-gradient(90deg, rgba(47, 107, 255, 0.13), rgba(47, 107, 255, 0.065)) !important;
+  border-color: rgba(47, 107, 255, 0.12);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.3), 0 5px 14px rgba(47, 107, 255, 0.06);
+}
+
+.dark .isopilot-sidebar-item-active {
+  background: linear-gradient(90deg, rgba(63, 120, 255, 0.24), rgba(63, 120, 255, 0.11)) !important;
+  border-color: rgba(111, 156, 255, 0.18);
+  box-shadow: inset 0 0 0 1px rgba(111, 156, 255, 0.06), 0 7px 18px rgba(0, 0, 0, 0.12);
+}
+
+.isopilot-sidebar-item-active::before {
+  content: "";
+  position: absolute;
+  left: -1px;
+  top: 8px;
+  bottom: 8px;
+  width: 3px;
+  border-radius: 999px;
+  background: #2f6bff;
+  box-shadow: 0 0 10px rgba(47, 107, 255, 0.28);
+}
+
+.dark .isopilot-sidebar-item-active::before {
+  background: #6f9cff;
+  box-shadow: 0 0 12px rgba(111, 156, 255, 0.4);
+}
+
+.isopilot-content-frame {
+  border-radius: 20px;
+}
+
+.isopilot-theme-toggle {
+  border: 1px solid var(--color-border-low);
+  background: var(--color-level-2);
+  color: var(--color-txt-secondary);
+  box-shadow: var(--shadow-base);
+}
+
+.isopilot-theme-toggle:hover {
+  border-color: var(--color-border-mid);
+  background: var(--color-highlight);
+  color: var(--color-txt-primary);
+}
+
+.isopilot-theme-toggle-track {
+  background: var(--color-border-mid);
+}
+
+.dark .isopilot-theme-toggle-track {
+  background: rgba(111, 156, 255, 0.38);
+}
+
+.isopilot-theme-toggle-thumb {
+  background: #ffffff;
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.25);
+}
+
+/* Make cards and form controls feel less flat without changing component APIs. */
+[data-radix-popper-content-wrapper] {
+  --shadow-mid: 0 16px 42px rgba(15, 23, 42, 0.14);
+}
