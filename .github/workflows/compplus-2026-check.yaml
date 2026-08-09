@@ -24,8 +24,8 @@ env:
   SERVICE_PASSWORD_64_OBJECTSTORE: ci-object-store-secret-000000000000000000000000000000000000000000000000000
   SERVICE_REALBASE64_32_ENCRYPTIONKEY: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
   SERVICE_PASSWORD_64_COOKIESECRET: ci-cookie-secret-000000000000000000000000000000000000000000000000000000
-  SERVICE_PASSWORD_64_PASSWORDPEPPER: ci-password-pepper-0000000000000000000000000000000000000000000000000000
-  SERVICE_PASSWORD_64_TRUSTTOKEN: ci-trust-token-000000000000000000000000000000000000000000000000000000
+  SERVICE_PASSWORD_64_PASSWORDPEPPER: ci-password-pepper-secret-0000000000000000000000000000000000000000000000000000
+  SERVICE_PASSWORD_64_TRUSTTOKEN: ci-trust-token-secret-000000000000000000000000000000000000000000000000000000
   ISOPILOT_PUBLIC_URL: http://127.0.0.1:8090
   ISOPILOT_CORS_ORIGINS: http://127.0.0.1:8090
 
@@ -84,6 +84,13 @@ jobs:
           grep -q '"uk-gdpr"' compplus/overlay/compplus/templates/pack_ukgdpr.go
           grep -q '"iso14001"' compplus/overlay/compplus/templates/pack_iso14001.go
           grep -q '"iso42001"' compplus/overlay/compplus/templates/pack_iso42001.go
+          test -f compplus/overlay/packages/ui/src/isopilot-theme.css
+          test -f compplus/overlay/apps/console/src/components/ThemeToggle.tsx
+          test -f compplus/overlay/apps/console/src/lib/displayMode/displayMode.ts
+          grep -q 'ISO Pilot' compplus/overlay/packages/ui/src/Atoms/Logo/Logo.tsx
+          grep -q 'isopilot-display-mode' compplus/overlay/apps/console/src/lib/displayMode/displayMode.ts
+          grep -q 'ThemeToggle' compplus/overlay/apps/console/src/pages/iam/organizations/ViewerMembershipLayout.tsx
+          grep -q 'isopilot-theme.css' compplus/overlay/contrib/apply-isopilot-source.sh
           ! grep -q 'POSTGRES_PASSWORD: "postgres"' compose.prod.yaml
           ! grep -q 'PROBOD_AWS_SECRET_ACCESS_KEY: "thisisnotasecret"' compose.prod.yaml
           ! grep -q 'CREATE ROLE probod LOGIN SUPERUSER' compose.prod.yaml
