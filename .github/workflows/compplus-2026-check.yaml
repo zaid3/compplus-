@@ -81,10 +81,11 @@ jobs:
         run: |
           set -euxo pipefail
           test -f compplus/overlay/pkg/probo/template_pack_service.go
+          test ! -e compplus/overlay/apps/console/src/pages/organizations/documents/_components/TemplateLibraryDialog.tsx
+          ! grep -q 'TemplateLibraryDialog' compplus/overlay/apps/console/src/pages/organizations/documents/DocumentsPage.tsx
           grep -q 'ARG PROBO_UPSTREAM_SHA=7d4b92c5ef1d77d0815f22749e01b8202d683d58' Dockerfile.compplus.source
           grep -q 'ISO 9001:2015 + Amd 1:2024' compplus/overlay/packages/ui/src/Molecules/FrameworkSelector/FrameworkSelector.tsx
           grep -q 'ISO 14001:2026' compplus/overlay/packages/ui/src/Molecules/FrameworkSelector/FrameworkSelector.tsx
-          grep -q 'DUAA changes in force in 2026' compplus/overlay/apps/console/src/pages/organizations/documents/_components/TemplateLibraryDialog.tsx
           grep -q '"iso27001"' compplus/overlay/compplus/templates/pack_iso27001.go
           grep -q '"iso9001"' compplus/overlay/compplus/templates/pack_iso9001.go
           grep -q '"uk-gdpr"' compplus/overlay/compplus/templates/pack_ukgdpr.go
