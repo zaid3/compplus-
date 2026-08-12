@@ -129,15 +129,25 @@ grep -Fq 'SMTP configuration is incomplete' entrypoint.sh
 grep -Fq 'PROBOD_SMTP_TLS_REQUIRED="true"' entrypoint.sh
 grep -Fq 'Strict-Transport-Security' "${web_server}"
 
-# Append ISO Pilot visual tokens after upstream theme declarations.
+# Append ISO Pilot visual tokens and responsive shell rules after upstream theme
+# declarations. Keeping mobile behaviour in its own file makes future UX work
+# independent from the light/dark colour system.
 theme_file="packages/ui/src/theme.css"
 theme_overrides="packages/ui/src/isopilot-theme.css"
+mobile_overrides="packages/ui/src/isopilot-mobile.css"
 theme_marker="ISO Pilot production theme overrides"
+mobile_marker="ISO Pilot responsive application-shell overrides"
 test -f "${theme_overrides}"
+test -f "${mobile_overrides}"
 if ! grep -Fq "${theme_marker}" "${theme_file}"; then
   printf '\n' >> "${theme_file}"
   cat "${theme_overrides}" >> "${theme_file}"
 fi
+if ! grep -Fq "${mobile_marker}" "${theme_file}"; then
+  printf '\n' >> "${theme_file}"
+  cat "${mobile_overrides}" >> "${theme_file}"
+fi
 grep -Fq "${theme_marker}" "${theme_file}"
+grep -Fq "${mobile_marker}" "${theme_file}"
 
 echo "ISO Pilot source customizations applied successfully"
