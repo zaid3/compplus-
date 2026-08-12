@@ -1,0 +1,82 @@
+/* ISO Pilot responsive application-shell overrides.
+ * Kept separate from the colour theme so mobile behaviour can evolve without
+ * changing the desktop visual system.
+ */
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  min-width: 0;
+  overflow-x: hidden;
+  overscroll-behavior-x: none;
+}
+
+.isopilot-header {
+  padding-left: max(0.75rem, env(safe-area-inset-left));
+  padding-right: max(0.75rem, env(safe-area-inset-right));
+}
+
+.isopilot-mobile-nav {
+  padding-left: env(safe-area-inset-left);
+  padding-bottom: env(safe-area-inset-bottom);
+  animation: isopilot-mobile-nav-in 180ms ease-out;
+}
+
+@keyframes isopilot-mobile-nav-in {
+  from {
+    transform: translateX(-18px);
+    opacity: 0.75;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@media (max-width: 1023px) {
+  .isopilot-content-frame {
+    border-radius: 0;
+  }
+
+  .isopilot-mobile-nav .isopilot-sidebar-item {
+    min-height: 44px;
+    padding-top: 0.625rem;
+    padding-bottom: 0.625rem;
+    font-size: 0.9375rem;
+  }
+
+  .isopilot-mobile-nav .isopilot-sidebar-item:hover {
+    transform: none;
+  }
+
+  /* Data-heavy screens may still need their natural width. Keep that overflow
+   * inside the content area instead of widening the complete application shell. */
+  .isopilot-content-frame table {
+    max-width: none;
+  }
+
+  .isopilot-content-frame input,
+  .isopilot-content-frame select,
+  .isopilot-content-frame textarea {
+    font-size: max(16px, 1em);
+  }
+
+  [data-radix-popper-content-wrapper] {
+    max-width: calc(100vw - 1rem) !important;
+  }
+}
+
+@media (max-width: 374px) {
+  .isopilot-header-logo > span:last-child {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .isopilot-mobile-nav {
+    animation: none;
+  }
+}
